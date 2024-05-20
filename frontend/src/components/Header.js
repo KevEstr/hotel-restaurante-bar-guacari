@@ -1,18 +1,21 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-
 import { useDispatch } from 'react-redux';
+import { setSection } from '../actions/SectionAction';
 import { logout } from '../actions/userActions';
 
 
 const Header = () => {
-    
     const dispatch = useDispatch()
+
     const handleLogout = (e) => {
         e.preventDefault()
-        dispatch(logout())
-       
+        dispatch(logout()) 
     }
+
+    const handleSetSection = (section) => {
+        dispatch(setSection(section));
+    }
+
     return (
         
        
@@ -23,6 +26,28 @@ const Header = () => {
                 <li className="nav-item">
                 <a className="nav-link" data-widget="pushmenu" href="/" role="button"><i className="fas fa-bars" /></a>
                 </li>
+
+                <span
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => handleSetSection('hotel')}
+                    className="nav-link"
+                    data-widget="control-sidebar"
+                    data-slide="true"
+                    role="button"
+                >
+                    <i className="fas fa-solid fa-hotel"></i> Hotel
+                </span>
+
+                <span
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => handleSetSection('restaurante')}
+                    className="nav-link"
+                    data-widget="control-sidebar"
+                    data-slide="true"
+                    role="button"
+                >
+                    <i className="fas fa-utensils"></i> Restaurante
+                </span>
 
             </ul>
 

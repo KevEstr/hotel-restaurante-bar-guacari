@@ -26,7 +26,7 @@ const IngredientEditScreen = ({ history, match }) => {
     const ingredientId = parseInt(match.params.id);
 
     const [name, setName] = useState("");
-    const [price, setPrice] = useState(0);
+    const [cost, setCost] = useState(0);
     const [stock, setStock] = useState(0);
     const [category, setCategory] = useState("");
 
@@ -67,7 +67,7 @@ const IngredientEditScreen = ({ history, match }) => {
             } else {
                 //set states
                 setName(ingredient.name);
-                setPrice(ingredient.price);
+                setCost(ingredient.cost);
                 setStock(ingredient.stock);
                 setCategory(ingredient.categoryId);
             }
@@ -82,8 +82,8 @@ const IngredientEditScreen = ({ history, match }) => {
         if (!name) {
             errorsCheck.name = "Nombre es requerido";
         }
-        if (!price) {
-            errorsCheck.price = "Precio es requerido";
+        if (!cost) {
+            errorsCheck.cost = "Precio es requerido";
         }
 
         if (!stock) {
@@ -104,7 +104,7 @@ const IngredientEditScreen = ({ history, match }) => {
                 updateIngredient({
                     id: ingredientId,
                     name,
-                    price,
+                    cost,
                     stock,
                     category,
                 })
@@ -138,8 +138,8 @@ const IngredientEditScreen = ({ history, match }) => {
             <Input
                 name={"precio"}
                 type={"number"}
-                data={price}
-                setData={setPrice}
+                data={cost}
+                setData={setCost}
                 errors={errors}
             />
 
