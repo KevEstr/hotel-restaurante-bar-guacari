@@ -30,6 +30,7 @@ const Menu = ({ history }) => {
         if (section === 'hotel') {
     return (
         <aside className="main-sidebar sidebar-dark-primary elevation-4">
+
                     {/* SECCIÓN QUE LE CORRESPONDE AL MENU DEL HOTEL */}
                     <Link to={"/dashboard"} className="brand-link">
                         <img
@@ -140,7 +141,7 @@ const Menu = ({ history }) => {
                                 </li>
 
                                 <li className="nav-item">
-                                    <Link to="/table" className="nav-link">
+                                    <Link to="/client" className="nav-link">
                                         <i className="nav-icon fas fa-border-all" />{" "}
                                         <p> Disponibilidad</p>
                             </Link>
