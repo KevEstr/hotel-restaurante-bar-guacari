@@ -1,4 +1,5 @@
 import React from "react";
+import Input from "../../components/form/Input";
 
 const OrderCart = ({ productsInOrder, setProductsInOrder }) => {
     //remove product from order
@@ -67,6 +68,9 @@ const OrderCart = ({ productsInOrder, setProductsInOrder }) => {
                                 X
                             </button>
                         </td>
+                        <td>
+                            
+                        </td>
                     </tr>
                 ))}
         </>
@@ -84,6 +88,7 @@ const OrderCart = ({ productsInOrder, setProductsInOrder }) => {
                         <th>Adicionar</th>
                         <th>Total</th>
                         <th className="d-none d-sm-table-cell">¿Eliminar?</th>
+                        <th>Nota</th>
                     </tr>
                 </thead>
                 <tbody>{renderCart()}</tbody>

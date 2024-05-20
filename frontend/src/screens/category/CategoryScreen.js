@@ -87,7 +87,7 @@ const CategoryScreen = ({ history, match }) => {
                 isOpen={modalIsOpen}
                 onRequestClose={() => setModalIsOpen(false)}
             >
-                <h2>Create Form</h2>
+                <h2>Formulario creación</h2>
                 <LoaderHandler loading={createLoading} error={createError} />
                 <form onSubmit={handleSubmit}>
                     <Input
