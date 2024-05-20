@@ -19,6 +19,9 @@ import TableEditScreen from "./screens/table/TableEditScreen";
 import IngredientScreen from "./screens/ingredient/IngredientScreen";
 import IngredientEditScreen from "./screens/ingredient/IngredientEditScreen";
 
+import RoomEditScreen from "./screens/room/roomScreen";
+import roomScreen from "./screens/room/roomEditScreen";
+
 import ProductScreen from "./screens/product/ProductScreen";
 import ProductEditScreen from "./screens/product/ProductEditScreen";
 
@@ -37,6 +40,7 @@ import PrivateRoute from "./auth/PrivateRoute";
 import NotFoundScreen from "./screens/NotFoundScreen";
 import AdminRoute from "./auth/AdminRoute";
 import NotAuthorizedScreen from "./screens/NotAuthorizedScreen";
+import RoomScreen from "./screens/room/roomScreen";
 
 const Main = () => {
     const dispatch = useDispatch();
@@ -82,7 +86,15 @@ const Main = () => {
                         component={IngredientEditScreen}
                     />
 
+                    <PrivateRoute
+                        path="/room/:id/edit"
+                        component={RoomEditScreen}
+                    />
+
                     <PrivateRoute path="/ingredient" component={IngredientScreen} />
+
+                    <PrivateRoute path="/room" component={RoomScreen} />
+
                     
                     <PrivateRoute
                         path="/product/:id/edit"
