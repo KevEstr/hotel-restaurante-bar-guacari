@@ -7,10 +7,8 @@ frontend/public/pages
 /.pnp
 .pnp.js
 
-
 #extra
 /extra
-
 
 # testing
 /coverage

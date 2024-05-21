@@ -2,8 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 /* Components */
-import Message from "../../components/Message";
-import Select from "../../components/Select";
 import Input from "../../components/form/Input";
 import HeaderContent from "../../components/HeaderContent";
 import ButtonGoBack from "../../components/ButtonGoBack";
@@ -16,7 +14,6 @@ import {
 } from "../../constants/ingredientConstants";
 
 /* Actions */
-import { listCategories } from "../../actions/categoryActions";
 import {
     updateIngredient,
     listIngredientDetails,
@@ -26,19 +23,10 @@ const IngredientEditScreen = ({ history, match }) => {
     const ingredientId = parseInt(match.params.id);
 
     const [name, setName] = useState("");
-    const [cost, setCost] = useState(0);
+    const [ingredientType, setIngredientType] = useState(null);
     const [stock, setStock] = useState(0);
-    const [category, setCategory] = useState("");
-
     const [errors, setErrors] = useState({});
-
     const dispatch = useDispatch();
-
-    const userLogin = useSelector((state) => state.userLogin);
-    const { userInfo } = userLogin;
-
-    const categoryList = useSelector((state) => state.categoryList);
-    const { categories } = categoryList;
 
     //ingredient details state
     const ingredientDetails = useSelector((state) => state.ingredientDetails);
@@ -67,9 +55,8 @@ const IngredientEditScreen = ({ history, match }) => {
             } else {
                 //set states
                 setName(ingredient.name);
-                setCost(ingredient.cost);
+                setIngredientType(ingredient.ingredientType);
                 setStock(ingredient.stock);
-                setCategory(ingredient.categoryId);
             }
         }
     }, [dispatch, history, ingredientId, ingredient, successUpdate]);
@@ -82,15 +69,12 @@ const IngredientEditScreen = ({ history, match }) => {
         if (!name) {
             errorsCheck.name = "Nombre es requerido";
         }
-        if (!cost) {
-            errorsCheck.cost = "Precio es requerido";
+        if (!ingredientType){
+            errorsCheck.ingredientType = "Tipo de Ingrediente Requerido"
         }
 
         if (!stock) {
             errorsCheck.stock = "Inventario es requerido";
-        }
-        if (!category) {
-            errorsCheck.category = "Categoría es requerida";
         }
 
         if (Object.keys(errorsCheck).length > 0) {
@@ -104,27 +88,33 @@ const IngredientEditScreen = ({ history, match }) => {
                 updateIngredient({
                     id: ingredientId,
                     name,
-                    cost,
-                    stock,
-                    category,
+                    ingredientType,
+                    stock
                 })
             );
         }
     };
 
-    const searchCategories = (e) => {
-        dispatch(listCategories(e.target.value));
+    const RadioButtonGroup = ({ name, options, selectedOption, setSelectedOption, errors }) => {
+        return (
+            <div>
+                {options.map(option => (
+                    <label key={option}>
+                        <input
+                            type="radio"
+                            name={name}
+                            value={option}
+                            checked={selectedOption === option}
+                            onChange={(e) => setSelectedOption(e.target.value)}
+                        />
+                        {option}
+                    </label>
+                ))}
+                {errors && errors[name] && <div className="error">{errors[name]}</div>}
+            </div>
+        );
     };
-
-    const renderCategoriesSelect = () => (
-        <Select
-            data={category}
-            setData={setCategory}
-            items={categories}
-            search={searchCategories}
-        />
-    );
-
+  
     const renderForm = () => (
         <form onSubmit={handleSubmit}>
             <Input
@@ -134,27 +124,36 @@ const IngredientEditScreen = ({ history, match }) => {
                 setData={setName}
                 errors={errors}
             />
-
+            <div className="form-group">
+                <label>Tipo de Ingrediente:</label>
+                <input type="text" className="form-control" value={ingredientType} readOnly />
+            </div>
+            <div className="form-group">
+                <label>Cantidad en el Inventario:</label>
+                <input type="text" className="form-control" value={stock} readOnly />
+            </div>
+            <label>Tipo de Movimiento:</label>
+            <RadioButtonGroup
+                        name={"ingredientType"}
+                        options={["ENTRADA", "SALIDA"]}
+                        selectedOption={ingredientType}  // Usar ingredientType directamente
+                        setSelectedOption={setIngredientType}  // Establecer el estado directamente
+                        errors={errors}
+            />
             <Input
-                name={"precio"}
-                type={"number"}
-                data={cost}
-                setData={setCost}
+                name={"Agregar Existencia"}
+                type={"text"}
+                data={name}
+                setData={setName}
                 errors={errors}
             />
-
             <Input
-                name={"inventarios"}
-                type={"number"}
-                data={stock}
-                setData={setStock}
+                name={"Concepto"}
+                type={"text"}
+                data={name}
+                setData={setName}
                 errors={errors}
             />
-
-            {renderCategoriesSelect()}
-            {errors.category && (
-                <Message message={errors.category} color={"warning"} />
-            )}
 
             <hr />
             <button type="submit" className="btn btn-success">

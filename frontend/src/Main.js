@@ -19,7 +19,6 @@ import TableEditScreen from "./screens/table/TableEditScreen";
 import IngredientScreen from "./screens/ingredient/IngredientScreen";
 import IngredientEditScreen from "./screens/ingredient/IngredientEditScreen";
 
-
 import ProductScreen from "./screens/product/ProductScreen";
 import ProductEditScreen from "./screens/product/ProductEditScreen";
 
@@ -83,10 +82,7 @@ const Main = () => {
                         component={IngredientEditScreen}
                     />
 
-            
-
                     <PrivateRoute path="/ingredient" component={IngredientScreen} />
-
                     
                     <PrivateRoute
                         path="/product/:id/edit"

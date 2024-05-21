@@ -1,22 +1,15 @@
 const asyncHandler = require("express-async-handler");
 const Ingredient = require("../models").Ingredient;
-const Category = require("../models").Category;
 const { Op } = require("sequelize");
 
 //@desc     Create a ingredient
 //@route    POST /api/ingredients
 //@access   Private/ingredient
-exports.createIngredient = asyncHandler(async (req, res) => {
-    const { name, cost, stock, categoryId } = req.body;
-    const category = await Category.findByPk(categoryId);
 
-    if (category) {
-        createdIngredient = await category.createIngredient({ name, cost, stock });
-        res.json(createdIngredient);
-    } else {
-        res.status(404);
-        throw new Error("Category not found");
-    }
+exports.createIngredient = asyncHandler(async (req, res) => {
+    const { name, typeIngredient, stock} = req.body;
+        const createdIngredient = await Ingredient.create({ name, typeIngredient, stock });
+        res.status(201).json(createdIngredient);
 });
 
 //@desc     Get all ingredients
@@ -27,16 +20,7 @@ exports.getIngredients = asyncHandler(async (req, res) => {
     const page = Number(req.query.pageNumber) || 1;
 
     const keyword = req.query.keyword ? req.query.keyword : null;
-
-    let options = {
-        include: [{ model: Category, as: "category" }],
-        attributes: {
-            exclude: ["categoryId", "updatedAt"],
-        },
-
-        offset: pageSize * (page - 1),
-        limit: pageSize,
-    };
+    let options = {};
 
     if (keyword) {
         options = {
@@ -45,8 +29,6 @@ exports.getIngredients = asyncHandler(async (req, res) => {
                 [Op.or]: [
                     { id: { [Op.like]: `%${keyword}%` } },
                     { name: { [Op.like]: `%${keyword}%` } },
-                    { cost: keyword },
-                    { "$category.name$": { [Op.like]: `%${keyword}%` } },
                 ],
             },
         };
@@ -60,11 +42,10 @@ exports.getIngredients = asyncHandler(async (req, res) => {
 //@desc     Get ingredient by ID
 //@route    GET /api/ingredients/:id
 //@access   Private/user
-exports.getIngredient = asyncHandler(async (req, res) => {
-    const ingredient = await Ingredient.findByPk(req.params.id, {
-        include: [{ model: Category, as: "category" }],
-    });
 
+exports.getIngredient = asyncHandler(async (req, res) => {
+    const ingredient = await Ingredient.findByPk(req.params.id);
+    
     if (ingredient) {
         res.json(ingredient);
     } else {
@@ -77,15 +58,14 @@ exports.getIngredient = asyncHandler(async (req, res) => {
 //@route    PUT /api/ingredients/:id
 //@access   Private/user
 exports.updateIngredient = asyncHandler(async (req, res) => {
-    const { name, cost, stock, category } = req.body;
+    const { name, ingredientType, stock} = req.body;
 
     const ingredient = await Ingredient.findByPk(req.params.id);
 
     if (ingredient) {
         ingredient.name = name;
-        ingredient.cost = cost;
+        ingredient.ingredientType = ingredientType;
         ingredient.stock = stock;
-        ingredient.categoryId = category;
         const updatedIngredient = await ingredient.save();
         res.json(updatedIngredient);
     } else {
