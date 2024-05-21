@@ -21,9 +21,25 @@ import LoaderHandler from "../../components/loader/LoaderHandler";
 import Pagination from "../../components/Pagination";
 import Message from "../../components/Message";
 
+import IngredientsCart from "../../components/order/IngredientsCart";
+import IngredientsTable from "../../components/order/IngredientsTable";
+
+import { listIngredients} from "../../actions/ingredientActions";
+import "../../../src/utils/menu.css"
+
+
+
 Modal.setAppElement("#root");
 
 const ProductScreen = ({ history }) => {
+
+    const [isSimple, setIsSimple] = useState(false);
+    const [isComposite, setIsComposite] = useState(false);
+    const [typeError, setTypeError] = useState(""); // Nuevo estado para el error de tipo de producto
+
+    const [ingredientsInOrder, setIngredientsInOrder] = useState([]);
+
+
     const [name, setName] = useState("");
     const [price, setPrice] = useState(0);
     const [stock, setStock] = useState(0);
@@ -63,6 +79,7 @@ const ProductScreen = ({ history }) => {
             setModalIsOpen(false);
         }
         dispatch(listProducts(keyword, pageNumber));
+        dispatch(listIngredients());
     }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess]);
 
     const handleSubmit = (e) => {
@@ -84,7 +101,13 @@ const ProductScreen = ({ history }) => {
             errorsCheck.category = "Categoría es requerida";
         }
 
-        if (Object.keys(errorsCheck).length > 0) {
+        if (!isSimple && !isComposite) {
+            setTypeError("Debe seleccionar si el producto es simple o compuesto"); // Establece el error si no se selecciona ninguno
+        } else {
+            setTypeError(""); // Limpia el error si uno de los dos está seleccionado
+        }
+
+        if (Object.keys(errorsCheck).length > 0 || (!isSimple && !isComposite)) {
             setErrors(errorsCheck);
         } else {
             setErrors({});
@@ -96,11 +119,27 @@ const ProductScreen = ({ history }) => {
                 price: price,
                 stock: stock,
                 categoryId: category,
+                isSimple: isSimple,
+                isComposite: isComposite,
+                
             };
 
             dispatch(createProduct(product));
         }
+
+        
     };
+
+    const handleSimpleChange = (e) => {
+        setIsSimple(e.target.checked);
+        if (e.target.checked) setIsComposite(false); // Deselect composite if simple is selected
+    };
+    
+    const handleCompositeChange = (e) => {
+        setIsComposite(e.target.checked);
+        if (e.target.checked) setIsSimple(false); // Deselect simple if composite is selected
+    };
+    
 
     const searchCategories = (e) => {
         dispatch(listCategories(e.target.value));
@@ -115,9 +154,17 @@ const ProductScreen = ({ history }) => {
         />
     );
 
+    const renderIngredientsTable = () => (
+        <IngredientsTable
+            ingredientsInOrder={ingredientsInOrder}
+            setIngredientsInOrder={setIngredientsInOrder}
+        />
+    );
+
     const renderModalCreateProduct = () => (
         <>
-            <ModalButton
+        <div>
+        <ModalButton
                 modal={modalIsOpen}
                 setModal={setModalIsOpen}
                 classes={"btn-success btn-lg mb-2"}
@@ -127,9 +174,10 @@ const ProductScreen = ({ history }) => {
                 isOpen={modalIsOpen}
                 onRequestClose={() => setModalIsOpen(false)}
             >
+                <div>
                 <LoaderHandler loading={createLoading} error={createError} />
                 <h2>Formulario Creación</h2>
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} className="form-container">
                     <Input
                         name={"nombre"}
                         type={"text"}
@@ -144,18 +192,48 @@ const ProductScreen = ({ history }) => {
                         setData={setPrice}
                         errors={errors}
                     />
-                    <Input
-                        name={"inventario"}
-                        type={"number"}
-                        data={stock}
-                        setData={setStock}
-                        errors={errors}
-                    />
+                    <label>Categoría de producto</label>
                     {renderCategoriesSelect()}
                     {errors.category && (
                         <Message message={errors.category} color={"warning"} />
                     )}
-                    <hr />
+                    <label>Tipo de producto</label>
+                    <div className="form-check">
+                        <input
+                            type="checkbox"
+                            className="form-check-input"
+                            id="simpleProduct"
+                            checked={isSimple}
+                            onChange={handleSimpleChange}
+                        />
+                        <label className="form-check-label" htmlFor="simpleProduct">
+                            Producto Simple
+                        </label>
+                    </div>
+                    <div className="form-check">
+                        <input
+                            type="checkbox"
+                            className="form-check-input"
+                            id="compositeProduct"
+                            checked={isComposite}
+                            onChange={handleCompositeChange}
+                        />
+                        <label className="form-check-label" htmlFor="compositeProduct">
+                            Producto Compuesto
+                        </label>
+                    </div>
+                    {typeError && (
+                    <Message message={typeError} color={"warning"} />
+                     )}
+                     <label>Ingredientes</label>
+                     <div className="form-group">
+                        {renderIngredientsTable()}
+                    
+                    {renderIngredientsCart()}
+                    {errors.category && (
+                        <Message message={errors.category} color={"warning"} />
+                    )}
+                    </div>
                     <button type="submit" className="btn btn-primary">
                         Confirmar
                     </button>
@@ -165,7 +243,13 @@ const ProductScreen = ({ history }) => {
                         classes={"btn-danger float-right"}
                     />
                 </form>
+
+
+                </div>
+                
             </Modal>
+        </div>
+            
         </>
     );
 
@@ -207,6 +291,18 @@ const ProductScreen = ({ history }) => {
                 ))}
             </tbody>
         </table>
+    );
+
+    const renderIngredientsCart = () => (
+        <>
+            {errors.products && (
+                <Message message={errors.products} color={"warning"} />
+            )}
+            <IngredientsCart
+                ingredientsInOrder={ingredientsInOrder}
+                setIngredientsInOrder={setIngredientsInOrder}
+            />
+        </>
     );
 
     return (

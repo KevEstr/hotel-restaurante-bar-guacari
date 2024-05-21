@@ -76,3 +76,15 @@
   text-align: center;
   
 }
+
+.form-container {
+  width: 80%; /* Ancho del formulario */
+  max-width: 800px; /* Máximo ancho del formulario */
+  height: 70vh; /* Altura del formulario */
+  margin: auto; /* Centrar el formulario horizontalmente */
+  overflow-y: auto; /* Hacer que el formulario sea desplazable verticalmente */
+  padding: 20px; /* Añadir padding interno */
+  background-color: #fff; /* Fondo blanco para el formulario */
+  border-radius: 8px; /* Bordes redondeados */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Sombra para darle profundidad */
+}
