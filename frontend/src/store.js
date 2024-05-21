@@ -9,6 +9,7 @@ import {
     userDetailsReducer,
     userUpdateReducer,
 } from "./reducers/userReducers";
+
 import {
     categoryListReducer,
     categoryCreateReducer,
@@ -93,7 +94,6 @@ const reducer = combineReducers({
     orderUpdate: orderUpdateReducer,
 
     section: sectionReducer
-
 });
 
 const userInfoFromStorage = localStorage.getItem("userInfo")

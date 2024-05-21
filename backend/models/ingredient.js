@@ -1,6 +1,7 @@
 "use strict";
 const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
+
     class Ingredient extends Model {
         /**
          * Helper method for defining associations.
@@ -9,10 +10,6 @@ module.exports = (sequelize, DataTypes) => {
          */
         static associate(models) {
             // define association here
-            this.belongsTo(models.Category, {
-                foreignKey: "categoryId",
-                as: "category",
-            });
             this.belongsToMany(models.Order, {
                 through: "OrderIngredient",
                 foreignKey: "ingredientId",
@@ -23,9 +20,8 @@ module.exports = (sequelize, DataTypes) => {
     Ingredient.init(
         {
             name: DataTypes.STRING,
-            cost: DataTypes.DOUBLE,
+            ingredientType: DataTypes.TINYINT,
             stock: DataTypes.INTEGER,
-            categoryId: DataTypes.INTEGER,
         },
         {
             sequelize,

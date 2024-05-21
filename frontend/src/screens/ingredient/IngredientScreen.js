@@ -8,26 +8,22 @@ import Modal from "react-modal";
 import Input from "../../components/form/Input";
 import ModalButton from "../../components/ModalButton";
 import DataTableLoader from "../../components/loader/DataTableLoader";
-import Select from "../../components/Select";
 
 /* Actions */
 import { listIngredients, createIngredient } from "../../actions/ingredientActions";
-import { listCategories } from "../../actions/categoryActions";
 
 /* Styles */
 import { modalStyles } from "../../utils/styles";
 import Search from "../../components/Search";
 import LoaderHandler from "../../components/loader/LoaderHandler";
 import Pagination from "../../components/Pagination";
-import Message from "../../components/Message";
 
 Modal.setAppElement("#root");
 
 const IngredientScreen = ({ history }) => {
     const [name, setName] = useState("");
-    const [cost, setCost] = useState(0);
+    const [ingredientType, setIngredientType] = useState(null);
     const [stock, setStock] = useState(0);
-    const [category, setCategory] = useState(null);
 
     const [errors, setErrors] = useState({});
 
@@ -36,9 +32,6 @@ const IngredientScreen = ({ history }) => {
     const [modalIsOpen, setModalIsOpen] = useState(false);
 
     const dispatch = useDispatch();
-
-    const categoryList = useSelector((state) => state.categoryList);
-    const { categories } = categoryList;
 
     const ingredientList = useSelector((state) => state.ingredientList);
     const { loading, error, ingredients, page, pages } = ingredientList;
@@ -56,10 +49,8 @@ const IngredientScreen = ({ history }) => {
     useEffect(() => {
         if (createSuccess) {
             setName("");
-            setCost(0);
+            setIngredientType(null);
             setStock(0);
-            setCategory(null);
-
             setModalIsOpen(false);
         }
         dispatch(listIngredients(keyword, pageNumber));
@@ -73,17 +64,9 @@ const IngredientScreen = ({ history }) => {
         if (!name) {
             errorsCheck.name = "Nombre es requerido";
         }
-        if (!cost) {
-            errorsCheck.cost = "Costo es requerido";
+        if (!ingredientType){
+            errorsCheck.ingredientType = "Tipo de Ingrediente es requerido";
         }
-
-        if (!stock) {
-            errorsCheck.stock = "Inventario es requerido";
-        }
-        if (!category) {
-            errorsCheck.category = "Categoría es requerida";
-        }
-
         if (Object.keys(errorsCheck).length > 0) {
             setErrors(errorsCheck);
         } else {
@@ -93,27 +76,34 @@ const IngredientScreen = ({ history }) => {
         if (Object.keys(errorsCheck).length === 0) {
             const ingredient = {
                 name: name,
-                cost: cost,
-                stock: stock,
-                categoryId: category,
+                ingredientType: ingredientType,
+                stock: stock
             };
 
             dispatch(createIngredient(ingredient));
         }
     };
 
-    const searchCategories = (e) => {
-        dispatch(listCategories(e.target.value));
+    const RadioButtonGroup = ({ name, options, selectedOption, setSelectedOption, errors }) => {
+        return (
+            <div>
+                {options.map(option => (
+                    <label key={option}>
+                        <input
+                            type="radio"
+                            name={name}
+                            value={option}
+                            checked={selectedOption === String(option)}
+                            onChange={(e) => setSelectedOption(e.target.value)}
+                        />
+                        {option}
+                    </label>
+                ))}
+                {errors && errors[name] && <div className="error">{errors[name]}</div>}
+            </div>
+        );
     };
 
-    const renderCategoriesSelect = () => (
-        <Select
-            data={category}
-            setData={setCategory}
-            items={categories}
-            search={searchCategories}
-        />
-    );
 
     const renderModalCreateIngredient = () => (
         <>
@@ -129,6 +119,7 @@ const IngredientScreen = ({ history }) => {
             >
                 <LoaderHandler loading={createLoading} error={createError} />
                 <h2>Formulario Creación</h2>
+
                 <form onSubmit={handleSubmit}>
                     <Input
                         name={"name"}
@@ -137,33 +128,25 @@ const IngredientScreen = ({ history }) => {
                         setData={setName}
                         errors={errors}
                     />
-                    <Input
-                        name={"cost"}
-                        type={"number"}
-                        data={cost}
-                        setData={setCost}
+                    <label>Cantidad Por:</label>
+                    <RadioButtonGroup
+                        name={"ingredientType"}
+                        options={[1,0]}
+                        selectedOption={ingredientType}  // Usar ingredientType directamente
+                        setSelectedOption={setIngredientType}  // Establecer el estado directamente
                         errors={errors}
                     />
-                    <Input
-                        name={"stock"}
-                        type={"number"}
-                        data={stock}
-                        setData={setStock}
-                        errors={errors}
-                    />
-                    {renderCategoriesSelect()}
-                    {errors.category && (
-                        <Message message={errors.category} color={"warning"} />
-                    )}
-                    <hr />
+
                     <button type="submit" className="btn btn-primary">
                         Confirmar
                     </button>
+
                     <ModalButton
                         modal={modalIsOpen}
                         setModal={setModalIsOpen}
                         classes={"btn-danger float-right"}
                     />
+                    
                 </form>
             </Modal>
         </>
@@ -175,10 +158,9 @@ const IngredientScreen = ({ history }) => {
                 <tr>
                     <th>ID</th>
                     <th>Nombre</th>
-                    <th>Costo</th>
+                    <th>Tipo de Ingrediente</th>
                     <th>Inventario</th>
                     <th className="d-none d-sm-table-cell">Creado en</th>
-                    <th className="d-none d-sm-table-cell">Categoría</th>
                     <th></th>
                 </tr>
             </thead>
@@ -187,13 +169,10 @@ const IngredientScreen = ({ history }) => {
                     <tr key={ingredient.id}>
                         <td>{ingredient.id}</td>
                         <td>{ingredient.name}</td>
-                        <td>{ingredient.cost}</td>
+                        <td>{ingredient.ingredientType}</td>
                         <td>{ingredient.stock}</td>
                         <td className="d-none d-sm-table-cell">
                             {ingredient.createdAt.slice(0, 10)}
-                        </td>
-                        <td className="d-none d-sm-table-cell">
-                            {ingredient.category.name}
                         </td>
                         <td>
                             <Link
