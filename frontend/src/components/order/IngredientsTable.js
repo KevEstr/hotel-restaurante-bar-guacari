@@ -30,12 +30,19 @@ const IngredientsTable = ({
             name: ingredient.name,
             quantity: 1,
         };
+        // Verifica si ingredientsInOrder es un array antes de intentar iterar sobre él
+    if (!Array.isArray(ingredientsInOrder)) {
+        // Si no es un array, inicialízalo como un array vacío
+        setIngredientsInOrder([ingredientIn]);
+    } else {
+        //ingredientInOrder es un array, procede a agregar el nuevo ingrediente
         //if is already in order
         if (!inOrder(ingredientIn, ingredientsInOrder)) {
             setIngredientsInOrder([...ingredientsInOrder, ingredientIn]);
         } else {
             alert("Ingrediente ya está en la órden");
         }
+    }
     };
 
     //ingredient list state
@@ -60,6 +67,7 @@ const IngredientsTable = ({
 
     //check if ingredient is already in order
     const inOrder = (obj, list) => {
+        if (!list) return false; // Verifica si la lista está definida
         for (let index = 0; index < list.length; index++) {
             if (obj.id === list[index].id) {
                 return list[index];
@@ -104,7 +112,7 @@ const IngredientsTable = ({
     );
 
     const renderIngredients = () => (
-        <table id="ingredientsTable" className="table table-hover text-nowrap full-width-table">
+        <table id="ingredientsTable" className="table table-hover text-nowrap full-width-table align-items-center">
             <thead
                 style={{
                     color: "#fff",
@@ -112,11 +120,11 @@ const IngredientsTable = ({
                 className="bg-info"
             >
                 <tr>
-                    <th>Nombre</th>
-                    <th>Agregar</th>
+                    <th style={{ textAlign: "center" }}>Nombre</th>
+                    <th style={{ textAlign: "center" }}>Agregar</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody style={{ textAlign: "center" }}>
                 {ingredients.map((ingredient) => (
                     <tr key={ingredient.id}>
                         <td>{ingredient.name}</td>
@@ -163,7 +171,10 @@ const IngredientsTable = ({
                 loader={<BigSpin />}
             />
 
-            <Pagination pages={pages} page={page} setPage={setPageNumber} />
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+                <Pagination pages={pages} page={page} setPage={setPageNumber} />
+            </div>
+
         </>
     );
 };

@@ -79,8 +79,8 @@
 
 .form-container {
   width: 80%; /* Ancho del formulario */
-  max-width: 800px; /* Máximo ancho del formulario */
-  height: 70vh; /* Altura del formulario */
+  width: 800px; /* Máximo ancho del formulario */
+  height: 800px; /* Altura del formulario */
   margin: auto; /* Centrar el formulario horizontalmente */
   overflow-y: auto; /* Hacer que el formulario sea desplazable verticalmente */
   padding: 20px; /* Añadir padding interno */

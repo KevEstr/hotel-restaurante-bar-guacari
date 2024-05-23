@@ -137,7 +137,7 @@ const ProductsTable = ({
                            {products.map(product => {
                                if (product.category.name === category) {
                                    // Calcula el tamaño de la columna en función del número de productos en la fila
-                                   const columnSize = Math.max(Math.floor(12 / Math.min(products.length, 4)), 3);
+                                   const columnSize = Math.max(Math.floor(12 / Math.min(products.length, 7)), 2);
                                    return (
                                        <div key={product.id} className={`col-md-${columnSize}`}>
                                            {/* Aquí colocas la lógica de renderizado de cada producto */}

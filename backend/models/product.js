@@ -18,6 +18,12 @@ module.exports = (sequelize, DataTypes) => {
                 foreignKey: "productId",
                 as: "order",
             });
+            // Define the many-to-many relationship with Ingredient
+            this.belongsToMany(models.Ingredient, {
+                through: "ProductIngredient",
+                foreignKey: "productId",
+                as: "ingredients",
+            });
         }
     }
     Product.init(
@@ -26,6 +32,7 @@ module.exports = (sequelize, DataTypes) => {
             price: DataTypes.DOUBLE,
             stock: DataTypes.INTEGER,
             categoryId: DataTypes.INTEGER,
+            isComposite: DataTypes.BOOLEAN,  // Add the isComposite field
         },
         {
             sequelize,

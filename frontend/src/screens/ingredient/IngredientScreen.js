@@ -22,7 +22,7 @@ Modal.setAppElement("#root");
 
 const IngredientScreen = ({ history }) => {
     const [name, setName] = useState("");
-    const [ingredientType, setIngredientType] = useState(null);
+    const [ingredientType, setIngredientType] = useState(5);
     const [stock, setStock] = useState(0);
 
     const [errors, setErrors] = useState({});
@@ -49,7 +49,7 @@ const IngredientScreen = ({ history }) => {
     useEffect(() => {
         if (createSuccess) {
             setName("");
-            setIngredientType(null);
+            setIngredientType(5);
             setStock(0);
             setModalIsOpen(false);
         }
@@ -58,13 +58,14 @@ const IngredientScreen = ({ history }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        console.log('Form submit initiated');  // Asegúrate de que el submit se esté ejecutando
 
         let errorsCheck = {};
 
         if (!name) {
             errorsCheck.name = "Nombre es requerido";
         }
-        if (!ingredientType){
+        if (ingredientType === null || ingredientType === undefined){
             errorsCheck.ingredientType = "Tipo de Ingrediente es requerido";
         }
         if (Object.keys(errorsCheck).length > 0) {
@@ -80,6 +81,8 @@ const IngredientScreen = ({ history }) => {
                 stock: stock
             };
 
+            console.log('TIPO DE INGREDIENTE ENVIADO: ', ingredient.ingredientType);
+
             dispatch(createIngredient(ingredient));
         }
     };
@@ -93,8 +96,8 @@ const IngredientScreen = ({ history }) => {
                             type="radio"
                             name={name}
                             value={option}
-                            checked={selectedOption === String(option)}
-                            onChange={(e) => setSelectedOption(e.target.value)}
+                            checked={selectedOption === option}
+                            onChange={(e) => setSelectedOption(Number(e.target.value))}
                         />
                         {option}
                     </label>
