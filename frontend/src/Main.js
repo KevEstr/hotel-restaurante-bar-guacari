@@ -19,9 +19,6 @@ import TableEditScreen from "./screens/table/TableEditScreen";
 import IngredientScreen from "./screens/ingredient/IngredientScreen";
 import IngredientMovementScreen from "./screens/ingredient/IngredientMovementScreen";
 import IngredientEditScreen from "./screens/ingredient/IngredientEditScreen";
-
-import IngredientEditScreen from "./screens/ingredient/IngredientEditScreen";
-
 import RoomScreen from "./screens/room/RoomScreen";
 import RoomEditScreen from "./screens/room/RoomEditScreen";
 import ActiveReservationsScreen from "./screens/reservation/ActiveReservationsScreen";
