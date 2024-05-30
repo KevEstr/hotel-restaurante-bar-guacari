@@ -1,0 +1,23 @@
+[33mcommit 3c5faa0c51b1098d643cc764a161cd5534b31d23[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Sat May 18 22:51:46 2024 -0500
+
+    Eliminar node_modules y archivos de caché del control de versiones
+
+[33mcommit df473a433c62a5e31f530be8c483d386fbab9a40[m[33m ([m[1;31morigin/main[m[33m)[m
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Sat May 18 22:40:27 2024 -0500
+
+    Vista de meseros lista y funcional
+
+[33mcommit 758916190553e09f4c777efabeb3088870027aed[m
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Fri May 17 10:53:13 2024 -0500
+
+    Casi todo traducido y modulo de ingredientes creado en front
+
+[33mcommit e7a81878331738eec06d12a60d8509c9e1e05359[m
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Thu May 16 18:58:00 2024 -0500
+
+    first commit

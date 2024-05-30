@@ -1,0 +1,90 @@
+.product-name {
+  background-color: grey;
+  width: 200px; /* Ancho fijo del div */
+  height: 150px; /* Altura fija del div para hacerlo cuadrado */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white; /* Color del texto */
+  padding: 0 10px; /* Espaciado interno */
+  overflow: hidden; /* Ocultar el desbordamiento */
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+
+.product-name p, .product-name h4 {
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  font-size: 24px; /* Tamaño de fuente más grande */
+  white-space: normal;
+  overflow: hidden;
+  text-align: center;
+}
+
+/* Reglas CSS para la primera categoría */
+.product-name-category1-background {
+  background-color: blue; /* Color de fondo para la primera categoría */
+  width: 200px; /* Ancho fijo del div */
+  height: 150px; /* Altura fija del div para hacerlo cuadrado */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white; /* Color del texto */
+  padding: 0 10px; /* Espaciado interno */
+  overflow: hidden; /* Ocultar el desbordamiento */
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+/* Reglas CSS para la segunda categoría */
+.product-name-category2-background {
+  background-color: green; /* Color de fondo para la segunda categoría */
+  width: 200px; /* Ancho fijo del div */
+  height: 150px; /* Altura fija del div para hacerlo cuadrado */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white; /* Color del texto */
+  padding: 0 10px; /* Espaciado interno */
+  overflow: hidden; /* Ocultar el desbordamiento */
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+/* Reglas CSS para la tercera categoría */
+.product-name-category3-background {
+  background-color: red; /* Color de fondo para la tercera categoría */
+  width: 200px; /* Ancho fijo del div */
+  height: 150px; /* Altura fija del div para hacerlo cuadrado */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white; /* Color del texto */
+  padding: 0 10px; /* Espaciado interno */
+  overflow: hidden; /* Ocultar el desbordamiento */
+  text-align: center;
+  margin-bottom: 10px;
+}
+.button-content {
+  /* Otros estilos para el botón */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  
+}
+
+.form-container {
+  width: 80%; /* Ancho del formulario */
+  max-width: 800px; /* Máximo ancho del formulario */
+  height: 70vh; /* Altura del formulario */
+  margin: auto; /* Centrar el formulario horizontalmente */
+  overflow-y: auto; /* Hacer que el formulario sea desplazable verticalmente */
+  padding: 20px; /* Añadir padding interno */
+  background-color: #fff; /* Fondo blanco para el formulario */
+  border-radius: 8px; /* Bordes redondeados */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Sombra para darle profundidad */
+}
