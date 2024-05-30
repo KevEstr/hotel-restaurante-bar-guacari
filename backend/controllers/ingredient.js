@@ -138,7 +138,6 @@ exports.updateIngredient = asyncHandler(async (req, res) => {
     }
 });
 
-
 //@desc     Delete a ingredient
 //@route    DELETE /api/ingredients/:id
 //@access   Private/user

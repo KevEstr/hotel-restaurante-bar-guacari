@@ -20,6 +20,16 @@ import IngredientScreen from "./screens/ingredient/IngredientScreen";
 import IngredientMovementScreen from "./screens/ingredient/IngredientMovementScreen";
 import IngredientEditScreen from "./screens/ingredient/IngredientEditScreen";
 
+import IngredientEditScreen from "./screens/ingredient/IngredientEditScreen";
+
+import RoomScreen from "./screens/room/RoomScreen";
+import RoomEditScreen from "./screens/room/RoomEditScreen";
+import ActiveReservationsScreen from "./screens/reservation/ActiveReservationsScreen";
+import ReservationScreen from "./screens/reservation/ReservationScreen";
+import ReservationCreateScreen from "./screens/reservation/ReservationCreateScreen";
+import ReservationEditScreen from "./screens/reservation/ReservationEditScreen";
+import ReservationViewScreen from "./screens/reservation/ReservationViewScreen";
+
 import ProductScreen from "./screens/product/ProductScreen";
 import ProductEditScreen from "./screens/product/ProductEditScreen";
 
@@ -28,6 +38,9 @@ import ClientEditScreen from "./screens/client/ClientEditScreen";
 
 import CategoryScreen from "./screens/category/CategoryScreen";
 import CategoryEditScreen from "./screens/category/CategoryEditScreen";
+
+import AgreementScreen from "./screens/agreement/AgreementScreen";
+import AgreementEditScreen from "./screens/agreement/AgreementEditScreen";
 
 import UserScreen from "./screens/user/UserScreen";
 import UserEditScreen from "./screens/user/UserEditScreen";
@@ -69,6 +82,13 @@ const Main = () => {
                     />
                     <PrivateRoute path="/category" component={CategoryScreen} />
 
+                    <PrivateRoute path="/agreement" component={AgreementScreen} />
+
+                    <PrivateRoute
+                        path="/agreement/:id/edit"
+                        component={AgreementEditScreen}
+                    />
+
                     <PrivateRoute path="/delivery" component={DeliveryScreen} />
 
                     <PrivateRoute
@@ -93,6 +113,20 @@ const Main = () => {
                     <PrivateRoute path="/product" component={ProductScreen} />
 
                     <PrivateRoute
+                        path="/room/:id/edit"
+                        component={RoomEditScreen}
+                    />
+
+                    <PrivateRoute path="/room" component={RoomScreen} />
+
+                    <PrivateRoute path="/activeReservation" component={ActiveReservationsScreen} />
+
+                    <PrivateRoute
+                        path="/reservation/create/:id/room"
+                        component={ReservationCreateScreen}
+                    />
+
+                    <PrivateRoute
                         path="/table/:id/edit"
                         component={TableEditScreen}
                     />
@@ -110,15 +144,29 @@ const Main = () => {
                     />
 
                     <PrivateRoute
+                        path="/reservation/:id/edit"
+                        component={ReservationEditScreen}
+                        exact
+                    />
+
+                    <PrivateRoute
                         path="/order/:id/view"
                         component={OrderViewScreen}
                         exact
                     />
+
+                    <PrivateRoute
+                        path="/reservation/:id/view"
+                        component={ReservationViewScreen}
+                        exact
+                    />
+
                     <PrivateRoute
                         path="/order/create"
                         component={OrderCreateScreen}
                     />
                     <PrivateRoute path="/order" component={OrderScreen} />
+                    <PrivateRoute path="/reservation" component={ReservationScreen} />
                     <PrivateRoute
                         path="/not-authorized"
                         component={NotAuthorizedScreen}

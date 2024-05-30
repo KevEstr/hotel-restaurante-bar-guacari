@@ -1,5 +1,6 @@
 "use strict";
 const { Model } = require("sequelize");
+const agreement = require("./agreement");
 module.exports = (sequelize, DataTypes) => {
     class Client extends Model {
         /**
@@ -13,6 +14,7 @@ module.exports = (sequelize, DataTypes) => {
                 foreignKey: "clientId",
                 as: "orders",
             });
+            this.belongsTo(models.Agreement, { foreignKey: "agreementId", as: "agreement" });
         }
     }
     Client.init(
@@ -22,6 +24,8 @@ module.exports = (sequelize, DataTypes) => {
             phone: DataTypes.STRING,
             email: DataTypes.STRING,
             dni: DataTypes.STRING,
+            agreementId: DataTypes.INTEGER,
+            has_reservation: DataTypes.BOOLEAN,
         },
         {
             sequelize,

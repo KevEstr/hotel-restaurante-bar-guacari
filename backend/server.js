@@ -25,6 +25,9 @@ const uploadRoutes = require("./routes/upload");
 const ingredientRoutes = require("./routes/ingredient");
 const ingredientMovementRoutes = require('./routes/ingredientmovements');
 
+const roomRoutes = require("./routes/room");
+const reservationRoutes = require("./routes/reservation");
+const agreementRoutes = require("./routes/agreement");
 
 /* Routes */
 app.use("/api/users", userRoutes);
@@ -36,6 +39,10 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/ingredients", ingredientRoutes);
 app.use('/api/ingredientmovements', ingredientMovementRoutes);
+app.use("/api/rooms", roomRoutes);
+app.use("/api/reservations", reservationRoutes);
+app.use("/api/agreements", agreementRoutes);
+
 
 const rootPath = path.resolve();
 

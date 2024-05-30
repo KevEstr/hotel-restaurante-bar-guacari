@@ -18,12 +18,26 @@ import {
 } from "./reducers/categoryReducers";
 
 import {
+    agreementListReducer,
+    agreementCreateReducer,
+    agreementDetailsReducer,
+    agreementUpdateReducer,
+} from "./reducers/agreementReducers";
+
+import {
     tableAllReducer,
     tableListReducer,
     tableCreateReducer,
     tableDetailsReducer,
     tableUpdateReducer,
 } from "./reducers/tableReducers";
+
+import {
+    roomListReducer,
+    roomCreateReducer,
+    roomDetailsReducer,
+    roomUpdateReducer,
+} from "./reducers/roomReducers";
 
 import {
     clientListReducer,
@@ -63,7 +77,17 @@ import {
     ingredientMovementDeleteReducer,
 } from './reducers/ingredientMovementReducers';
 
+  
+
+import{
+    reservationListReducer,
+    reservationCreateReducer,
+    reservationDetailsReducer,
+    reservationUpdateReducer,
+} from "./reducers/reservationReducers";
+
 const reducer = combineReducers({
+
     ingredientMovementList: ingredientMovementListReducer,
     ingredientMovementDetails: ingredientMovementDetailsReducer,
     ingredientMovementCreate: ingredientMovementCreateReducer,
@@ -80,6 +104,11 @@ const reducer = combineReducers({
     categoryCreate: categoryCreateReducer,
     categoryDetails: categoryDetailsReducer,
     categoryUpdate: categoryUpdateReducer,
+
+    agreementList: agreementListReducer,
+    agreementCreate: agreementCreateReducer,
+    agreementDetails: agreementDetailsReducer,
+    agreementUpdate: agreementUpdateReducer,
 
     ingredientList: ingredientListReducer,
     ingredientCreate: ingredientCreateReducer,
@@ -98,6 +127,11 @@ const reducer = combineReducers({
     tableDetails: tableDetailsReducer,
     tableUpdate: tableUpdateReducer,
 
+    roomList: roomListReducer,
+    roomCreate: roomCreateReducer,
+    roomDetails: roomDetailsReducer,
+    roomUpdate: roomUpdateReducer,
+
     clientList: clientListReducer,
     clientCreate: clientCreateReducer,
     clientDetails: clientDetailsReducer,
@@ -108,6 +142,11 @@ const reducer = combineReducers({
     orderCreate: orderCreateReducer,
     orderDetails: orderDetailsReducer,
     orderUpdate: orderUpdateReducer,
+
+    reservationList: reservationListReducer,
+    reservationCreate: reservationCreateReducer,
+    reservationDetails: reservationDetailsReducer,
+    reservationUpdate: reservationUpdateReducer,
 
     section: sectionReducer
 });

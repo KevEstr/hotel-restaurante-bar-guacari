@@ -15,7 +15,6 @@ const {
 const { runValidation } = require("../validators");
 const { productCreateValidator } = require("../validators/product");
 
-
 // ROUTES
 router
     .route("/")

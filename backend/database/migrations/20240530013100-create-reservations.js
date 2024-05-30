@@ -1,44 +1,52 @@
 'use strict';
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('Clients', {
+    await queryInterface.createTable('reservations', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      name: {
-        type: Sequelize.STRING,
-        allowNull: false
-      },
-      address: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        defaultValue: 'Address'
-      },
-      phone: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        defaultValue: '999999999'
-      },
-      email: {
-        type: Sequelize.STRING,
-        unique: true,
-        allowNull: false
-      },
-      dni: {
-        type: Sequelize.STRING,
-        unique: true,
-        allowNull: false
-      },
-      agreementId: {
+      price: {
         type: Sequelize.INTEGER,
         allowNull: false
       },
-      has_reservation: {
+      start_date: {
+        type: Sequelize.DATEONLY,
+        allowNull: false
+      },
+      end_date: {
+        type: Sequelize.DATEONLY,
+        allowNull: false
+      },
+      note: {
+        type: Sequelize.STRING,
+        defaultValue: null
+      },
+      quantity: {
         type: Sequelize.INTEGER,
         allowNull: false
+      },
+      clientId: {
+        type: Sequelize.INTEGER,
+        allowNull: false
+      },
+      userId: {
+        type: Sequelize.INTEGER,
+        allowNull: false
+      },
+      roomId: {
+        type: Sequelize.INTEGER,
+        allowNull: false
+      },
+      is_paid: {
+        type: Sequelize.INTEGER,
+        allowNull: false
+      },
+      paymentId: {
+        type: Sequelize.INTEGER,
+        defaultValue: null
       },
       createdAt: {
         allowNull: false,
@@ -51,21 +59,8 @@ module.exports = {
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP')
       }
     });
-
-    // Add foreign key constraint
-    await queryInterface.addConstraint('Clients', {
-      fields: ['agreementId'],
-      type: 'foreign key',
-      name: 'fk_clients_agreement',
-      references: {
-        table: 'agreements',
-        field: 'id'
-      },
-      onDelete: 'CASCADE',
-      onUpdate: 'CASCADE'
-    });
   },
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('Clients');
+    await queryInterface.dropTable('reservations');
   }
 };

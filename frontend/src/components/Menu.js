@@ -91,20 +91,20 @@ const Menu = ({ history }) => {
 
                                 <li className="nav-header">SISTEMA HOTELERO</li>
                                 <li className="nav-item">
-                                    <Link to="/active" className="nav-link">
+                                    <Link to="/room" className="nav-link">
                                         <i className="nav-icon fas fa-solid fa-bed" />{" "}
                                         <p> Habitaciones </p>
                                     </Link>
                                 </li>
 
                                 <li className="nav-item">
-                                    <Link to="/delivery" className="nav-link">
+                                    <Link to="/activeReservation" className="nav-link">
                                         <i className="nav-icon fas fa-solid fa-calendar-check" />{" "}
                                         <p> Reservas </p>
                                     </Link>
                                 </li>
                                 <li className="nav-item">
-                                    <Link to="/order" className="nav-link">
+                                    <Link to="/reservation" className="nav-link">
                                         <i className="nav-icon fas fa-solid fa-soap" />{" "}
                                         <p> Lavandería </p>
                                     </Link>
@@ -113,23 +113,16 @@ const Menu = ({ history }) => {
                                 <li className="nav-header">GESTIÓN DEL HOTEL</li>
 
                                 <li className="nav-item">
-                                    <Link to="/category" className="nav-link">
+                                    <Link to="/agreement" className="nav-link">
                                         <i className="nav-icon fas fa-solid fa-people-arrows" />{" "}
                                         <p>Convenios</p>
                                     </Link>
                                 </li>
 
                                 <li className="nav-item">
-                                    <Link to="/product" className="nav-link">
+                                    <Link to="/" className="nav-link">
                                         <i className="nav-icon fas fa-solid fa-money-bill" />{" "}
                                         <p>Facturación</p>
-                                    </Link>
-                                </li>
-
-                                <li className="nav-item">
-                                    <Link to="/ingredient" className="nav-link">
-                                    <i className="nav-icon fas fa-seedling" />{" "}
-                                        <p> Ingredientes</p>
                                     </Link>
                                 </li>
 
@@ -139,13 +132,6 @@ const Menu = ({ history }) => {
                                         <p> Clientes</p>
                                     </Link>
                                 </li>
-
-                                <li className="nav-item">
-                                    <Link to="/client" className="nav-link">
-                                        <i className="nav-icon fas fa-border-all" />{" "}
-                                        <p> Disponibilidad</p>
-                            </Link>
-                        </li>
                     </ul>
                 </nav>
                 {/* /.sidebar-menu */}

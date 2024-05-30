@@ -25,5 +25,8 @@ exports.clientCreateValidator = [
         .notEmpty()
         .withMessage('DNI is required')
         .isString()
-        .withMessage('DNI must be a String')
+        .withMessage('DNI must be a String'),
+    check('agreementId')
+        .notEmpty()
+        .withMessage('agreementId is required')
 ]

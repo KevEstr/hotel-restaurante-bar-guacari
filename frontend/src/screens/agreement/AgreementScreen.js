@@ -4,79 +4,57 @@ import { Link } from "react-router-dom";
 
 /* Components */
 import HeaderContent from "../../components/HeaderContent";
+import ModalButton from "../../components/ModalButton";
 import Modal from "react-modal";
 import Input from "../../components/form/Input";
-import ModalButton from "../../components/ModalButton";
 import DataTableLoader from "../../components/loader/DataTableLoader";
 import LoaderHandler from "../../components/loader/LoaderHandler";
 import Search from "../../components/Search";
 import Pagination from "../../components/Pagination";
-import Select from "../../components/Select";
-import Message from "../../components/Message";
-
 
 /* Actions */
-import { createClient, listClients } from "../../actions/clientActions";
-import { listAgreements } from "../../actions/agreementActions";
-
+import { createAgreement, listAgreements } from "../../actions/agreementActions";
 
 /* Styles */
 import { modalStyles } from "../../utils/styles";
 
-Modal.setAppElement("#root");
-
-const ClientScreen = ({ history, match}) => {
-
-    const agreementFromUrl = window.location.href.indexOf("agreement") !== -1;
-
-    const [agreement, setAgreement] = useState(
-        agreementFromUrl ? parseInt(match.params.id) : null
-    );
-
+const AgreementScreen = ({ history, match }) => {
     const [modalIsOpen, setModalIsOpen] = useState(false);
-    const [pageNumber, setPageNumber] = useState(1);
-    const [keyword, setKeyword] = useState("");
 
     const [name, setName] = useState("");
-    const [address, setAddress] = useState("");
-    const [phone, setPhone] = useState("");
-    const [email, setEmail] = useState("");
-    const [dni, setDni] = useState("");
-    const [has_reservation, setHasReservation] = useState(false);
-
-
+    const [max_daily_food, setMaxDailyFood] = useState("");
+    const [max_daily_laundry, setMaxDailyLaundry] = useState("");
+    const [max_daily_hydration, setMaxDailyHydration] = useState("");
+    const [userId, setUserId] = useState("");
     const [errors, setErrors] = useState({});
+    const [keyword, setKeyword] = useState("");
+    const [pageNumber, setPageNumber] = useState(1);
 
     const dispatch = useDispatch();
+
+    const agreementList = useSelector((state) => state.agreementList);
+    const { loading, error, agreements, page, pages } = agreementList;
 
     const userLogin = useSelector((state) => state.userLogin);
     const { userInfo } = userLogin;
 
-
-    const clientList = useSelector((state) => state.clientList);
-    const { loading, error, clients, page, pages } = clientList;
-
-    const agreementList = useSelector((state) => state.agreementList);
-    const { agreements } = agreementList;
-
-    const clientCreate = useSelector((state) => state.clientCreate);
+    const agreementCreate = useSelector((state) => state.agreementCreate);
     const {
         loading: createLoading,
         success: createSuccess,
         error: createError,
-    } = clientCreate;
+    } = agreementCreate;
 
     useEffect(() => {
-        dispatch(listClients(keyword, pageNumber));
+        dispatch(listAgreements(keyword, pageNumber));
+
         if (createSuccess) {
             setName("");
-            setAddress("");
-            setPhone("");
-            setEmail("");
-            setDni("");
-            setAgreement("");
+            setMaxDailyFood("");
+            setMaxDailyLaundry("");
+            setMaxDailyHydration("");
+            setUserId("");
             setModalIsOpen(false);
-            setHasReservation(false);
         }
     }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess]);
 
@@ -88,20 +66,6 @@ const ClientScreen = ({ history, match}) => {
         if (!name) {
             errorsCheck.name = "Nombre es requerido";
         }
-        if (!address) {
-            errorsCheck.address = "Dirección es requerida";
-        }
-
-        if (!phone) {
-            errorsCheck.phone = "Teléfono es requerido";
-        }
-        if (!email) {
-            errorsCheck.email = "Email es requerido";
-        }
-
-        if (!dni) {
-            errorsCheck.dni = "CC requerida";
-        }
 
         if (Object.keys(errorsCheck).length > 0) {
             setErrors(errorsCheck);
@@ -110,34 +74,19 @@ const ClientScreen = ({ history, match}) => {
         }
 
         if (Object.keys(errorsCheck).length === 0) {
-            const client = {
+            const agreement = {
                 name: name,
-                address: address,
-                phone: phone,
-                email: email,
-                dni: dni,
-                agreementId: agreement,
-                has_reservation: has_reservation,
+                max_daily_food: max_daily_food,
+                max_daily_laundry: max_daily_laundry,
+                max_daily_hydration: max_daily_hydration,
+                userId: userId,
             };
 
-            dispatch(createClient(client));
+            dispatch(createAgreement(agreement));
         }
     };
 
-    const searchAgreements = (e) => {
-        dispatch(listAgreements(e.target.value));
-    };
-
-    const renderAgreementsSelect = () => (
-        <Select
-            data={agreement}
-            setData={setAgreement}
-            items={agreements}
-            search={searchAgreements}
-        />
-    );
-
-    const renderModalCreateClient = () => (
+    const renderModalCreateAgreement = () => (
         <>
             <ModalButton
                 modal={modalIsOpen}
@@ -149,8 +98,8 @@ const ClientScreen = ({ history, match}) => {
                 isOpen={modalIsOpen}
                 onRequestClose={() => setModalIsOpen(false)}
             >
+                <h2>Formulario creación</h2>
                 <LoaderHandler loading={createLoading} error={createError} />
-                <h2>Create Form</h2>
                 <form onSubmit={handleSubmit}>
                     <Input
                         name={"nombre"}
@@ -159,45 +108,36 @@ const ClientScreen = ({ history, match}) => {
                         setData={setName}
                         errors={errors}
                     />
+
                     <Input
-                        name={"dirección"}
-                        type={"text"}
-                        data={address}
-                        setData={setAddress}
-                        errors={errors}
-                    />
-                    <Input
-                        name={"tel"}
-                        type={"text"}
-                        data={phone}
-                        setData={setPhone}
-                        errors={errors}
-                    />
-                    <Input
-                        name={"email"}
-                        type={"email"}
-                        data={email}
-                        setData={setEmail}
-                        errors={errors}
-                    />
-                    <Input
-                        name={"CC"}
-                        type={"text"}
-                        data={dni}
-                        setData={setDni}
+                        name={"Tope de Alimentación:"}
+                        type={"number"}
+                        data={max_daily_food}
+                        setData={setMaxDailyFood}
                         errors={errors}
                     />
 
-                    <label>Convenio:</label>
-                    {renderAgreementsSelect()}
-                    {errors.agreement && (
-                        <Message message={errors.agreement} color={"warning"} />
-                    )}
+                    <Input
+                        name={"Tope de Lavanderia:"}
+                        type={"number"}
+                        data={max_daily_laundry}
+                        setData={setMaxDailyLaundry}
+                        errors={errors}
+                    />
+
+                    <Input
+                        name={"Tope de Hidratación:"}
+                        type={"number"}
+                        data={max_daily_hydration}
+                        setData={setMaxDailyHydration}
+                        errors={errors}
+                    />
 
                     <hr />
                     <button type="submit" className="btn btn-primary">
                         Confirmar
                     </button>
+
                     <ModalButton
                         modal={modalIsOpen}
                         setModal={setModalIsOpen}
@@ -208,49 +148,37 @@ const ClientScreen = ({ history, match}) => {
         </>
     );
 
-    const renderClientsTable = () => (
+    const renderTable = () => (
         <table className="table table-hover text-nowrap">
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Nombre</th>
-                    <th className="d-none d-sm-table-cell">Dirección</th>
-                    <th className="d-none d-sm-table-cell">Tel</th>
-                    <th className="d-none d-sm-table-cell">Email</th>
-                    <th className="d-none d-sm-table-cell">CC</th>
-                    <th className="d-none d-sm-table-cell">Convenio</th>
-                    <th className="d-none d-sm-table-cell">¿Cliente Activo?</th>
+                    <th>Convenio</th>
+                    <th>Tope de Alimentación:</th>
+                    <th>Tope de Lavanderia:</th>
+                    <th>Tope de Hidratación:</th>
+                    <th>Usuario</th>
                     <th className="d-none d-sm-table-cell">Creado en</th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
-                {clients.map((client) => (
-                    <tr key={client.id}>
-                        <td>{client.id}</td>
-                        <td>{client.name}</td>
+                {agreements.map((agreement) => (
+                    <tr key={agreement.id}>
+                        <td>{agreement.id}</td>
+                        <td>{agreement.name}</td>
+                        <td>{agreement.max_daily_food}</td>
+                        <td>{agreement.max_daily_laundry}</td>
+                        <td>{agreement.max_daily_hydration}</td>
+                        <td>{agreement.userId}</td>
+
+
                         <td className="d-none d-sm-table-cell">
-                            {client.address}
-                        </td>
-                        <td className="d-none d-sm-table-cell">
-                            {client.phone}
-                        </td>
-                        <td className="d-none d-sm-table-cell">
-                            {client.email}
-                        </td>
-                        <td className="d-none d-sm-table-cell">{client.dni}</td>
-                        <td className="d-none d-sm-table-cell">
-                            {client.agreementId}
-                        </td>
-                        <td className="d-none d-sm-table-cell">
-                        {client.has_reservation ? "Sí" : "No"}
-                        </td>
-                        <td className="d-none d-sm-table-cell">
-                            {client.createdAt.slice(0, 10)}
+                            {agreement.createdAt.slice(0, 10)}
                         </td>
                         <td>
                             <Link
-                                to={`/client/${client.id}/edit`}
+                                to={`/agreement/${agreement.id}/edit`}
                                 className="btn btn-warning btn-lg"
                             >
                                 Editar
@@ -264,16 +192,19 @@ const ClientScreen = ({ history, match}) => {
 
     return (
         <>
-            <HeaderContent name={"Clientes"} />
+            <HeaderContent name={"Convenios"} />
+
+            {/* Main content */}
 
             <section className="content">
                 <div className="container-fluid">
-                    {renderModalCreateClient()}
+                    {renderModalCreateAgreement()}
+
                     <div className="row">
                         <div className="col-12">
                             <div className="card">
                                 <div className="card-header">
-                                    <h3 className="card-title">Clientes</h3>
+                                    <h3 className="card-title">Convenios</h3>
                                     <div className="card-tools">
                                         <Search
                                             keyword={keyword}
@@ -288,7 +219,7 @@ const ClientScreen = ({ history, match}) => {
                                         loading={loading}
                                         error={error}
                                         loader={<DataTableLoader />}
-                                        render={renderClientsTable}
+                                        render={renderTable}
                                     />
                                 </div>
                                 {/* /.card-body */}
@@ -310,4 +241,4 @@ const ClientScreen = ({ history, match}) => {
     );
 };
 
-export default ClientScreen;
+export default AgreementScreen;

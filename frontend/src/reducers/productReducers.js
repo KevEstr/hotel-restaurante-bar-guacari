@@ -103,6 +103,7 @@ export const productDeleteReducer = (state = {}, action) => {
             return state;
     }
 };
+<<<<<<< HEAD
 
 export const productIngredientsReducer = (state = { ingredients: [] }, action) => {
     switch (action.type) {
@@ -116,3 +117,5 @@ export const productIngredientsReducer = (state = { ingredients: [] }, action) =
             return state;
     }
 };
+=======
+>>>>>>> origin/kev-con-hotel
