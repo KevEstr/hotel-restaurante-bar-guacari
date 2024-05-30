@@ -20,6 +20,32 @@ import {
     ORDER_STATISTICS_FAIL,
 } from "../constants/orderConstants";
 
+import { 
+    PRODUCT_DETAILS_REQUEST, 
+    PRODUCT_DETAILS_SUCCESS, 
+    PRODUCT_DETAILS_FAIL 
+} from '../constants/productConstants';
+
+export const listProductDetails = (id) => async (dispatch) => {
+    try {
+        dispatch({ type: PRODUCT_DETAILS_REQUEST });
+
+        const { data } = await axios.get(`/api/products/${id}`);
+
+        dispatch({ 
+            type: PRODUCT_DETAILS_SUCCESS,
+            payload: data 
+        });
+    } catch (error) {
+        dispatch({
+            type: PRODUCT_DETAILS_FAIL,
+            payload: error.response && error.response.data.message 
+                ? error.response.data.message 
+                : error.message
+        });
+    }
+};
+
 //get all sales
 export const getStatistics = () => async (dispatch, getState) => {
     try {
@@ -208,6 +234,8 @@ export const updateOrder = (order) => async (dispatch, getState) => {
                     ? error.response.data.message
                     : error.message,
         });
+        console.error("Error actualizando la orden:", error.response && error.response.data ? error.response.data : error.message);
+
     }
 };
 

@@ -22,7 +22,7 @@ Modal.setAppElement("#root");
 
 const IngredientScreen = ({ history }) => {
     const [name, setName] = useState("");
-    const [ingredientType, setIngredientType] = useState(5);
+    const [ingredientType, setIngredientType] = useState(false);
     const [stock, setStock] = useState(0);
 
     const [errors, setErrors] = useState({});
@@ -38,6 +38,7 @@ const IngredientScreen = ({ history }) => {
 
     const userLogin = useSelector((state) => state.userLogin);
     const { userInfo } = userLogin;
+    
 
     const ingredientCreate = useSelector((state) => state.ingredientCreate);
     const {
@@ -49,7 +50,7 @@ const IngredientScreen = ({ history }) => {
     useEffect(() => {
         if (createSuccess) {
             setName("");
-            setIngredientType(5);
+            setIngredientType(false);
             setStock(0);
             setModalIsOpen(false);
         }
@@ -78,7 +79,8 @@ const IngredientScreen = ({ history }) => {
             const ingredient = {
                 name: name,
                 ingredientType: ingredientType,
-                stock: stock
+                stock: 45,
+                userId: userInfo.id
             };
 
             console.log('TIPO DE INGREDIENTE ENVIADO: ', ingredient.ingredientType);
@@ -91,21 +93,26 @@ const IngredientScreen = ({ history }) => {
         return (
             <div>
                 {options.map(option => (
-                    <label key={option}>
+                    <label key={option.value}>
                         <input
                             type="radio"
                             name={name}
-                            value={option}
-                            checked={selectedOption === option}
-                            onChange={(e) => setSelectedOption(Number(e.target.value))}
+                            value={option.value}
+                            checked={selectedOption === (option.value === 'true')}
+                            onChange={(e) => setSelectedOption(e.target.value === 'true')}
                         />
-                        {option}
+                        {option.label}
                     </label>
                 ))}
                 {errors && errors[name] && <div className="error">{errors[name]}</div>}
             </div>
         );
     };
+
+    const radioOptions = [
+        { label: 'Peso', value: 'true' },
+        { label: 'Unidad', value: 'false' }
+    ];
 
 
     const renderModalCreateIngredient = () => (
@@ -132,13 +139,15 @@ const IngredientScreen = ({ history }) => {
                         errors={errors}
                     />
                     <label>Cantidad Por:</label>
+
                     <RadioButtonGroup
-                        name={"ingredientType"}
-                        options={[1,0]}
-                        selectedOption={ingredientType}  // Usar ingredientType directamente
-                        setSelectedOption={setIngredientType}  // Establecer el estado directamente
-                        errors={errors}
-                    />
+                    name="ingredientType"
+                    options={radioOptions}
+                    selectedOption={ingredientType}
+                    setSelectedOption={setIngredientType}
+                    errors={errors}
+                />
+                    
 
                     <button type="submit" className="btn btn-primary">
                         Confirmar
@@ -172,7 +181,7 @@ const IngredientScreen = ({ history }) => {
                     <tr key={ingredient.id}>
                         <td>{ingredient.id}</td>
                         <td>{ingredient.name}</td>
-                        <td>{ingredient.ingredientType}</td>
+                        <td>{ingredient.ingredientType ? 'Peso' : 'Unidad'}</td>
                         <td>{ingredient.stock}</td>
                         <td className="d-none d-sm-table-cell">
                             {ingredient.createdAt.slice(0, 10)}

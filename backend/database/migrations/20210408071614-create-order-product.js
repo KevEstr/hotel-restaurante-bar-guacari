@@ -28,6 +28,11 @@ module.exports = {
           key: 'id'
         },
         onDelete: 'CASCADE'
+      },
+      note: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+        onDelete: 'CASCADE'
       }
     });
   },

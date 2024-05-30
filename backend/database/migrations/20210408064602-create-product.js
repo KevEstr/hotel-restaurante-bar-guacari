@@ -18,7 +18,13 @@ module.exports = {
       },
       stock: {
         type: Sequelize.INTEGER,
-        allowNull: false
+        allowNull: false,
+        defaultValue: 0,
+      },
+      averagePrice: {
+        type: Sequelize.DECIMAL(10,2),
+        allowNull: false,
+        defaultValue: 0,
       },
       categoryId: {
         type: Sequelize.INTEGER,

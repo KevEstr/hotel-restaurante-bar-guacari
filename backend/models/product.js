@@ -30,9 +30,10 @@ module.exports = (sequelize, DataTypes) => {
         {
             name: DataTypes.STRING,
             price: DataTypes.DOUBLE,
-            stock: DataTypes.INTEGER,
             categoryId: DataTypes.INTEGER,
-            isComposite: DataTypes.BOOLEAN,  // Add the isComposite field
+            isComposite: DataTypes.BOOLEAN,
+            stock: DataTypes.INTEGER,
+            averagePrice: DataTypes.DECIMAL(10,2),
         },
         {
             sequelize,

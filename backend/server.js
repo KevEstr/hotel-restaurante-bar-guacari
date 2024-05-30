@@ -8,7 +8,7 @@ dotenv.config();
 const app = express();
 
 if (process.env.NODE_ENV === "development") {
-    app.use(morgan("dev"));
+    app.use(morgan("tiny"));
 }
 
 app.use(express.json()); // for parsing application/json
@@ -23,6 +23,8 @@ const tableRoutes = require("./routes/table");
 const orderRoutes = require("./routes/order");
 const uploadRoutes = require("./routes/upload");
 const ingredientRoutes = require("./routes/ingredient");
+const ingredientMovementRoutes = require('./routes/ingredientmovements');
+
 
 /* Routes */
 app.use("/api/users", userRoutes);
@@ -33,6 +35,7 @@ app.use("/api/tables", tableRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/ingredients", ingredientRoutes);
+app.use('/api/ingredientmovements', ingredientMovementRoutes);
 
 const rootPath = path.resolve();
 
@@ -47,6 +50,7 @@ if (process.env.NODE_ENV === "production") {
     );
 } else {
     app.get("/", (req, res) => {
+        console.log("Root route accessed");
         res.send("API is running...");
     });
 }

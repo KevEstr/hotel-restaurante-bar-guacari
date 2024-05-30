@@ -18,6 +18,9 @@ import {
     PRODUCT_DELETE_SUCCESS,
     PRODUCT_DELETE_FAIL,
     PRODUCT_DELETE_RESET,
+    PRODUCT_INGREDIENTS_REQUEST,
+    PRODUCT_INGREDIENTS_SUCCESS,
+    PRODUCT_INGREDIENTS_FAIL,
 } from "../constants/productConstants";
 
 export const productListReducer = (
@@ -96,6 +99,19 @@ export const productDeleteReducer = (state = {}, action) => {
             return { loading: false, error: action.payload };
         case PRODUCT_DELETE_RESET:
             return {};
+        default:
+            return state;
+    }
+};
+
+export const productIngredientsReducer = (state = { ingredients: [] }, action) => {
+    switch (action.type) {
+        case PRODUCT_INGREDIENTS_REQUEST:
+            return { loading: true, ingredients: [] };
+        case PRODUCT_INGREDIENTS_SUCCESS:
+            return { loading: false, ingredients: action.payload };
+        case PRODUCT_INGREDIENTS_FAIL:
+            return { loading: false, error: action.payload };
         default:
             return state;
     }

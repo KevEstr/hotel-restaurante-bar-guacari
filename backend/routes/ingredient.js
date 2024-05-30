@@ -7,6 +7,8 @@ const {
     getIngredient,
     updateIngredient,
     deleteIngredient,
+    getAllIngredientStock,
+    getIngredientStockForProduct
 } = require("../controllers/ingredient");
 
 // VALIDATORS
@@ -24,5 +26,8 @@ router
     .get(protect, getIngredient)
     .put(protect, updateIngredient)
     .delete(protect, deleteIngredient);
+
+router.get("/inventory", protect, getAllIngredientStock);
+
 
 module.exports = router;

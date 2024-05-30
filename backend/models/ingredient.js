@@ -15,13 +15,20 @@ module.exports = (sequelize, DataTypes) => {
                 foreignKey: "ingredientId",
                 as: "products",
             });
+
+            this.belongsToMany(models.Order, {
+                through: "OrderIngredient",
+                foreignKey: "ingredientId",
+                as: "order",
+            });
         }
     }
     Ingredient.init(
         {
-            name: DataTypes.STRING,
-            ingredientType: DataTypes.INTEGER,
-            stock: DataTypes.INTEGER,
+            name: DataTypes.TEXT,
+            ingredientType: DataTypes.BOOLEAN,
+            stock: DataTypes.DECIMAL(10, 2),
+            averagePrice: DataTypes.DECIMAL(10, 2)
         },
         {
             sequelize,

@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useHistory } from "react-router-dom";  // Actualizado
+
 
 /* Components */
 import Message from "../../components/Message";
@@ -20,13 +22,12 @@ import LoaderHandler from "../../components/loader/LoaderHandler";
 
 /* Constants */
 
-import { PRODUCT_LIST_RESET } from "../../constants/productConstants";
 import { ORDER_CREATE_RESET } from "../../constants/orderConstants";
 
 /* Actions */
 import { listTables } from "../../actions/tableActions";
 import { listClients } from "../../actions/clientActions";
-import { createOrder } from "../../actions/orderActions";
+import { createOrder, listProductDetails } from "../../actions/orderActions";
 
 import { allTables } from "../../actions/tableActions"
 
@@ -41,7 +42,8 @@ import {
 import { listProducts, createProduct } from "../../actions/productActions";
 import { listCategories } from "../../actions/categoryActions";
 
-const OrderCreateScreen = ({ history, match }) => {
+const OrderCreateScreen = ({ match }) => {
+    const history = useHistory();  // Usando useHistory para la navegación
     /* Get table from url */
     const tableFromUrl = window.location.href.indexOf("table") !== -1;
     /* Get delivery from url */
@@ -56,6 +58,11 @@ const OrderCreateScreen = ({ history, match }) => {
     const [errors, setErrors] = useState({});
     const [total, setTotal] = useState(0);
     const [productsInOrder, setProductsInOrder] = useState([]);
+    const [selectedCategory, setSelectedCategory] = useState(null);
+    const [keyword, setKeyword] = useState("");
+    const [ingredientStocks, setIngredientStocks] = useState({});
+    const [productStocks, setProductStocks] = useState({});
+
 
     const dispatch = useDispatch();
 
@@ -70,6 +77,11 @@ const OrderCreateScreen = ({ history, match }) => {
 
     const productList = useSelector((state) => state.productList);
     const { products } = productList;
+    const { categories } = useSelector((state) => state.categoryList);
+    
+    //product details state
+    const productDetails = useSelector((state) => state.productDetails);
+    const { product: productDetailsData } = productDetails;
 
     //order create state
     const orderCreate = useSelector((state) => state.orderCreate);
@@ -81,9 +93,8 @@ const OrderCreateScreen = ({ history, match }) => {
 
     useEffect(() => {
         dispatch(allTables());
-        dispatch(listProducts());
+        dispatch(listCategories())
         if (success) {
-            dispatch({ type: PRODUCT_LIST_RESET });
             dispatch({ type: ORDER_CREATE_RESET });
             if (delivery) {
                 history.push("/delivery");
@@ -91,7 +102,7 @@ const OrderCreateScreen = ({ history, match }) => {
                 history.push("/active");
             }
         }
-    }, [dispatch, history, success, error]);
+    }, [dispatch, history, success, error, keyword, selectedCategory]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -117,6 +128,7 @@ const OrderCreateScreen = ({ history, match }) => {
         }
 
         if (Object.keys(errorsCheck).length === 0) {
+            console.log("Productos en la orden: ",productsInOrder)
             /* Create order */
             const order = {
                 total: total,
@@ -127,6 +139,7 @@ const OrderCreateScreen = ({ history, match }) => {
                 note: note,
             };
             /* Make request */
+            console.log("ORDEN A CREAR: ",order)
             dispatch(createOrder(order));
         }
     };
@@ -139,10 +152,35 @@ const OrderCreateScreen = ({ history, match }) => {
         return mappedTables;
     };
 
+    const handleCategoryFilter = (categoryId) => {
+        setSelectedCategory(categoryId === selectedCategory ? null : categoryId);
+    };
+    
+    const renderCategoryButtons = () => (
+        <>
+            {categories.map((category) => (
+                <button
+                    key={category.id}
+                    className={`btn ${selectedCategory === category.id ? 'btn-primary' : 'btn-outline-primary'}`}
+                    onClick={() => handleCategoryFilter(category.id)}
+                >
+                    {category.name}
+                </button>
+            ))}
+        </>
+    );
     const renderProductsTable = () => (
+        
         <ProductsTable
             productsInOrder={productsInOrder}
             setProductsInOrder={setProductsInOrder}
+            selectedCategory={selectedCategory} 
+            keyword={keyword}
+            setKeyword={setKeyword}
+            ingredientStocks={ingredientStocks}
+            setIngredientStocks={setIngredientStocks}
+            productStocks={productStocks}
+            setProductStocks={setProductStocks}
         />
     );
 
@@ -159,6 +197,10 @@ const OrderCreateScreen = ({ history, match }) => {
             <OrderCart
                 productsInOrder={productsInOrder}
                 setProductsInOrder={setProductsInOrder}
+                ingredientStocks={ingredientStocks}
+                setIngredientStocks={setIngredientStocks}
+                productStocks={productStocks}
+                setProductStocks={setProductStocks}
             />
         </>
     );
@@ -269,8 +311,10 @@ const OrderCreateScreen = ({ history, match }) => {
                                 {/* /.card-header */}
                                 <div className="card-body">
                                     <div className="row">
+                                    {renderCategoryButtons()}
                                         <div className="col-12 col-lg-12">
                                             {renderProductsTable()}
+                                            {console.log("Productos seleccionados: ",productsInOrder)}
                                         </div>
                                     </div>
                                     <div className="col-12 col-lg-12">

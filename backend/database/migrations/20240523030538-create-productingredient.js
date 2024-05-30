@@ -10,7 +10,7 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       quantity: {
-        type: Sequelize.FLOAT
+        type: Sequelize.DOUBLE
       },
       ingredientId: {
         type: Sequelize.INTEGER,

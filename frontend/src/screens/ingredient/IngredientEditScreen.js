@@ -25,6 +25,11 @@ const IngredientEditScreen = ({ history, match }) => {
     const [name, setName] = useState("");
     const [ingredientType, setIngredientType] = useState(null);
     const [stock, setStock] = useState(0);
+    const [concept, setConcept] = useState("");
+    const [operation, setOperation] = useState(""); // Por defecto entrada
+    const [totalPrice, setTotalPrice] = useState(null); // Por defecto entrada
+    const [quantity, setQuantity] = useState(null);
+    const [showPrice, setShowPrice] = useState(true);
     const [errors, setErrors] = useState({});
     const dispatch = useDispatch();
 
@@ -55,7 +60,7 @@ const IngredientEditScreen = ({ history, match }) => {
             } else {
                 //set states
                 setName(ingredient.name);
-                setIngredientType(ingredient.ingredientType);
+                setIngredientType(ingredient.ingredientType ? 'Peso' : 'Unidad');
                 setStock(ingredient.stock);
             }
         }
@@ -69,12 +74,16 @@ const IngredientEditScreen = ({ history, match }) => {
         if (!name) {
             errorsCheck.name = "Nombre es requerido";
         }
-        if (!ingredientType){
-            errorsCheck.ingredientType = "Tipo de Ingrediente Requerido"
+
+        if (!quantity || quantity <= 0) {
+            errorsCheck.quantity = "Cantidad es requerida y debe ser mayor que cero";
         }
 
-        if (!stock) {
-            errorsCheck.stock = "Inventario es requerido";
+        if (!concept) {
+            errorsCheck.concept = "Concepto es requerido";
+        }
+        if (!totalPrice && operation === 'entrada') {
+            errorsCheck.concept = "Precio de compra es requerido";
         }
 
         if (Object.keys(errorsCheck).length > 0) {
@@ -88,11 +97,20 @@ const IngredientEditScreen = ({ history, match }) => {
                 updateIngredient({
                     id: ingredientId,
                     name,
-                    ingredientType,
-                    stock
+                    quantity,
+                    concept,
+                    operation,
+                    totalPrice,
                 })
             );
         }
+    };
+
+    const handleOperationChange = (operation) => {
+        console.log('Operation selected:', operation); // Registro de la operación seleccionada
+        setOperation(operation);
+        setShowPrice(operation !== 'entrada');
+
     };
 
     const RadioButtonGroup = ({ name, options, selectedOption, setSelectedOption, errors }) => {
@@ -116,7 +134,9 @@ const IngredientEditScreen = ({ history, match }) => {
     };
   
     const renderForm = () => (
+        
         <form onSubmit={handleSubmit}>
+            {console.log('showPrice:', showPrice)}
             <Input
                 name={"nombre"}
                 type={"text"}
@@ -133,28 +153,44 @@ const IngredientEditScreen = ({ history, match }) => {
                 <input type="text" className="form-control" value={stock} readOnly />
             </div>
             <label>Tipo de Movimiento:</label>
-            <RadioButtonGroup
-                        name={"ingredientType"}
-                        options={["ENTRADA", "SALIDA"]}
-                        selectedOption={ingredientType}  // Usar ingredientType directamente
-                        setSelectedOption={setIngredientType}  // Establecer el estado directamente
-                        errors={errors}
+            <div>
+                <input
+                    type="radio"
+                    name="operation"
+                    value="entrada"
+                    checked={operation === 'entrada'}
+                    onChange={() => handleOperationChange('entrada')}
+                /> Entrada
+                <input
+                    type="radio"
+                    name="operation"
+                    value="salida"
+                    checked={operation === 'salida'}
+                    onChange={() => handleOperationChange('salida')}
+                /> Salida
+            </div>
+            <Input
+                name={"Cantidad"}
+                type={"number"}
+                data={quantity}
+                setData={setQuantity}
+                errors={errors}
             />
             <Input
-                name={"Agregar Existencia"}
-                type={"text"}
-                data={name}
-                setData={setName}
+                name={"Precio de compra"}
+                type={"number"}
+                data={totalPrice}
+                setData={setTotalPrice}
                 errors={errors}
+                hidden={showPrice}
             />
             <Input
                 name={"Concepto"}
                 type={"text"}
-                data={name}
-                setData={setName}
+                data={concept}
+                setData={setConcept}
                 errors={errors}
             />
-
             <hr />
             <button type="submit" className="btn btn-success">
                 Confirmar

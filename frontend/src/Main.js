@@ -17,6 +17,7 @@ import TableScreen from "./screens/table/TableScreen";
 import TableEditScreen from "./screens/table/TableEditScreen";
 
 import IngredientScreen from "./screens/ingredient/IngredientScreen";
+import IngredientMovementScreen from "./screens/ingredient/IngredientMovementScreen";
 import IngredientEditScreen from "./screens/ingredient/IngredientEditScreen";
 
 import ProductScreen from "./screens/product/ProductScreen";
@@ -121,6 +122,10 @@ const Main = () => {
                     <PrivateRoute
                         path="/not-authorized"
                         component={NotAuthorizedScreen}
+                    />
+                    <PrivateRoute
+                        path="/ingredientmovements"
+                        component={IngredientMovementScreen}
                     />
                     <PrivateRoute path="/" component={DashboardScreen} />
                     <Route component={NotFoundScreen} />

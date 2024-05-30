@@ -11,9 +11,6 @@ exports.productCreateValidator = [
         .withMessage('Price is required')
         .isFloat()
         .withMessage('Price must be a number'),
-    check('stock')
-        .isNumeric()
-        .withMessage('Stock must be a number'),
     check('categoryId')
         .notEmpty()
         .withMessage('Category is required')

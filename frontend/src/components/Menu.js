@@ -271,6 +271,25 @@ const Menu = ({ history }) => {
                             <p> Mesas</p>
                         </Link>
                     </li>
+                    <li className="nav-header">REPORTES</li>
+                    <li className="nav-item">
+                        <Link to="/ingredientmovement" className="nav-link">
+                            <i className="nav-icon fas fa-border-all" />{" "}
+                            <p> Ingredientes</p>
+                        </Link>
+                    </li>
+                    <li className="nav-item">
+                        <Link to="/table" className="nav-link">
+                            <i className="nav-icon fas fa-border-all" />{" "}
+                            <p> Productos</p>
+                        </Link>
+                    </li>
+                    <li className="nav-item">
+                        <Link to="/table" className="nav-link">
+                            <i className="nav-icon fas fa-border-all" />{" "}
+                            <p> Ventas</p>
+                        </Link>
+                    </li>
                 </ul>
             </nav>
             {/* /.sidebar-menu */}

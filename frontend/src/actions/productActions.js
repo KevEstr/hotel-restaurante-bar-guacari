@@ -15,10 +15,13 @@ import {
     PRODUCT_DELETE_REQUEST,
     PRODUCT_DELETE_SUCCESS,
     PRODUCT_DELETE_FAIL,
+    PRODUCT_INGREDIENTS_REQUEST,
+    PRODUCT_INGREDIENTS_SUCCESS,
+    PRODUCT_INGREDIENTS_FAIL,
 } from "../constants/productConstants";
 
 //get all products
-export const listProducts = (keyword = "", pageNumber = "") => async (
+export const listProducts = (keyword = "", category = '') => async (
     dispatch,
     getState
 ) => {
@@ -39,11 +42,17 @@ export const listProducts = (keyword = "", pageNumber = "") => async (
             },
         };
 
+        //build query params
+        let query = `/api/products?`;
+        if (keyword) {
+            query += `keyword=${keyword}&`;
+        }
+        if (category) {
+            query += `category=${category}`;
+        }
+
         //get all products
-        const { data } = await axios.get(
-            `/api/products?keyword=${keyword}&pageNumber=${pageNumber}`,
-            config
-        );
+        const { data } = await axios.get(query, config);
 
         dispatch({
             type: PRODUCT_LIST_SUCCESS,
@@ -171,6 +180,45 @@ export const updateProduct = (product) => async (dispatch, getState) => {
     }
 };
 
+export const updateSimpleProduct = (product) => async (dispatch, getState) => {
+    try {
+        dispatch({
+            type: PRODUCT_UPDATE_REQUEST,
+        });
+
+        //get user from state
+        const {
+            userLogin: { userInfo },
+        } = getState();
+        //headers
+        const config = {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${userInfo.token}`,
+            },
+        };
+
+        //update product
+        const { data } = await axios.put(
+            `/api/products/${product.id}`,
+            product,
+            config
+        );
+        dispatch({
+            type: PRODUCT_UPDATE_SUCCESS,
+            payload: data,
+        });
+    } catch (error) {
+        dispatch({
+            type: PRODUCT_UPDATE_FAIL,
+            payload:
+                error.response && error.response.data.message
+                    ? error.response.data.message
+                    : error.message,
+        });
+    }
+};
+
 //delete product
 export const deleteProduct = (id) => async (dispatch, getState) => {
     try {
@@ -197,6 +245,38 @@ export const deleteProduct = (id) => async (dispatch, getState) => {
     } catch (error) {
         dispatch({
             type: PRODUCT_DELETE_FAIL,
+            payload:
+                error.response && error.response.data.message
+                    ? error.response.data.message
+                    : error.message,
+        });
+    }
+};
+
+// Nueva acción para obtener los ingredientes de un producto
+export const listProductIngredients = (id) => async (dispatch, getState) => {
+    try {
+        dispatch({ type: PRODUCT_INGREDIENTS_REQUEST });
+
+        const {
+            userLogin: { userInfo },
+        } = getState();
+
+        const config = {
+            headers: {
+                Authorization: `Bearer ${userInfo.token}`,
+            },
+        };
+
+        const { data } = await axios.get(`/api/products/${id}/ingredients`, config);
+
+        dispatch({
+            type: PRODUCT_INGREDIENTS_SUCCESS,
+            payload: data,
+        });
+    } catch (error) {
+        dispatch({
+            type: PRODUCT_INGREDIENTS_FAIL,
             payload:
                 error.response && error.response.data.message
                     ? error.response.data.message

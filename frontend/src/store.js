@@ -44,6 +44,7 @@ import {
     productCreateReducer,
     productDetailsReducer,
     productUpdateReducer,
+    productIngredientsReducer,
 } from "./reducers/productReducers";
 
 import {
@@ -54,7 +55,21 @@ import {
     statisticsReducer,
 } from "./reducers/orderReducers";
 
+import {
+    ingredientMovementListReducer,
+    ingredientMovementDetailsReducer,
+    ingredientMovementCreateReducer,
+    ingredientMovementUpdateReducer,
+    ingredientMovementDeleteReducer,
+} from './reducers/ingredientMovementReducers';
+
 const reducer = combineReducers({
+    ingredientMovementList: ingredientMovementListReducer,
+    ingredientMovementDetails: ingredientMovementDetailsReducer,
+    ingredientMovementCreate: ingredientMovementCreateReducer,
+    ingredientMovementUpdate: ingredientMovementUpdateReducer,
+    ingredientMovementDelete: ingredientMovementDeleteReducer,
+
     userLogin: userLoginReducer,
     userList: userListReducer,
     userRegister: userRegisterReducer,
@@ -75,6 +90,7 @@ const reducer = combineReducers({
     productCreate: productCreateReducer,
     productDetails: productDetailsReducer,
     productUpdate: productUpdateReducer,
+    productIngredients: productIngredientsReducer,
 
     tableAll: tableAllReducer,
     tableList: tableListReducer,

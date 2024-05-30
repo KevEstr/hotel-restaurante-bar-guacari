@@ -8,7 +8,13 @@ import Search from "../Search";
 import { BigSpin } from "../loader/SvgLoaders";
 
 /* actions */
-import { listProducts } from "../../actions/productActions";
+import { listProducts, listProductDetails  } from "../../actions/productActions";
+import { listAllIngredients  } from "../../actions/ingredientActions";
+
+import {
+    PRODUCT_UPDATE_RESET,
+    PRODUCT_DETAILS_RESET,
+} from "../../constants/productConstants";
 
 import "../../../src/utils/menu.css"
 import LinesEllipsis from "react-lines-ellipsis";
@@ -19,33 +25,80 @@ const ProductsTable = ({
     productsInOrder,
     setProductsInOrder,
     productsAlreadyOrdered,
+    selectedCategory,
+    ingredientStocks, 
+    setIngredientStocks,
+    productStocks,
+    setProductStocks,
 }) => {
     //add product to order
     const dispatch = useDispatch();
     const [keyword, setKeyword] = useState("");
     const [pageNumber, setPageNumber] = useState(0);
     const [products, setProducts] = useState([]);
+    const [productToAdd, setProductToAdd] = useState(null);
 
-    const addProduct = (e, product) => {
-        e.preventDefault();
+     //product details state
+     const productDetails = useSelector((state) => state.productDetails);
+     const {  product } = productDetails;
 
-        //product object
-        const productIn = {
-            id: product.id,
-            name: product.name,
-            price: product.price,
-            stock: product.stock,
-            quantity: 1,
-        };
-        //if is already in order
-        if (!inOrder(productIn, productsInOrder)) {
-            setProductsInOrder([...productsInOrder, productIn]);
-        } else {
-            alert("Producto ya está en la órden");
+    const ingredientList = useSelector((state) => state.ingredientList);
+    const { loading, error, ingredients } = ingredientList;    
+
+
+    const checkCompositeStock = async (product) => {
+        let stockAvailable = true;
+
+        if(product.isComposite){
+            if (stockAvailable) {
+                // Update ingredient stocks in state
+                const updatedStocks = { ...ingredientStocks };
+                console.log("TABLE ingredientStocks ", ingredientStocks)
+                for (const ingredient of product.ingredients) {
+                    const ingredientId = ingredient.ProductIngredient.ingredientId;
+                    const quantity = Number(ingredient.ProductIngredient.quantity);
+                    console.log("TABLE ingredientStocks[ingredientId] ",ingredientStocks[ingredientId])
+                    if (updatedStocks[ingredientId] < quantity) {
+                        stockAvailable = false;
+                        return false;
+                    } else {
+                        updatedStocks[ingredientId] = Number(ingredientStocks[ingredientId]) - Number(quantity);
+                    }
+                }
+                setIngredientStocks(updatedStocks);
+            }
         }
+        
+        return stockAvailable;
     };
 
-    //product list state
+    const addProduct = async (e, product) => {
+        e.preventDefault();
+        console.log("TABLE productDetails: ",productDetails)
+        if (product.isComposite) {
+            let isStockAvailable = await checkCompositeStock(product);
+            if (!isStockAvailable) {
+                alert("No hay suficiente stock de ingredientes.");
+                return;
+            }
+            setProductToAdd(product);
+            dispatch(listProductDetails(product.id));
+            
+        }
+        else {
+            if (productStocks[product.id] < 1) {
+                alert("No hay suficiente stock de este producto.");
+                return;
+            }
+            const updatedStocks = { ...productStocks };
+            updatedStocks[product.id] -= 1;
+            setProductStocks(updatedStocks);
+            setProductToAdd(product);
+            dispatch(listProductDetails(product.id));
+        }
+        
+    };
+
     const productList = useSelector((state) => state.productList);
     const {
         loading: loadingProductList,
@@ -56,11 +109,80 @@ const ProductsTable = ({
     } = productList;
 
     useEffect(() => {
+        dispatch(listAllIngredients());
+        dispatch(listProducts());
+    }, [dispatch]);
+
+    /*useEffect(() => {
+        if (productsFromState.length > 0) {
+            setProducts(mapProducts(productsFromState));
+        }
+    }, [productsFromState]);*/
+
+    useEffect(() => {
+        if (productsFromState.length > 0) {
+            const stocks = {};
+            productsFromState.forEach((product) => {
+                stocks[product.id] = Number(product.stock);
+            });
+            setProductStocks(stocks);
+            setProducts(mapProducts(productsFromState));
+        }
+    }, [productsFromState]);
+
+    useEffect(() => {
+        if (ingredients.length > 0) {
+            const stocks = {};
+            ingredients.forEach((ingredient) => {
+                stocks[ingredient.id] = Number(ingredient.stock);
+            });
+            setIngredientStocks(stocks);
+
+            console.log("TABLE Variable ingredientStocks: ",ingredientStocks);
+
+
+        }
+    }, [ingredients]);
+   
+
+    useEffect(() => {
+        if (productToAdd && product && productToAdd.id === product.id) {
+            const productIn = {
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                isComposite: product.isComposite,
+                ingredients: product.isComposite
+                    ? product.ingredients.map(ingredient => ({
+                        ...ingredient,
+                        ProductIngredient: {
+                            productId: product.id,
+                            ingredientId: ingredient.id,
+                            quantity: ingredient.ProductIngredient.quantity,
+                        },
+                    }))
+                    : [],
+                quantity: 1,
+            };
+            if (!inOrder(productIn, productsInOrder)) {
+                setProductsInOrder([...productsInOrder, productIn]);
+            } else {
+                alert("Producto ya está en la órden");
+            }
+            setProductToAdd(null);
+        }
+    }, [product, productToAdd, productsInOrder, setProductsInOrder]);
+
+
+    useEffect(() => {
+        let allProducts = dispatch(listProducts(keyword, pageNumber));
+        console.log("TABLE ALL PRODUCTS: ",allProducts)
         dispatch(listProducts(keyword, pageNumber));
-    }, [keyword, pageNumber]);
+    }, [dispatch,keyword, pageNumber]);
 
     useEffect(() => {
         if (productsFromState) {
+            console.log("TABLE productsFromState", productsFromState)
             setProducts(mapProducts(productsFromState));
         }
     }, [productsFromState]);
@@ -75,34 +197,25 @@ const ProductsTable = ({
         return false;
     };
 
+    const filteredProducts = selectedCategory 
+        ? products.filter(product => product.category.name === selectedCategory) 
+        : products;
+
     //refresh products table
     const refreshProducts = (e) => {
         e.preventDefault();
         dispatch(listProducts(keyword, pageNumber));
     };
 
-    //check stock to show
-    const showStock = (product) => {
-        const productInOrder = productsInOrder.find(
-            (productIn) => productIn.id === product.id
-        );
-        if (productInOrder) return product.stock - productInOrder.quantity;
-        return product.stock;
-    };
-
     const mapProducts = (productsToMap) => {
-        if (!productsAlreadyOrdered) return productsToMap;
-
+        // Mapea cada producto en la lista productsToMap sin modificar el stock.
         const mappedProducts = productsToMap.map((item) => {
-            productsAlreadyOrdered.map((item2) => {
-                if (item.id === item2.id) {
-                    item.stock = item.stock + item2.quantity;
-                }
-            });
+            // Devuelve cada producto tal como está sin ningún cambio.
             return item;
         });
         return mappedProducts;
     };
+    
 
     const renderRefreshButton = () => (
         <button className="btn btn-info float-right" onClick={refreshProducts}>
@@ -125,74 +238,51 @@ const ProductsTable = ({
     };
 
     const renderProducts1 = () => {
-       // Obtener todas las categorías únicas de los productos
-       const uniqueCategories = [...new Set(products.map(product => product.category.name))];
-
-       return (
-           <div className="row" style={{ overflowY: 'auto', maxHeight: '600px'}}>
-               {uniqueCategories.map(category => (
-                   <div key={category} className="col-md-12">
-                       <h2>{category}</h2> {/* Título de la categoría */}
-                       <div className="row">
-                           {products.map(product => {
-                               if (product.category.name === category) {
-                                   // Calcula el tamaño de la columna en función del número de productos en la fila
-                                   const columnSize = Math.max(Math.floor(12 / Math.min(products.length, 7)), 2);
-                                   return (
-                                       <div key={product.id} className={`col-md-${columnSize}`}>
-                                           {/* Aquí colocas la lógica de renderizado de cada producto */}
-                                           {inOrder(product, productsInOrder) ? (
-                                               <button disabled className={`product-name-${getCategoryBackgroundClass(product.category.name)}`}>
-                                                   <div className="button-content">
-                                                       <p>
-                                                           {product.name}
-                                                       </p>
-                                                       <h4>
-                                                           En la orden
-                                                       </h4>
-                                                       <p>
-                                                        Inventario: {product.stock}
-                                                    </p>
-                                                   </div>
-                                               </button>
-                                           ) : product.stock > 0 ? (
-                                               <button
-                                                   className={`product-name-${getCategoryBackgroundClass(product.category.name)}`}
-                                                   onClick={(e) => addProduct(e, product)}
-                                               >
+        const uniqueCategories = [...new Set(products.map(product => product.category.name))];
+    
+        return (
+            <div className="row" style={{ overflowY: 'auto', maxHeight: '600px'}}>
+                {uniqueCategories.map(category => (
+                    <div key={category} className="col-md-12">
+                        <h2>{category}</h2>
+                        <div className="row">
+                            {filteredProducts.map(product => {
+                                if (product.category.name === category) {
+                                    const columnSize = Math.max(Math.floor(12 / Math.min(products.length, 7)), 2);
+                                    const isInOrder = inOrder(product, productsInOrder);
+                                    return (
+                                        <div key={product.id} className={`col-md-${columnSize}`}>
+                                            <button
+                                                className={`product-name-${getCategoryBackgroundClass(product.category.name)}`}
+                                                onClick={(e) => addProduct(e, product)}
+                                                disabled={isInOrder}
+                                            >
                                                 <div className="button-content">
                                                     <h4>
-                                                       <LinesEllipsis
-                                                           text={product.name}
-                                                           maxLine={3}
-                                                           ellipsis="..."
-                                                           trimRight
-                                                           basedOn="letters"
-                                                       />
-                                                   </h4>
-                                                   <p>
-                                                        Inventario: {product.stock}
-                                                    </p>
-                                                   
+                                                        <LinesEllipsis
+                                                            text={product.name}
+                                                            maxLine={3}
+                                                            ellipsis="..."
+                                                            trimRight
+                                                            basedOn="letters"
+                                                        />
+                                                    </h4>
+                                                    {isInOrder && (
+                                                        <p>En la orden</p>
+                                                    )}
                                                 </div>
-                                                   
-                                               </button>
-                                           ) : (
-                                               <button disabled className={`product-name-${getCategoryBackgroundClass(product.category.name)}`}>
-                                                   Sin inventario
-                                               </button>
-                                           )}
-                                       </div>
-                                   );
-                               }
-                               return null; // Devuelve null si el producto no pertenece a la categoría actual
-                           })}
-                       </div>
-                   </div>
-               ))}
-           </div>
-       );
-   };
+                                            </button>
+                                        </div>
+                                    );
+                                }
+                                return null;
+                            })}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    };
 
 
 

@@ -3,6 +3,10 @@ const Order = require("../models").Order;
 const { Op } = require("sequelize");
 const Client = require("../models").Client;
 const Table = require("../models").Table;
+const Product = require("../models").Product;
+const Ingredient = require("../models").Ingredient;
+
+
 //utils
 const {
     stock,
@@ -11,45 +15,11 @@ const {
     updateProductsStock,
 } = require("../utils/order");
 
-//@desc     Create a Order
-//@route    POST /api/orders
-//@access   Private/user
-exports.createOrder = asyncHandler(async (req, res) => {
-    //get data from request
-    const { total, tableId, clientId, products, delivery, note } = req.body;
+const {
+    verifyStock,
+    updateStockAndCreateMovement
+} = require("../utils/ingredient");
 
-    await stock(products);
-
-    if (stock) {
-        //create order
-
-        const createdOrder = await Order.create({
-            total,
-            tableId: !delivery ? tableId : null,
-            userId: req.user.id,
-            clientId: clientId,
-            delivery: delivery,
-            note: note,
-        });
-
-        //create order products
-        await addProductsInOrder(createdOrder, products);
-
-        //update table to occupied
-        if (!delivery) {
-            await updateTable(createdOrder.tableId, true);
-        }
-
-        //update stock
-        await updateProductsStock(products, -1);
-
-        res.status(201).json(createdOrder);
-
-        //response OK
-    } else {
-        res.status(400).json({ message: "There is no stock available" });
-    }
-});
 
 //@desc     Get all orders
 //@route    GET /api/orders
@@ -141,69 +111,190 @@ exports.updateOrderPay = asyncHandler(async (req, res) => {
     }
 });
 
+const findDifferences = (oldProducts, newProducts) => {
+    const restockProducts = [];
+    const newProductsToAdd = [];
+    const modifiedProducts = [];
+
+    const oldProductsMap = new Map(oldProducts.map(p => [p.id, p]));
+
+    newProducts.forEach(newProduct => {
+        const oldProduct = oldProductsMap.get(newProduct.id);
+        if (oldProduct) {
+            if (newProduct.quantity !== oldProduct.quantity) {
+                modifiedProducts.push({
+                    id: newProduct.id,
+                    oldQuantity: oldProduct.quantity,
+                    newQuantity: newProduct.quantity
+                });
+            }
+            oldProductsMap.delete(newProduct.id);
+        } else {
+            newProductsToAdd.push(newProduct);
+        }
+    });
+
+    restockProducts.push(...oldProductsMap.values());
+
+    return { restockProducts, newProductsToAdd, modifiedProducts };
+};
+//@desc     Create a Order
+//@route    POST /api/orders
+//@access   Private/user
+exports.createOrder = asyncHandler(async (req, res) => {
+    //get data from request
+    const { total, tableId, clientId, products, delivery, note } = req.body;
+
+    try {
+        // Verificar si hay suficiente inventario
+        const stockAvailable = await verifyStock(products);
+
+        if (stockAvailable) {
+            // Crear la orden
+            const createdOrder = await Order.create({
+                total,
+                tableId: !delivery ? tableId : null,
+                userId: req.user.id,
+                clientId: clientId,
+                delivery: delivery,
+                note: note,
+            });
+
+            // Crear productos en la orden
+            await addProductsInOrder(createdOrder, products);
+
+            // Actualizar la mesa a ocupada si no es una entrega
+            if (!delivery) {
+                await updateTable(createdOrder.tableId, true);
+            }
+
+            // Actualizar el stock y crear movimientos de inventario
+            await updateStockAndCreateMovement(products, req.user.id, createdOrder.id,-1,false);
+
+            res.status(201).json(createdOrder);
+        } else {
+            res.status(400).json({ message: "There is no stock available" });
+        }
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
+const diffProducts = (oldProducts, newProducts) => {
+    const addedProducts = [];
+    const removedProducts = [];
+    const modifiedProducts = [];
+
+    const oldProductMap = new Map();
+    oldProducts.forEach(product => oldProductMap.set(product.id, product));
+
+    newProducts.forEach(newProduct => {
+        const oldProduct = oldProductMap.get(newProduct.id);
+        if (oldProduct) {
+            if (newProduct.quantity !== oldProduct.OrderProduct.quantity) {
+                modifiedProducts.push({ oldProduct, newProduct });
+            }
+            oldProductMap.delete(newProduct.id);
+        } else {
+            addedProducts.push(newProduct);
+        }
+    });
+
+    oldProductMap.forEach(oldProduct => removedProducts.push(oldProduct));
+    //throw new Error(`oldProductMap: ${JSON.stringify(oldProductMap, null, 2)}`);
+    //throw new Error(`oldProductMap: ${oldProductMap}`);
+
+
+    return { addedProducts, removedProducts, modifiedProducts };
+};
+
+
+const adjustInventoryForChanges = async (productChanges, userId, orderId) => {
+    const { addedProducts, removedProducts, modifiedProducts } = productChanges;
+
+    if(removedProducts!==null){
+        await updateStockAndCreateMovement(removedProducts, userId, orderId, 1, false);
+    }
+    //throw new Error(`addedProducts.lenght ${JSON.stringify(addedProducts, null, 2)}`);
+    if(addedProducts!==null){
+        await updateStockAndCreateMovement(addedProducts, userId, orderId, -1, false);
+    }
+    //throw new Error(`modifiedProducts.lenght ${JSON.stringify(modifiedProducts!==null, null, 2)}`);
+    if(modifiedProducts!==null){
+    await updateStockAndCreateMovement(modifiedProducts, userId, orderId, 0, true);
+    }
+};
+
+
 //@desc     Update order
 //@route    PUT /api/orders/:id
 //@access   Private/user
 exports.updateOrder = asyncHandler(async (req, res) => {
-    const order = await Order.findByPk(req.params.id, {
-        include: { all: true, nested: true },
-    });
-    const { total, clientId, tableId, delivery, products, note } = req.body;
+    const orderId = req.params.id;
+    const { total, tableId, clientId, products, delivery, note } = req.body;
+    const userId = req.user.id;
 
-    if (order) {
+    try {
+        const order = await Order.findByPk(orderId);
+        if (!order) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+
+        // Verificar si hay suficiente inventario para los nuevos productos
+        const stockAvailable = await verifyStock(products);
+        if (!stockAvailable) {
+            return res.status(400).json({ message: "There is no stock available for the updated products" });
+        }
+
+        // Actualizar la orden
+        order.total = total;
         order.clientId = clientId;
         order.delivery = delivery;
         order.note = note;
+        order.tableId = !delivery ? tableId : null;
 
-        /* CHECK TABLE */
-        if (order.tableId !== tableId) {
-            if (!order.tableId && !delivery) {
-                /* DELIVERY -> TABLE */
-                await updateTable(tableId, true);
-                order.tableId = tableId;
-            } else if (order.tableId && delivery) {
-                /* TABLE -> DELIVERY */
-                await updateTable(order.tableId, false);
-                order.tableId = null;
-            } else {
-                /* TABLE -> TABLE */
-                await updateTable(order.tableId, false);
-                await updateTable(tableId, true);
-                order.tableId = tableId;
-            }
+        const oldProducts = await order.getProducts({
+            include: [
+                {
+                    model: Ingredient,
+                    as: 'ingredients',
+                    through: {
+                        attributes: ['ingredientId', 'productId', 'quantity']
+                    }
+                },
+            ]
+        });
+        
+
+
+        const productChanges = diffProducts(oldProducts, products);
+
+        await adjustInventoryForChanges(productChanges, userId, orderId);
+
+
+        //await updateStockAndCreateMovement(oldProducts, userId, orderId, +1);
+
+        // Eliminar los productos actuales de la orden
+        await order.setProducts(null);
+
+        // Agregar los nuevos productos a la orden
+        await addProductsInOrder(order, products);
+
+        // Actualizar el stock y crear movimientos de inventario para los nuevos productos
+        //await updateStockAndCreateMovement(products, userId, orderId, -1);
+
+        // Si la orden es para una mesa, actualizar el estado de la mesa
+        if (!delivery) {
+            await updateTable(tableId, true);
         }
-
-        /* CHECK PRODUCTS */
-        if (parseFloat(order.total) !== parseFloat(total)) {
-            const oldProducts = await order.getProducts();
-            if (oldProducts) {
-                /* FORMAT OLD PRODUCTS */
-                const formattedOldProducts = oldProducts.map((product) => {
-                    product.quantity = product.OrderProduct.quantity;
-                    return product;
-                });
-
-                /* RESTOCK OLD PRODUCTS */
-                await updateProductsStock(formattedOldProducts, 1);
-
-                /* DELETE ALL PRODUCTS FROM ORDER */
-                await order.setProducts(null);
-
-                /* CREATE NEW PRODUCTS */
-                await addProductsInOrder(order, products);
-
-                /* UPDATE STOCK */
-                await updateProductsStock(products, -1);
-            }
-        }
-        order.total = total;
         const updatedOrder = await order.save();
-        res.status(200).json(updatedOrder);
-    } else {
-        res.status(404);
-        throw new Error("Order not found");
+        res.json(updatedOrder);
+        res.status(200).json({ message: "Order updated successfully" });
+    } catch (error) {
+        res.status(400).json({ message: error.message });
     }
 });
+
 
 //@desc     Update order to delivered
 //@route    POST /api/orders/:id/delivery

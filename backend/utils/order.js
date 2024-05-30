@@ -24,9 +24,11 @@ exports.updateTable = async (id, occupied) => {
 exports.addProductsInOrder = async (order, products) => {
     products.forEach(async (product) => {
         await order.addProduct(product.id, {
-            through: { quantity: product.quantity },
+            through: { quantity: product.quantity, note: product.note }
         });
     });
+    
+    
 };
 
 /* 
@@ -48,4 +50,6 @@ exports.updateProductsStock = async (products, condition) => {
             await productToUpdate.save();
         }
     });
-};
+
+    
+}

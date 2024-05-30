@@ -8,16 +8,15 @@ module.exports = (sequelize, DataTypes) => {
          * The `models/index` file will call this method automatically.
          */
         static associate(models) {
-            // define association here if needed
-            this.belongsToMany(models.Ingredient, { foreignKey: "ingredientId" });
-            this.belongsToMany(models.Product, { foreignKey: "productId" });
+            this.belongsTo(models.Ingredient, { through: models.ProductIngredient, foreignKey: "ingredientId" });
+            this.belongsTo(models.Product, { through: models.ProductIngredient, foreignKey: "productId" });
         }
     }
     ProductIngredient.init(
         {
             productId: DataTypes.INTEGER,
             ingredientId: DataTypes.INTEGER,
-            quantity: DataTypes.FLOAT
+            quantity: DataTypes.DECIMAL(10,2)
         },
         {
             sequelize,

@@ -40,6 +40,9 @@ const OrderEditScreen = ({ history, match }) => {
     const [productsInOrder, setProductsInOrder] = useState([]);
     const [productsAlreadyOrdered, setProductsAlreadyOrdered] = useState([]);
     const [errors, setErrors] = useState({});
+    const [ingredientStocks, setIngredientStocks] = useState({});
+    const [productStocks, setProductStocks] = useState({});
+
 
     const dispatch = useDispatch();
 
@@ -79,6 +82,7 @@ const OrderEditScreen = ({ history, match }) => {
     useEffect(() => {
         //load order
         if (order) {
+            console.log("ORDEN PREVIA: ",order)
             if (!order.id || order.id !== orderId) {
                 dispatch(listOrderDetails(orderId));
             } else {
@@ -90,10 +94,13 @@ const OrderEditScreen = ({ history, match }) => {
 
                 if (order.products) {
                     /* Format products */
+                    console.log("Productos en la orden",order.products)
+                    console.log("Orden ",order )
                     const products = order.products.map((product) => {
                         return {
                             ...product,
                             quantity: product.OrderProduct.quantity,
+                            note: product.OrderProduct.note,
                         };
                     });
 
@@ -110,14 +117,14 @@ const OrderEditScreen = ({ history, match }) => {
         let errorsCheck = {};
 
         if (!table && !delivery) {
-            errorsCheck.table = "Table is required";
+            errorsCheck.table = "Mesa es requerida";
         }
         if (!client) {
-            errorsCheck.client = "Client is required";
+            errorsCheck.client = "Cliente es requerido";
         }
 
         if (productsInOrder.length < 1) {
-            errorsCheck.products = "Cart cannot by empty";
+            errorsCheck.products = "Órden no puede estar vacía";
         }
 
         if (Object.keys(errorsCheck).length > 0) {
@@ -127,6 +134,33 @@ const OrderEditScreen = ({ history, match }) => {
         }
 
         if (Object.keys(errorsCheck).length === 0) {
+            // Crear un array para almacenar los productos con sus ingredientes
+            const productsWithIngredients = productsInOrder.map((product) => {
+                // Verificar si el producto tiene ingredientes
+                if (product.ingredients && product.ingredients.length > 0) {
+                    // Si el producto tiene ingredientes, realizar el mismo proceso que antes
+                    const ingredientsWithQuantities = product.ingredients.map((ingredient) => {
+                        const quantityUsed = ingredient.ProductIngredient.quantity;
+                        return {
+                            ingredientId: ingredient.id,
+                            quantity: quantityUsed
+                        };
+                    });
+        
+                    return {
+                        productId: product.id,
+                        quantity: product.quantity,
+                        ingredients: ingredientsWithQuantities
+                    };
+                } else {
+                    // Si el producto no tiene ingredientes, simplemente retornar la información básica del producto
+                    return {
+                        productId: product.id,
+                        quantity: product.quantity
+                    };
+                }
+            });
+        
             const order = {
                 id: orderId,
                 total: total,
@@ -136,7 +170,7 @@ const OrderEditScreen = ({ history, match }) => {
                 delivery: delivery,
                 note: note,
             };
-
+            console.log("ORDEN A ACTUALIZAR: ",order)
             dispatch(updateOrder(order));
         }
     };
@@ -154,6 +188,10 @@ const OrderEditScreen = ({ history, match }) => {
             productsInOrder={productsInOrder}
             productsAlreadyOrdered={productsAlreadyOrdered}
             setProductsInOrder={setProductsInOrder}
+            setIngredientStocks={setIngredientStocks}
+            ingredientStocks={ingredientStocks}
+            productStocks={productStocks}
+            setProductStocks={setProductStocks}
         />
     );
 
@@ -170,6 +208,10 @@ const OrderEditScreen = ({ history, match }) => {
             <OrderCart
                 productsInOrder={productsInOrder}
                 setProductsInOrder={setProductsInOrder}
+                setIngredientStocks={setIngredientStocks}
+                ingredientStocks={ingredientStocks}
+                productStocks={productStocks}
+                setProductStocks={setProductStocks}
             />
         </>
     );
@@ -256,14 +298,14 @@ const OrderEditScreen = ({ history, match }) => {
                                     <Message message={error} color={"danger"} />
                                 </div>
                                 {/* /.card-header */}
-                                <div className="card-body">
-                                    <div className="row">
-                                        <div className="col-12 col-lg-6">
+                                <div >
+                                    <div>
+                                        <div className="col-12 col-lg-12">
                                             {renderProductsTable()}
                                         </div>
-                                        <div className="col-12 col-lg-6">
+                                        <div className="col-12 col-lg-12">
                                             {renderCart()}
-                                            <div className="row">
+                                            <div>
                                                 <div className="col-12 col-md-6">
                                                     {renderTablesSelect()}
                                                 </div>

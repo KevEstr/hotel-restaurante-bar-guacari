@@ -13,7 +13,7 @@ import Pagination from "../../components/Pagination";
 import Message from "../../components/Message";
 import IngredientsCart from "../../components/order/IngredientsCart";
 import IngredientsTable from "../../components/order/IngredientsTable";
-import { listProducts, createProduct } from "../../actions/productActions";
+import { listProducts, createProduct  } from "../../actions/productActions";
 import { listCategories } from "../../actions/categoryActions";
 import { listIngredients } from "../../actions/ingredientActions";
 import { modalStyles } from "../../utils/styles";
@@ -32,6 +32,7 @@ const ProductScreen = ({ history }) => {
     const [ingredientsInOrder, setIngredientsInOrder] = useState([]);
     const [isSimple, setIsSimple] = useState(false);
     const [isComposite, setIsComposite] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState(null);
 
     const dispatch = useDispatch();
 
@@ -52,8 +53,8 @@ const ProductScreen = ({ history }) => {
             resetForm();
             setModalIsOpen(false);
         }
-        dispatch(listProducts(keyword, pageNumber));
-    }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess]);
+        dispatch(listProducts(keyword, pageNumber,selectedCategory));
+    }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess, selectedCategory]);
 
     const resetForm = () => {
         setName("");
@@ -61,7 +62,7 @@ const ProductScreen = ({ history }) => {
         setStock(0);
         setCategory(null);
         setErrors({});
-        setIngredientsInOrder([]);
+        setIngredientsInOrder(null);
         setIsSimple(false);
         setIsComposite(false);
     };
@@ -77,14 +78,12 @@ const ProductScreen = ({ history }) => {
         if (!price) {
             errorsCheck.price = "Precio de venta es requerido";
         }
-        if (!stock) {
-            errorsCheck.stock = "Inventario es requerido";
-        }
         if (!category) {
             errorsCheck.category = "Categoría es requerida";
         }
-        if (isComposite && !ingredientsInOrder) {
-            errorsCheck.ingredients = "Se necesitan ingredientes";
+        console.log("ingredientsInOrder: ",ingredientsInOrder)
+        if (isComposite && ingredientsInOrder.length === 0) {
+            errorsCheck.ingredientsInOrder = "Se necesitan ingredientes";
         }
 
 
@@ -101,14 +100,15 @@ const ProductScreen = ({ history }) => {
         const product = {
             name: name,
             price: price,
-            stock: stock,
             categoryId: category,
             isComposite: isComposite,  // Include this to indicate product type
-            ingredients: ingredientsInOrder  // Include ingredient IDs for composite products
+            ingredients: isComposite ? ingredientsInOrder : [] // Solo incluir ingredientes si es compuesto
         };
 
         dispatch(createProduct(product));
     };
+
+    
 
     const searchCategories = (e) => {
         dispatch(listCategories(e.target.value));
@@ -133,7 +133,7 @@ const ProductScreen = ({ history }) => {
 
     const renderIngredientsCart = () => (
         <>
-            {errors.products && <Message message={errors.products} color={"warning"} />}
+            {errors.ingredientsInOrder && <Message message={errors.ingredientsInOrder} color={"warning"} />}
             <IngredientsCart ingredientsInOrder={ingredientsInOrder} setIngredientsInOrder={setIngredientsInOrder} />
         </>
     );
@@ -170,8 +170,7 @@ const ProductScreen = ({ history }) => {
                     {errors.name && <Message message={errors.name} color={"warning"} />}
                     <Input name={"precio de venta"} type={"number"} data={price} setData={setPrice} errors={errors} />
                     {errors.price && <Message message={errors.price} color={"warning"} />}
-                    <Input name={"inventario"} type={"number"} data={stock} setData={setStock} errors={errors} />
-                    {errors.stock && <Message message={errors.stock} color={"warning"} />}
+                    <label>Categoría:</label>
                     {renderCategoriesSelect()}
                     {errors.category && <Message message={errors.category} color={"warning"} />}
                     <hr />
@@ -227,7 +226,6 @@ const ProductScreen = ({ history }) => {
                     <th>ID</th>
                     <th>Nombre</th>
                     <th>Precio de venta</th>
-                    <th>Inventario</th>
                     <th className="d-none d-sm-table-cell">Creado en</th>
                     <th className="d-none d-sm-table-cell">Categoría</th>
                     <th></th>
@@ -239,7 +237,6 @@ const ProductScreen = ({ history }) => {
                         <td>{product.id}</td>
                         <td>{product.name}</td>
                         <td>{product.price}</td>
-                        <td>{product.stock}</td>
                         <td className="d-none d-sm-table-cell">{product.createdAt.slice(0, 10)}</td>
                         <td className="d-none d-sm-table-cell">{product.category.name}</td>
                         <td>
