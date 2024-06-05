@@ -26,6 +26,7 @@ exports.getClients = asyncHandler(async (req, res) => {
     const pageSize = 5;
     const page = Number(req.query.pageNumber) || 1;
     const keyword = req.query.keyword ? req.query.keyword : null;
+    const hasReservation = req.query.has_reservation === "true";
     let options = {
         attributes: {
             exclude: ["updatedAt"],
@@ -35,20 +36,23 @@ exports.getClients = asyncHandler(async (req, res) => {
     };
 
     if (keyword) {
-        options = {
-            ...options,
-            where: {
-                [Op.or]: [
-                    { id: { [Op.like]: `%${keyword}%` } },
-                    { name: { [Op.like]: `%${keyword}%` } },
-                    { address: { [Op.like]: `%${keyword}%` } },
-                    { phone: { [Op.like]: `%${keyword}%` } },
-                    { email: { [Op.like]: `%${keyword}%` } },
-                    { dni: { [Op.like]: `%${keyword}%` } },
-                    { agreementId: { [Op.like]: `%${keyword}%` } },
-                    {has_reservation: { [Op.like]: `%${keyword}%` } },
-                ],
-            },
+        options.where = {
+            [Op.or]: [
+                { id: { [Op.like]: `%${keyword}%` } },
+                { name: { [Op.like]: `%${keyword}%` } },
+                { address: { [Op.like]: `%${keyword}%` } },
+                { phone: { [Op.like]: `%${keyword}%` } },
+                { email: { [Op.like]: `%${keyword}%` } },
+                { dni: { [Op.like]: `%${keyword}%` } },
+                { agreementId: { [Op.like]: `%${keyword}%` } },
+            ],
+        };
+    }
+
+    if (hasReservation) {
+        options.where = {
+            ...options.where,
+            has_reservation: true,
         };
     }
 

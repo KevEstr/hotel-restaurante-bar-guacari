@@ -2,6 +2,8 @@ import { createStore, combineReducers, applyMiddleware } from "redux";
 import thunk from "redux-thunk";
 import { composeWithDevTools } from "redux-devtools-extension";
 import { sectionReducer } from './reducers/sectionReducer';
+import { serviceListReducer, serviceCreateReducer } from './reducers/serviceReducers';
+
 import {
     userLoginReducer,
     userListReducer,
@@ -67,6 +69,7 @@ import {
     orderDetailsReducer,
     orderUpdateReducer,
     statisticsReducer,
+    orderListByClientReducer,
 } from "./reducers/orderReducers";
 
 import {
@@ -76,6 +79,9 @@ import {
     ingredientMovementUpdateReducer,
     ingredientMovementDeleteReducer,
 } from './reducers/ingredientMovementReducers';
+
+import { roleListReducer } from './reducers/roleReducers';
+
 
   
 
@@ -87,6 +93,14 @@ import{
 } from "./reducers/reservationReducers";
 
 const reducer = combineReducers({
+
+    serviceList: serviceListReducer,
+    serviceCreate: serviceCreateReducer,
+
+    roleList: roleListReducer,
+
+
+    orderListByClient: orderListByClientReducer,
 
     ingredientMovementList: ingredientMovementListReducer,
     ingredientMovementDetails: ingredientMovementDetailsReducer,

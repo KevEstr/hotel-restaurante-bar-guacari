@@ -57,6 +57,14 @@ const IngredientScreen = ({ history }) => {
         dispatch(listIngredients(keyword, pageNumber));
     }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess]);
 
+    useEffect(() => {
+        const negativeStockIngredients = ingredients.filter(ingredient => ingredient.stock < 0);
+        if (negativeStockIngredients.length > 0) {
+            const ingredientNames = negativeStockIngredients.map(ingredient => ingredient.name).join(', ');
+            alert(`EXISTENCIA NEGATIVA: Se recomienda realizar inventario de los ingredientes ${ingredientNames} y realizar la entrada respectiva`);
+        }
+    }, [ingredients]);
+
     const handleSubmit = (e) => {
         e.preventDefault();
         console.log('Form submit initiated');  // Asegúrate de que el submit se esté ejecutando

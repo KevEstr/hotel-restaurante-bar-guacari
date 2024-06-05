@@ -15,6 +15,9 @@ import LoaderHandler from "../../components/loader/LoaderHandler";
 
 /* Actions */
 import { listUsers, register } from "../../actions/userActions";
+import { listRoles } from "../../actions/roleActions"; // importar la nueva acción
+import { allRoles } from "../../actions/roleActions"
+
 
 /* Styles */
 import { modalStyles } from "../../utils/styles";
@@ -23,6 +26,9 @@ const UserScreen = ({ history }) => {
     const [modalIsOpen, setModalIsOpen] = useState(false);
     const [keyword, setKeyword] = useState("");
     const [pageNumber, setPageNumber] = useState(1);
+
+    const [roleId, setRoleId] = useState("");
+
 
     const [name, setName] = useState("");
     const [password, setPassword] = useState("");
@@ -45,19 +51,28 @@ const UserScreen = ({ history }) => {
         error: createError,
     } = userRegister;
 
+    const roleList = useSelector((state) => state.roleList);
+    const { roles } = roleList; // Obtener roles desde el estado
+
+
     useEffect(() => {
         if (userInfo && userInfo.isAdmin) {
             dispatch(listUsers(keyword, pageNumber));
+            dispatch(listRoles());
         }
         if (createSuccess) {
             setName("");
             setPassword("");
             setEmail("");
             setIsAdmin(false);
-
+            setRoleId('');
             setModalIsOpen(false);
         }
     }, [dispatch, userInfo, pageNumber, keyword, history, createSuccess]);
+
+    useEffect(() => {
+        //dispatch(allRoles());
+    }, [dispatch, history, userInfo]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -74,6 +89,10 @@ const UserScreen = ({ history }) => {
             errorsCheck.email = "Email es requerido";
         }
 
+        if (!roleId) {
+            errorsCheck.roleId = "Rol es requerido"; // Validar que el rol esté seleccionado
+        }
+
         if (Object.keys(errorsCheck).length > 0) {
             setErrors(errorsCheck);
         } else {
@@ -86,6 +105,7 @@ const UserScreen = ({ history }) => {
                 email: email,
                 password: password,
                 isAdmin: isAdmin,
+                roleId: roleId,
             };
 
             dispatch(register(user));
@@ -198,6 +218,24 @@ const UserScreen = ({ history }) => {
                         data={isAdmin}
                         setData={setIsAdmin}
                     />
+                      <div className="form-group">
+                        <label htmlFor="role">Rol</label>
+                        <select
+                            id="role"
+                            name="role"
+                            className="form-control"
+                            value={roleId}
+                            onChange={(e) => setRoleId(e.target.value)}
+                        >
+                            <option value="">Seleccione un rol</option>
+                            {console.log("ROLES LIST: ",roleList)}
+                            {console.log("ROLES: ",roles)}
+                            {roles!== undefined && roles.map((role) => (
+                                <option key={role.id} value={role.id}>{role.name}</option>
+                            ))}
+                        </select>
+                        {errors.roleId && <div className="text-danger">{errors.roleId}</div>}
+                    </div>
 
                     <hr />
                     <button type="submit" className="btn btn-primary">

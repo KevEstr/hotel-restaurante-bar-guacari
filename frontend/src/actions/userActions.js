@@ -111,7 +111,7 @@ export const listUsers =
 
 //register an user
 export const register = (user) => async (dispatch, getState) => {
-    const { name, email, password, isAdmin } = user;
+    const { name, email, password, isAdmin, roleId } = user;
 
     try {
         dispatch({
@@ -134,7 +134,7 @@ export const register = (user) => async (dispatch, getState) => {
         //get login data
         const { data } = await axios.post(
             "/api/users",
-            { name, email, password, isAdmin },
+            { name, email, password, isAdmin, roleId },
             config
         );
         dispatch({

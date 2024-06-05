@@ -20,6 +20,9 @@ import { RESERVATION_CREATE_RESET } from "../../constants/reservationConstants";
 import { allRooms } from "../../actions/roomActions";
 import { listClients } from "../../actions/clientActions";
 import { createReservation, updateClientHasReservation } from "../../actions/reservationActions";
+import { getServices, listServices } from '../../actions/serviceActions';
+import { listAgreements } from '../../actions/agreementActions';
+
 
 const ReservationCreateScreen = ({ history, match }) => {
     /* Get table from url */
@@ -39,6 +42,10 @@ const ReservationCreateScreen = ({ history, match }) => {
     const [end_date, setEndDate] = useState("");
     const [quantity, setQuantity] = useState(null);
     const [clientAgreementId, setClientAgreementId] = useState(null);
+    const [selectedServices, setSelectedServices] = useState([]);
+    const [clientAgreement, setClientAgreement] = useState(null);
+
+
 
     const dispatch = useDispatch();
 
@@ -51,22 +58,79 @@ const ReservationCreateScreen = ({ history, match }) => {
     const roomList = useSelector((state) => state.roomList);
     const { rooms } = roomList;
 
+    const serviceList = useSelector((state) => state.serviceList);
+    const { services } = serviceList;
+
     //reservation create state
     const reservationCreate = useSelector((state) => state.reservationCreate);
     const { success, loading, error, reservation } = reservationCreate;
 
-    useEffect(() => {
+    const agreementList = useSelector((state) => state.agreementList);
+    const { agreements, loading: loadingAgreements, error: errorAgreements } = agreementList;
+
+
+    /*useEffect(() => {
         dispatch(allRooms());
-    }, [dispatch, history, userInfo]);
+    }, [dispatch, history, userInfo]);*/
 
     useEffect(() => {
-        dispatch(allRooms());
+        dispatch(getServices());
+  }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(listAgreements());
+}, [dispatch]);
+
+    useEffect(() => {
+        dispatch(listServices());
+    }, [dispatch]);
+    
+      useEffect(() => {
+        //dispatch(allRooms());
         if (success) {
-            setReservationId(reservation.id);
+            dispatch(listServices());
             dispatch({ type: RESERVATION_CREATE_RESET });
             history.push("/activeReservation");
         }
     }, [dispatch, history, success, error, reservation]);
+
+    const handleServiceChange = (e, serviceId) => {
+        const { name, value } = e.target;
+        setSelectedServices((prevServices) => {
+            // Verifica si se está deseleccionando el servicio
+            if (value === "") {
+                // Elimina el servicio del estado
+                return prevServices.filter((service) => service.id !== serviceId);
+            } else {
+                // Verifica si el servicio ya está en selectedServices
+                const serviceExists = prevServices.find((service) => service.id === serviceId);
+                if (serviceExists) {
+                    // Actualiza el límite máximo del servicio existente
+                    return prevServices.map((service) =>
+                        service.id === serviceId ? { ...service, [name]: value } : service
+                    );
+                } else {
+                    // Agrega el servicio seleccionado al estado
+                    return [
+                        ...prevServices,
+                        { id: serviceId, maxLimit: value }
+                    ];
+                }
+            }
+        });
+    };
+
+    const handleAddService = (service) => {
+        const isSelected = selectedServices.some(item => item.id === service.id);
+    
+        if (isSelected) {
+            // Si el servicio ya está seleccionado, lo quitamos
+            setSelectedServices(prevServices => prevServices.filter(item => item.id !== service.id));
+        } else {
+            // Si el servicio no está seleccionado, lo agregamos
+            setSelectedServices(prevServices => [...prevServices, { id: service.id, maxLimit: '', name: service.name }]);
+        }
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -79,6 +143,9 @@ const ReservationCreateScreen = ({ history, match }) => {
         if (!client) {
             errorsCheck.client = "Cliente es requerido";
         }
+        if(selectedServices.length<1){
+            errorsCheck.selectedServices = "Debe seleccionar al menos 1 servicio";
+        }
 
         /* Check errors */
         if (Object.keys(errorsCheck).length > 0) {
@@ -86,6 +153,9 @@ const ReservationCreateScreen = ({ history, match }) => {
         } else {
             setErrors({});
         }
+
+        console.log("Servicios seleccionados:", selectedServices);
+
 
         if (Object.keys(errorsCheck).length === 0) {
             /* Create reservation */
@@ -99,12 +169,15 @@ const ReservationCreateScreen = ({ history, match }) => {
                 paymentId: 0,
                 note: note,
                 is_paid: 0,
+                services: selectedServices,
 
             };
             /* Make request */
 
             dispatch(updateClientHasReservation(reservation.clientId, true));
             dispatch(createReservation(reservation));
+            console.log("Datos de la reserva:", reservation);
+            setReservationId(reservation.id);
         }
     };
 
@@ -133,6 +206,9 @@ const ReservationCreateScreen = ({ history, match }) => {
         setClient(selectedClient);
         const selectedClientData = clients.find(client => client.id === selectedClient);
         setClientAgreementId(selectedClientData ? selectedClientData.agreementId : null);
+        const selectedClientAgreement = agreements.find(agreement => agreement.id === selectedClientData.agreementId);
+        setClientAgreement(selectedClientAgreement ? selectedClientAgreement : null);
+
     };
 
     const searchClients = (e) => {
@@ -238,6 +314,46 @@ const ReservationCreateScreen = ({ history, match }) => {
                                                 </div>
                                             
                                         </div>
+
+                                        <div style={{ flex: '1 1 45%', minWidth: '200px' }}>
+                                            <h3 className="card-title">Convenio: </h3>
+                                            {console.log("clientAgreement: ", clientAgreement )}
+                                            <label htmlFor="clientAgreementName">{clientAgreement && clientAgreement.name }</label>
+
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor="servicios">Servicios</label>
+                                            <div>{console.log("Services: ",services)}
+                                                {clientAgreement && clientAgreement.service && clientAgreement.service.map((service) => (
+                                                    <div key={service.id}>
+                                                        <label>
+                                                            <input
+                                                                type="checkbox"
+                                                                value={service.id}
+                                                                onChange={() => handleAddService(service)}
+                                                            />
+                                                            {service.name}
+                                                        </label>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            {errors.selectedServices && <Message message={errors.selectedServices} color={"warning"} />}
+                                        </div>{console.log("Servicios seleccionados: ",selectedServices)}
+                                        {selectedServices.map((service) => (
+                                            <div key={service.id}>
+                                                <label htmlFor={`maxLimit-${service.id}`}>
+                                                    Tope Máximo para {service.name}
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    id={`maxLimit-${service.id}`}
+                                                    name="maxLimit"
+                                                    value={service.maxLimit}
+                                                    onChange={(e) => handleServiceChange(e, service.id)}
+                                                />
+                                            </div>
+                                        ))}
                                         <div className="mt-4" style={{ marginTop: '20px' }}>
                                             {renderNoteTextarea()}
                                         </div>

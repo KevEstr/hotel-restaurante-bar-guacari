@@ -13,6 +13,7 @@ module.exports = (sequelize, DataTypes) => {
         static associate(models) {
             // define association here
             this.hasMany(models.Order, { foreignKey: "userId", as: "orders" });
+            this.belongsTo(models.Role, { foreignKey: "roleId", as: "role" });
         }
     }
     User.init(
@@ -22,6 +23,8 @@ module.exports = (sequelize, DataTypes) => {
             password: DataTypes.STRING,
             image: DataTypes.STRING,
             isAdmin: DataTypes.BOOLEAN,
+            roleId: DataTypes.INTEGER, // Añadir el campo roleId
+
         },
         {
             sequelize,

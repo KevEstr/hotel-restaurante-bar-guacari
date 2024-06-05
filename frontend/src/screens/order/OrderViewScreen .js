@@ -280,7 +280,7 @@ const OrderViewScreen = ({ history, match }) => {
     );
 
     const renderInfo = () => (
-        <>
+        <>  {console.log("order",order)}
             <div className="col-12 col-md-6">
                 {renderCartInfo()}
                 {renderOrderProducts()}

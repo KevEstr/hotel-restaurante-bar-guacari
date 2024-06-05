@@ -5,6 +5,9 @@ const Client = require("../models").Client;
 const Table = require("../models").Table;
 const Product = require("../models").Product;
 const Ingredient = require("../models").Ingredient;
+const OrderProduct = require("../models").OrderProduct;
+
+
 
 
 //utils
@@ -20,6 +23,38 @@ const {
     updateStockAndCreateMovement
 } = require("../utils/ingredient");
 
+// @desc    Fetch orders by client ID
+// @route   GET /api/orders/client/:id
+// @access  Private
+exports.getOrdersByClientId = asyncHandler(async (req, res) => {
+    const clientId = req.params.id;
+
+    const orders = await Order.findAll({
+        where: { clientId },
+        include: [
+            {
+                model: Product,
+                as: 'products',
+                through: { model: OrderProduct, as: "orderProducts" }
+            },
+            {
+                model: Client,
+                as: 'client',
+            },
+            {
+                model: Table,
+                as: 'table',
+            },
+        ],
+    });
+
+    if (orders) {
+        res.json(orders);
+    } else {
+        res.status(404);
+        throw new Error('Orders not found');
+    }
+});
 
 //@desc     Get all orders
 //@route    GET /api/orders
@@ -33,6 +68,11 @@ exports.getOrders = asyncHandler(async (req, res) => {
         include: [
             { model: Client, as: "client" },
             { model: Table, as: "table" },
+            {
+                model: Product,
+                as: "products",
+                through: { model: OrderProduct, as: "orderProducts" }
+            },
         ],
         attributes: {
             exclude: ["userId", "clientId", "tableId", "updatedAt"],
@@ -143,38 +183,31 @@ const findDifferences = (oldProducts, newProducts) => {
 //@access   Private/user
 exports.createOrder = asyncHandler(async (req, res) => {
     //get data from request
-    const { total, tableId, clientId, products, delivery, note } = req.body;
+    const { total, tableId, clientId, products, delivery, note, userId } = req.body;
 
     try {
         // Verificar si hay suficiente inventario
-        const stockAvailable = await verifyStock(products);
+        const createdOrder = await Order.create({
+            total,
+            tableId: !delivery ? tableId : null,
+            userId: userId,
+            clientId: clientId,
+            delivery: delivery,
+            note: note,
+        });
 
-        if (stockAvailable) {
-            // Crear la orden
-            const createdOrder = await Order.create({
-                total,
-                tableId: !delivery ? tableId : null,
-                userId: req.user.id,
-                clientId: clientId,
-                delivery: delivery,
-                note: note,
-            });
+        // Crear productos en la orden
+        await addProductsInOrder(createdOrder, products);
 
-            // Crear productos en la orden
-            await addProductsInOrder(createdOrder, products);
-
-            // Actualizar la mesa a ocupada si no es una entrega
-            if (!delivery) {
-                await updateTable(createdOrder.tableId, true);
-            }
-
-            // Actualizar el stock y crear movimientos de inventario
-            await updateStockAndCreateMovement(products, req.user.id, createdOrder.id,-1,false);
-
-            res.status(201).json(createdOrder);
-        } else {
-            res.status(400).json({ message: "There is no stock available" });
+        // Actualizar la mesa a ocupada si no es una entrega
+        if (!delivery) {
+            await updateTable(createdOrder.tableId, true);
         }
+
+        // Actualizar el stock y crear movimientos de inventario
+        await updateStockAndCreateMovement(products, userId, createdOrder.id,-1,false,true);
+
+        res.status(201).json(createdOrder);
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
@@ -213,15 +246,15 @@ const adjustInventoryForChanges = async (productChanges, userId, orderId) => {
     const { addedProducts, removedProducts, modifiedProducts } = productChanges;
 
     if(removedProducts!==null){
-        await updateStockAndCreateMovement(removedProducts, userId, orderId, 1, false);
+        await updateStockAndCreateMovement(removedProducts, userId, orderId, 1, false, false);
     }
-    //throw new Error(`addedProducts.lenght ${JSON.stringify(addedProducts, null, 2)}`);
+    //throw new Error(`addedProducts ${JSON.stringify(addedProducts, null, 2)}`);
     if(addedProducts!==null){
-        await updateStockAndCreateMovement(addedProducts, userId, orderId, -1, false);
+        await updateStockAndCreateMovement(addedProducts, userId, orderId, -1, false, false);
     }
     //throw new Error(`modifiedProducts.lenght ${JSON.stringify(modifiedProducts!==null, null, 2)}`);
     if(modifiedProducts!==null){
-    await updateStockAndCreateMovement(modifiedProducts, userId, orderId, 0, true);
+    await updateStockAndCreateMovement(modifiedProducts, userId, orderId, 0, true, false);
     }
 };
 
@@ -231,8 +264,7 @@ const adjustInventoryForChanges = async (productChanges, userId, orderId) => {
 //@access   Private/user
 exports.updateOrder = asyncHandler(async (req, res) => {
     const orderId = req.params.id;
-    const { total, tableId, clientId, products, delivery, note } = req.body;
-    const userId = req.user.id;
+    const { total, tableId, clientId, products, delivery, note, userId } = req.body;
 
     try {
         const order = await Order.findByPk(orderId);
@@ -241,10 +273,10 @@ exports.updateOrder = asyncHandler(async (req, res) => {
         }
 
         // Verificar si hay suficiente inventario para los nuevos productos
-        const stockAvailable = await verifyStock(products);
+        /*const stockAvailable = await verifyStock(products);
         if (!stockAvailable) {
             return res.status(400).json({ message: "There is no stock available for the updated products" });
-        }
+        }*/
 
         // Actualizar la orden
         order.total = total;
@@ -252,6 +284,7 @@ exports.updateOrder = asyncHandler(async (req, res) => {
         order.delivery = delivery;
         order.note = note;
         order.tableId = !delivery ? tableId : null;
+        order.userId= userId;
 
         const oldProducts = await order.getProducts({
             include: [
@@ -292,6 +325,7 @@ exports.updateOrder = asyncHandler(async (req, res) => {
         res.status(200).json({ message: "Order updated successfully" });
     } catch (error) {
         res.status(400).json({ message: error.message });
+        throw new Error("Órden no encontrada");
     }
 });
 

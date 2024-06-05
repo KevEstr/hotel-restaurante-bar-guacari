@@ -1,5 +1,6 @@
 const asyncHandler = require("express-async-handler");
 const User = require("../models").User;
+const Role = require("../models").Role;
 const generateToken = require("../utils/generateToken");
 const bcrypt = require("bcrypt");
 const { Op } = require("sequelize");
@@ -8,7 +9,7 @@ const { Op } = require("sequelize");
 //@route    POST /api/users
 //@access   Private/admin
 exports.registerUser = asyncHandler(async (req, res) => {
-    const { name, email, password, isAdmin } = req.body;
+    const { name, email, password, isAdmin, roleId } = req.body;
 
     //check if email is already in use
     const userExists = await User.findOne({ where: { email } });
@@ -23,6 +24,7 @@ exports.registerUser = asyncHandler(async (req, res) => {
         email,
         password,
         isAdmin,
+        roleId,
     });
     if (user) {
         //return created user
@@ -32,6 +34,7 @@ exports.registerUser = asyncHandler(async (req, res) => {
             email: user.email,
             isAdmin: user.isAdmin,
             image: user.image,
+            roleId: user.roleId,
         });
     } else {
         res.status(400);

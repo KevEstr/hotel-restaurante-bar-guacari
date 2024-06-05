@@ -18,6 +18,9 @@ import {
     ORDER_STATISTICS_REQUEST,
     ORDER_STATISTICS_SUCCESS,
     ORDER_STATISTICS_FAIL,
+    CLIENT_ORDER_LIST_REQUEST,
+    CLIENT_ORDER_LIST_SUCCESS,
+    CLIENT_ORDER_LIST_FAIL,
 } from "../constants/orderConstants";
 
 import { 
@@ -83,9 +86,41 @@ export const getStatistics = () => async (dispatch, getState) => {
     }
 };
 
+/*export const listOrdersByClient = (clientId) => async (dispatch, getState) => {
+    dispatch(listOrders({ clientId }));
+};*/
+
+export const listOrdersByClient = (clientId) => async (dispatch, getState) => {
+    try {
+        dispatch({ type: CLIENT_ORDER_LIST_REQUEST });
+
+        const { userLogin: { userInfo } } = getState();
+
+        const config = {
+            headers: {
+                Authorization: `Bearer ${userInfo.token}`,
+            },
+        };
+
+        const { data } = await axios.get(`/api/orders/client/${clientId}`, config);
+
+        dispatch({
+            type: CLIENT_ORDER_LIST_SUCCESS,
+            payload: data,
+        });
+    } catch (error) {
+        dispatch({
+            type: CLIENT_ORDER_LIST_FAIL,
+            payload: error.response && error.response.data.message
+                ? error.response.data.message
+                : error.message,
+        });
+    }
+};
+
 //get all orders with pagination
 export const listOrders = (options) => async (dispatch, getState) => {
-    const { keyword, pageNumber, delivery } = options;
+    const { keyword, pageNumber, delivery, clientId } = options;
     try {
         dispatch({
             type: ORDER_LIST_REQUEST,
@@ -103,21 +138,34 @@ export const listOrders = (options) => async (dispatch, getState) => {
             },
         };
 
-        //get all orders
-        const { data } = await axios.get(
-            `/api/orders/?keyword=${keyword}&pageNumber=${pageNumber}${
-                delivery ? "&delivery=true" : ""
-            }`,
-            config
-        );
+        // Construct query params
+        let query = `/api/orders/?`;
+        if (keyword) query += `keyword=${keyword}&`;
+        if (pageNumber) query += `pageNumber=${pageNumber}&`;
+        if (delivery) query += `delivery=true&`;
+        if (clientId) query += `clientId=${clientId}`;
+
+        const { data } = await axios.get(query, config);
 
         dispatch({
             type: ORDER_LIST_SUCCESS,
             payload: data,
         });
+        dispatch({
+            type: "ORDER_LIST_BY_CLIENT_SUCCESS",
+            payload: data,
+        });
     } catch (error) {
         dispatch({
             type: ORDER_LIST_FAIL,
+            payload:
+                error.response && error.response.data.message
+                    ? error.response.data.message
+                    : error.message,
+        });
+
+        dispatch({
+            type: "ORDER_LIST_BY_CLIENT_FAIL",
             payload:
                 error.response && error.response.data.message
                     ? error.response.data.message

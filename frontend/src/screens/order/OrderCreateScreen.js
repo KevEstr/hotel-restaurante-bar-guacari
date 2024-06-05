@@ -41,6 +41,7 @@ import {
 
 import { listProducts, createProduct } from "../../actions/productActions";
 import { listCategories } from "../../actions/categoryActions";
+import { listUsers, register } from "../../actions/userActions";
 
 const OrderCreateScreen = ({ match }) => {
     const history = useHistory();  // Usando useHistory para la navegación
@@ -62,6 +63,8 @@ const OrderCreateScreen = ({ match }) => {
     const [keyword, setKeyword] = useState("");
     const [ingredientStocks, setIngredientStocks] = useState({});
     const [productStocks, setProductStocks] = useState({});
+    const [user, setUser] = useState(null);
+
 
 
     const dispatch = useDispatch();
@@ -87,13 +90,22 @@ const OrderCreateScreen = ({ match }) => {
     const orderCreate = useSelector((state) => state.orderCreate);
     const { success, loading, error } = orderCreate;
 
+    const userList = useSelector((state) => state.userList);
+    const { loading:usersLoading, error:usersError, users, page, pages } = userList;
+
     useEffect(() => {
         dispatch(allTables());
     }, [dispatch, history, userInfo]);
 
     useEffect(() => {
+        dispatch(listUsers());
+        dispatch(listClients("", "", true)); // Load clients with reservation on mount
+    }, [dispatch]);
+
+    useEffect(() => {
         dispatch(allTables());
         dispatch(listCategories())
+        console.log("clientes: ", clients)
         if (success) {
             dispatch({ type: ORDER_CREATE_RESET });
             if (delivery) {
@@ -119,6 +131,9 @@ const OrderCreateScreen = ({ match }) => {
         if (productsInOrder.length < 1) {
             errorsCheck.products = "Órden no puede estar vacía";
         }
+        if (!user) {
+            errorsCheck.user = "Usuario es requerido";
+        }
 
         /* Check errors */
         if (Object.keys(errorsCheck).length > 0) {
@@ -128,6 +143,7 @@ const OrderCreateScreen = ({ match }) => {
         }
 
         if (Object.keys(errorsCheck).length === 0) {
+            console.log("USUARIO: ",user)
             console.log("Productos en la orden: ",productsInOrder)
             /* Create order */
             const order = {
@@ -137,6 +153,7 @@ const OrderCreateScreen = ({ match }) => {
                 products: productsInOrder,
                 delivery: delivery,
                 note: note,
+                userId: user,
             };
             /* Make request */
             console.log("ORDEN A CREAR: ",order)
@@ -225,7 +242,7 @@ const OrderCreateScreen = ({ match }) => {
     );
 
     const searchClients = (e) => {
-        dispatch(listClients(e.target.value));
+        dispatch(listClients(e.target.value, "",true));
     };
 
     const renderClientsSelect = () => (
@@ -233,11 +250,24 @@ const OrderCreateScreen = ({ match }) => {
             <Select
                 data={client}
                 setData={setClient}
-                items={clients}
+                items={clients.filter(client => client.has_reservation)}
                 search={searchClients}
             />
             {errors.client && (
                 <Message message={errors.client} color={"warning"} />
+            )}
+        </>
+    );
+
+    const renderUserSelect = () => (
+        <>
+            <Select
+                data={user}
+                setData={setUser}
+                items={users.filter(user => user.roleId!==1 && user.roleId!==null)}
+            />
+            {errors.user && (
+                <Message message={errors.user} color={"warning"} />
             )}
         </>
     );
@@ -320,6 +350,10 @@ const OrderCreateScreen = ({ match }) => {
                                     <div className="col-12 col-lg-12">
                                             {renderCart()}
                                             <div >
+                                                <h3 className="card-title">Selecciona tu nombre:</h3>
+                                                <div className="col-12 col-md-6">
+                                                    {renderUserSelect()}
+                                                </div>
                                                 <h3 className="card-title">Selecciona la mesa:</h3>
                                                 <div className="col-12 col-md-6">
                                                     {renderTablesSelect()}

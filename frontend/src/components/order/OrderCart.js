@@ -67,7 +67,7 @@ const OrderCart = ({ productsInOrder, setProductsInOrder, ingredientStocks, setI
         console.log("productsInOrder: ",productsInOrder)
         //remove product
 
-        if (product.isComposite) {
+        /*if (product.isComposite) {
             const updatedStocks = { ...ingredientStocks };
 
             for (const ingredient of product.ingredients) {
@@ -93,7 +93,14 @@ const OrderCart = ({ productsInOrder, setProductsInOrder, ingredientStocks, setI
                 return item.id !== product.id;
             });
             setProductsInOrder(productsIn);
-        }
+        }*/
+
+
+
+        const productsIn = productsInOrder.filter(function (item) {
+            return item.id !== product.id;
+        });
+        setProductsInOrder(productsIn);
         
 
 
@@ -104,7 +111,7 @@ const OrderCart = ({ productsInOrder, setProductsInOrder, ingredientStocks, setI
     const addUnit = async (e, product) => {
         e.preventDefault();
 
-        if (product.isComposite) {
+        /*if (product.isComposite) {
             let isStockAvailable = await checkCompositeStock(product);
             if (!isStockAvailable) {
                 alert("No hay suficiente stock de ingredientes.");
@@ -128,7 +135,13 @@ const OrderCart = ({ productsInOrder, setProductsInOrder, ingredientStocks, setI
                 el.id === product.id ? { ...el, quantity: el.quantity + 1 } : el
             );
             setProductsInOrder(newProducts);
-        }
+        }*/
+
+        //dispatch(listProductDetails(product.id));
+        const newProducts = productsInOrder.map((el) =>
+            el.id === product.id ? { ...el, quantity: el.quantity + 1 } : el
+        );
+        setProductsInOrder(newProducts);
         
     }
 
@@ -136,7 +149,7 @@ const OrderCart = ({ productsInOrder, setProductsInOrder, ingredientStocks, setI
     const removeUnit = (e, product) => {
         e.preventDefault();
 
-        if(product.isComposite){
+        /*if(product.isComposite){
             const updatedStocks = { ...ingredientStocks };
             console.log("ORDER CART REMOVE ingredientStocks ",ingredientStocks)
             for (const ingredient of product.ingredients) {
@@ -159,7 +172,12 @@ const OrderCart = ({ productsInOrder, setProductsInOrder, ingredientStocks, setI
                 el.id === product.id ? { ...el, quantity: el.quantity - 1 } : el
             );
             setProductsInOrder(newProducts);
-        }
+        }*/
+
+        const newProducts = productsInOrder.map((el) =>
+            el.id === product.id ? { ...el, quantity: el.quantity - 1 } : el
+        );
+        setProductsInOrder(newProducts);
         
     };
 
@@ -188,7 +206,7 @@ const OrderCart = ({ productsInOrder, setProductsInOrder, ingredientStocks, setI
                                 -
                             </button>
                             <button
-                                disabled={productIn.isComposite ? false : productIn.quantity >= productIn.stock}
+                                //disabled={productIn.isComposite ? false : productIn.quantity >= productIn.stock}
                                 className="btn btn-primary"
                                 onClick={(e) => addUnit(e, productIn)}
                             >

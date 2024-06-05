@@ -60,7 +60,7 @@ exports.updateProduct = asyncHandler(async (req, res) => {
 
         // Guardar los cambios del producto
         // Si el producto es compuesto y tiene ingredientes, actualizarlos
-        if (isComposite && ingredients && ingredients.length > 0) {
+        if (isComposite===true && ingredients && ingredients.length > 0) {
             // Limpiar los ingredientes existentes en la tabla intermedia
             await ProductIngredient.destroy({ where: { productId: product.id } });
 
@@ -68,9 +68,23 @@ exports.updateProduct = asyncHandler(async (req, res) => {
             await addIngredientsInProduct(product, ingredients);
         }
         
-        if(!isComposite){
+        if(isComposite===false){
 
             let oldStock = Number(product.stock);
+            if(oldStock<0){
+                await ProductInventoryMovement.create({
+                    productId: product.id,
+                    ingredientId: null,
+                    userId: 2,
+                    quantity: -oldStock,
+                    type: "entrada",
+                    concept: `Ajuste de inventario automático por existencia negativa.`,
+                    totalPrice: product.averagePrice*-oldStock,
+                });
+                product.stock=0;
+                product.save();
+                oldStock=0;
+            }
             let newQuantity = Number(quantity);
         
             if (newQuantity) {

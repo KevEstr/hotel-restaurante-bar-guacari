@@ -55,11 +55,14 @@ const Main = () => {
     const { userInfo } = userLogin;
 
     return (
+        
         <>
+        
             <Header />
             <Menu />
 
             <div className="content-wrapper">
+            
                 <Switch>
                     <PrivateRoute
                         path="/active"
@@ -80,9 +83,9 @@ const Main = () => {
                     <PrivateRoute path="/category" component={CategoryScreen} />
 
                     <PrivateRoute path="/agreement" component={AgreementScreen} />
-
                     <PrivateRoute
-                        path="/agreement/:id/edit"
+                    
+                        path="/agreements/:id/edit"
                         component={AgreementEditScreen}
                     />
 

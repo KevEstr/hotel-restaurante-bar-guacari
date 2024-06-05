@@ -14,6 +14,7 @@ import Pagination from "../../components/Pagination";
 
 /* Actions */
 import { createAgreement, listAgreements } from "../../actions/agreementActions";
+import { getServices } from '../../actions/serviceActions';
 
 /* Styles */
 import { modalStyles } from "../../utils/styles";
@@ -38,6 +39,12 @@ const AgreementScreen = ({ history, match }) => {
     const userLogin = useSelector((state) => state.userLogin);
     const { userInfo } = userLogin;
 
+    const [serviceIds, setServiceIds] = useState([]);
+
+    const serviceList = useSelector((state) => state.serviceList);
+    const { services } = serviceList;
+
+
     const agreementCreate = useSelector((state) => state.agreementCreate);
     const {
         loading: createLoading,
@@ -46,6 +53,7 @@ const AgreementScreen = ({ history, match }) => {
     } = agreementCreate;
 
     useEffect(() => {
+        dispatch(getServices());
         dispatch(listAgreements(keyword, pageNumber));
 
         if (createSuccess) {
@@ -76,14 +84,23 @@ const AgreementScreen = ({ history, match }) => {
         if (Object.keys(errorsCheck).length === 0) {
             const agreement = {
                 name: name,
-                max_daily_food: max_daily_food,
-                max_daily_laundry: max_daily_laundry,
-                max_daily_hydration: max_daily_hydration,
-                userId: userId,
+                serviceIds: serviceIds,
             };
-
+            console.log("Convenio a crear: ", agreement)
             dispatch(createAgreement(agreement));
+
+            setName('');
+            setServiceIds([]);
         }
+    };
+
+    const handleCheckboxChange = (id) => {
+        if (serviceIds.includes(id)) {
+            setServiceIds(serviceIds.filter((sid) => sid !== id));
+        } else {
+            setServiceIds([...serviceIds, id]);
+        }
+        console.log("SERVICIOS AÑADIDOS: ",serviceIds)
     };
 
     const renderModalCreateAgreement = () => (
@@ -108,30 +125,19 @@ const AgreementScreen = ({ history, match }) => {
                         setData={setName}
                         errors={errors}
                     />
-
-                    <Input
-                        name={"Tope de Alimentación:"}
-                        type={"number"}
-                        data={max_daily_food}
-                        setData={setMaxDailyFood}
-                        errors={errors}
-                    />
-
-                    <Input
-                        name={"Tope de Lavanderia:"}
-                        type={"number"}
-                        data={max_daily_laundry}
-                        setData={setMaxDailyLaundry}
-                        errors={errors}
-                    />
-
-                    <Input
-                        name={"Tope de Hidratación:"}
-                        type={"number"}
-                        data={max_daily_hydration}
-                        setData={setMaxDailyHydration}
-                        errors={errors}
-                    />
+                    <div>
+                    {services.map((service) => (
+                        <div key={service.id}>
+                            <input
+                                type="checkbox"
+                                id={service.id}
+                                onChange={() => handleCheckboxChange(service.id)}
+                            />
+                            <label htmlFor={service.id}>{service.name}</label>
+                        </div>
+                        ))}
+                    </div>
+                    
 
                     <hr />
                     <button type="submit" className="btn btn-primary">
@@ -154,10 +160,6 @@ const AgreementScreen = ({ history, match }) => {
                 <tr>
                     <th>ID</th>
                     <th>Convenio</th>
-                    <th>Tope de Alimentación:</th>
-                    <th>Tope de Lavanderia:</th>
-                    <th>Tope de Hidratación:</th>
-                    <th>Usuario</th>
                     <th className="d-none d-sm-table-cell">Creado en</th>
                     <th></th>
                 </tr>
@@ -167,18 +169,12 @@ const AgreementScreen = ({ history, match }) => {
                     <tr key={agreement.id}>
                         <td>{agreement.id}</td>
                         <td>{agreement.name}</td>
-                        <td>{agreement.max_daily_food}</td>
-                        <td>{agreement.max_daily_laundry}</td>
-                        <td>{agreement.max_daily_hydration}</td>
-                        <td>{agreement.userId}</td>
-
-
                         <td className="d-none d-sm-table-cell">
                             {agreement.createdAt.slice(0, 10)}
                         </td>
                         <td>
-                            <Link
-                                to={`/agreement/${agreement.id}/edit`}
+                        <Link
+                                to={`/agreements/${agreement.id}/edit`}
                                 className="btn btn-warning btn-lg"
                             >
                                 Editar

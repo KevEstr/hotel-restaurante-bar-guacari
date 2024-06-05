@@ -20,6 +20,15 @@ module.exports = (sequelize, DataTypes) => {
                 otherkey: "roomId",
                 as: "room",
             });
+
+            this.belongsToMany(models.Service, {
+                through: models.ReservationService,
+                foreignKey: "reservationId",
+                otherKey: "serviceId", // Corregido de otherkey a otherKey
+                as: "service",
+            });
+            
+
             this.belongsTo(models.User, { foreignKey: "userId", as: "user" });
         }
     }

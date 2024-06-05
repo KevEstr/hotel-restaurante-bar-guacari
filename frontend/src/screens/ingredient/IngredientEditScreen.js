@@ -6,6 +6,8 @@ import Input from "../../components/form/Input";
 import HeaderContent from "../../components/HeaderContent";
 import ButtonGoBack from "../../components/ButtonGoBack";
 import LoaderHandler from "../../components/loader/LoaderHandler";
+import Message from "../../components/Message";
+
 
 /* Constants */
 import {
@@ -151,7 +153,14 @@ const IngredientEditScreen = ({ history, match }) => {
             <div className="form-group">
                 <label>Cantidad en el Inventario:</label>
                 <input type="text" className="form-control" value={stock} readOnly />
-            </div>
+                {stock < 0 && 
+                <Message 
+                    message={`Este ingrediente tiene existencia negativa, se recomienda realizar inventario y registrar la entrada de mercancía actual.<br /> 
+                    <br /> 
+                    <strong>NOTA:</strong> El ajuste de cantidad ${stock} se realiza de forma automática.`} 
+                    color={"danger"} 
+                />
+            }            </div>
             <label>Tipo de Movimiento:</label>
             <div>
                 <input

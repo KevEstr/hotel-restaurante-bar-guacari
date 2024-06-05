@@ -75,7 +75,7 @@ const ProductsTable = ({
     const addProduct = async (e, product) => {
         e.preventDefault();
         console.log("TABLE productDetails: ",productDetails)
-        if (product.isComposite) {
+        /*if (product.isComposite) {
             let isStockAvailable = await checkCompositeStock(product);
             if (!isStockAvailable) {
                 alert("No hay suficiente stock de ingredientes.");
@@ -95,8 +95,9 @@ const ProductsTable = ({
             setProductStocks(updatedStocks);
             setProductToAdd(product);
             dispatch(listProductDetails(product.id));
-        }
-        
+        }*/
+        setProductToAdd(product);
+        dispatch(listProductDetails(product.id));
     };
 
     const productList = useSelector((state) => state.productList);
@@ -125,12 +126,12 @@ const ProductsTable = ({
             productsFromState.forEach((product) => {
                 stocks[product.id] = Number(product.stock);
             });
-            setProductStocks(stocks);
+            //setProductStocks(stocks);
             setProducts(mapProducts(productsFromState));
         }
     }, [productsFromState]);
 
-    useEffect(() => {
+    /*useEffect(() => {
         if (ingredients.length > 0) {
             const stocks = {};
             ingredients.forEach((ingredient) => {
@@ -142,7 +143,7 @@ const ProductsTable = ({
 
 
         }
-    }, [ingredients]);
+    }, [ingredients]);*/
    
 
     useEffect(() => {

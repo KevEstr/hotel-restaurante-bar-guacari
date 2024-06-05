@@ -23,7 +23,27 @@ import {
     ORDER_STATISTICS_FAIL,
     ORDER_STATISTICS_RESET,
     ORDER_CREATE_RESET,
+    CLIENT_ORDER_LIST_REQUEST,
+    CLIENT_ORDER_LIST_SUCCESS,
+    CLIENT_ORDER_LIST_FAIL,
+    CLIENT_ORDER_LIST_RESET,
 } from "../constants/orderConstants";
+
+export const orderListByClientReducer = (
+    state = { loading: true, orders: [] },
+    action
+) => {
+    switch (action.type) {
+        case "ORDER_LIST_BY_CLIENT_REQUEST":
+            return { ...state, loading: true };
+        case "ORDER_LIST_BY_CLIENT_SUCCESS":
+            return { ...state, loading: false, orders: action.payload };
+        case "ORDER_LIST_BY_CLIENT_FAIL":
+            return { ...state, loading: false, error: action.payload };
+        default:
+            return state;
+    }
+};
 
 export const orderListReducer = (
     state = { loading: true, orders: [] },
@@ -43,11 +63,22 @@ export const orderListReducer = (
             return { loading: false, error: action.payload };
         case ORDER_LIST_RESET:
             return { orders: [] };
+        case CLIENT_ORDER_LIST_REQUEST:
+            return { ...state, loading: true };
+        case CLIENT_ORDER_LIST_SUCCESS:
+            return {
+                ...state,
+                loading: false,
+                clientOrders: action.payload,
+            };
+        case CLIENT_ORDER_LIST_FAIL:
+            return { ...state, loading: false, error: action.payload };
+        case CLIENT_ORDER_LIST_RESET:
+            return { ...state, clientOrders: [] };
         default:
             return state;
     }
-};
-
+    };    
 export const statisticsReducer = (
     state = {
         loading: true,

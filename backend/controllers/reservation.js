@@ -4,18 +4,30 @@ const { Op } = require("sequelize");
 const Client = require("../models").Client;
 const Room = require("../models").Room;
 const RoomReservation = require("../models").RoomReservation;
+const { ReservationService } = require("../models");
+const Service = require("../models").Service
+const Agreement = require("../models").Agreement;
+const { AgreementService } = require("../models");
+const { User } = require("../models").User;
+
+
+
+
 
 const {
-    updateRoom,
-} = require("../controllers/room"); 
+    updateRoom
+} = require("../utils/reservation");
 
 //@desc     Create a Order
 //@route    POST /api/orders
 //@access   Private/user
 exports.createReservation = asyncHandler(async (req, res) => {
     //get data from request
-    const {price, start_date, end_date, quantity, clientId, roomId, note, paymentId, is_paid} = req.body;
+    const {price, start_date, end_date, quantity, clientId, roomId, note, paymentId, is_paid, services} = req.body;
+    console.log("Cuerpo de la solicitud:", req.body);
 
+
+    try {
         const createdReservation = await Reservation.create({
             price,
             start_date,
@@ -27,14 +39,14 @@ exports.createReservation = asyncHandler(async (req, res) => {
             note: note,
             paymentId: paymentId,
             is_paid: is_paid,
-        });
+                });
 
         // Create the entry in the RoomReservation table
-            await RoomReservation.create({
-                roomId,
-                reservationId: createdReservation.id,
-                active_status: true,
-            });
+        await RoomReservation.create({
+            roomId,
+            reservationId: createdReservation.id,
+            active_status: true,
+        });
 
         const room = await Room.findByPk(roomId);
         if (room) {
@@ -42,12 +54,25 @@ exports.createReservation = asyncHandler(async (req, res) => {
             await room.save();
         }
 
+        if (services && services.length > 0) {
+            await Promise.all(services.map(async (service) => {
+                await ReservationService.create({
+                    reservationId: createdReservation.id,
+                    serviceId: service.id,
+                    maxLimit: service.maxLimit,
+                });
+            }));
+        }
+
         //update table to occupied
-        await updateRoom(createdReservation.roomId, "hola", true);
+        await updateRoom(createdReservation.roomId, true);
 
         res.status(201).json(createdReservation);
-        
-    });
+    } catch (error) {
+        console.error("Error creating reservation:", error);
+        res.status(500).json({ message: "Error creating reservation", services });
+    }
+});
 
 //@desc     Get all orders
 //@route    GET /api/orders
@@ -61,6 +86,14 @@ exports.getReservations = asyncHandler(async (req, res) => {
         include: [
             { model: Client, as: "client" },
             { model: Room, as: "room" },
+            {
+                model: Service,
+                as: "services",
+                through: {
+                    model: ReservationService,
+                    attributes: ["maxLimit"],
+                },
+            },
         ],
         attributes: {
             exclude: ["userId", "clientId", "roomId", "updatedAt"],
@@ -87,20 +120,63 @@ exports.getReservations = asyncHandler(async (req, res) => {
     res.json({ reservations, page, pages: Math.ceil(count / pageSize) });
 });
 
+exports.getReservation = asyncHandler(async (req, res) => {
+    const reservation = await Reservation.findByPk(req.params.id, {
+      include: [
+        {
+          model: Client,
+          as: 'client'
+        },
+        { model: Service, as: "service", through: ReservationService, include: [
+            {
+              model: Agreement,
+              as: "agreement",
+              through: AgreementService,
+            },
+          ],},
+      ]
+    });
+  
+    if (reservation) {
+      res.json(reservation);
+    } else {
+      res.status(404);
+      throw new Error("reservation not found");
+    }
+  });
+
 //@desc     Get order by ID
 //@route    GET /api/order/:id
 //@access   Private/user
-exports.getReservation = asyncHandler(async (req, res) => {
+/*exports.getReservation = asyncHandler(async (req, res) => {
     const reservation = await Reservation.findByPk(req.params.id, {
-        include: { all: true, nested: true },
+      include: [
+        {
+          model: Client, 
+          as: 'client', 
+        },
+        {
+          model: Service, 
+          as: 'services', 
+          through: {
+            model: ReservationService, 
+          },
+          include: [
+            {
+              model: Agreement, 
+              as: 'agreements', 
+            },
+          ],
+        },
+      ],
     });
     if (reservation) {
-        res.json(reservation);
+      res.json(reservation);
     } else {
-        res.status(404);
-        throw new Error("reservation not found");
+      res.status(404);
+      throw new Error("reservation not found");
     }
-});
+  });*/
 
 //@desc     Update order to paid
 //@route    POST /api/orders/:id/pay
@@ -116,7 +192,7 @@ exports.updateReservation = asyncHandler(async (req, res) => {
     });
 
     if (reservation) {
-        const { price, start_date, end_date, quantity, clientId, roomId, note, paymentId, is_paid } = req.body;
+        const { price, start_date, end_date, quantity, clientId, roomId, note, paymentId, is_paid, services } = req.body;
 
         if (price !== undefined) reservation.price = price;
         if (start_date !== undefined) reservation.start_date = start_date;
@@ -127,6 +203,17 @@ exports.updateReservation = asyncHandler(async (req, res) => {
         if (note !== undefined) reservation.note = note;
         if (paymentId !== undefined) reservation.paymentId = paymentId;
         if (is_paid !== undefined) reservation.is_paid = is_paid;
+        await ReservationService.destroy({ where: { reservationId: reservation.id } });
+
+        if (services && services.length > 0) {
+            await Promise.all(services.map(async (service) => {
+                await ReservaServicio.create({
+                    reservationId: reserva.id,
+                    serviceId: service.id,
+                    maxLimit: service.maxLimit,
+                });
+            }));
+        }
 
         const updatedReservation = await reservation.save();
         res.json(updatedReservation);

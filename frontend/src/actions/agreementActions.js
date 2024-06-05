@@ -61,7 +61,7 @@ export const listAgreements =
 
 //create a category
 export const createAgreement = (agreement) => async (dispatch, getState) => {
-    const { name, max_daily_food, max_daily_laundry, max_daily_hydration, userId } = agreement;
+    const { name, serviceIds } = agreement;
 
     try {
         dispatch({
@@ -82,7 +82,7 @@ export const createAgreement = (agreement) => async (dispatch, getState) => {
         };
 
         //create category
-        const { data } = await axios.post("/api/agreements", { name, max_daily_food, max_daily_laundry, max_daily_hydration, userId }, config);
+        const { data } = await axios.post("/api/agreements", { name, serviceIds }, config);
         dispatch({
             type: AGREEMENT_CREATE_SUCCESS,
             payload: data,

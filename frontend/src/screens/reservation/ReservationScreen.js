@@ -9,12 +9,14 @@ import Search from "../../components/Search";
 import LoaderHandler from "../../components/loader/LoaderHandler";
 import Pagination from "../../components/Pagination";
 
+
 /* Actions */
 import { listReservations } from "../../actions/reservationActions";
 
 const ReservationScreen = ({ history }) => {
     const [pageNumber, setPageNumber] = useState(1);
     const [keyword, setKeyword] = useState("");
+
 
     const dispatch = useDispatch();
 
@@ -23,6 +25,8 @@ const ReservationScreen = ({ history }) => {
 
     const reservationList = useSelector((state) => state.reservationList);
     const { loading, error, reservations, page, pages } = reservationList;
+
+    
 
     useEffect(() => {
         dispatch(listReservations({ keyword, pageNumber}));
@@ -35,6 +39,8 @@ const ReservationScreen = ({ history }) => {
             </button>
         </Link>
     );
+
+
 
     const renderTable = () => (
         // console.log(reservations);

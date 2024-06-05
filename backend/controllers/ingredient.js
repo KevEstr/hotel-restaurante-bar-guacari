@@ -91,6 +91,19 @@ exports.updateIngredient = asyncHandler(async (req, res) => {
         let newQuantity= Number(quantity)
         ingredient.name = name;
         // Registrar el movimiento de inventario si cambia el stock
+        if(oldStock<0){
+            await InventoryMovement.create({
+                ingredientId: ingredient.id,
+                userId: 2,
+                quantity: -oldStock,
+                type: "entrada",
+                concept: `Ajuste de inventario automático por existencia negativa.`,
+                totalPrice: ingredient.averagePrice*-oldStock,
+            });
+            ingredient.stock=0;
+            ingredient.save();
+            oldStock=0;
+        }
         if (newQuantity) {
             let movementType;
             if (operation==='entrada') {

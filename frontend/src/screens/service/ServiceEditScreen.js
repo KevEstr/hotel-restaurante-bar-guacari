@@ -18,17 +18,16 @@ import {
     updateAgreement,
     listAgreementDetails,
 } from "../../actions/agreementActions";
-
-import { getServices } from '../../actions/serviceActions';
-
 import LoaderHandler from "../../components/loader/LoaderHandler";
 
-const AgreementEditScreen = ({ history, match }) => {                         
+const AgreementEditScreen = ({ history, match }) => {
+
     const agreementId = parseInt(match.params.id);
     const [name, setName] = useState("");
+    const [max_daily_food, setMaxDailyFood] = useState("");
+    const [max_daily_laundry, setMaxDailyLaundry] = useState("");
+    const [max_daily_hydration, setMaxDailyHydration] = useState("");
     const [userId, setUserId] = useState("");
-    const [serviceIds, setServiceIds] = useState([]);
-
 
     const [errors, setErrors] = useState({});
     const dispatch = useDispatch();
@@ -36,9 +35,6 @@ const AgreementEditScreen = ({ history, match }) => {
     //category details state
     const agreementDetails = useSelector((state) => state.agreementDetails);
     const { loading, error, agreement } = agreementDetails;
-
-    const serviceList = useSelector((state) => state.serviceList);
-    const { services } = serviceList;
 
     //category update state
     const agreementUpdate = useSelector((state) => state.agreementUpdate);
@@ -48,36 +44,29 @@ const AgreementEditScreen = ({ history, match }) => {
         success: successUpdate,
     } = agreementUpdate;
 
-      useEffect(() => {
+    useEffect(() => {
         //after update redirect to users
         if (successUpdate) {
-          dispatch({ type: AGREEMENT_UPDATE_RESET });
-          dispatch({ type: AGREEMENT_DETAILS_RESET });
-          dispatch({ type: AGREEMENT_DELETE_RESET });
-          history.push("/agreement");
+            dispatch({ type: AGREEMENT_UPDATE_RESET });
+            dispatch({ type: AGREEMENT_DETAILS_RESET });
+            dispatch({ type: AGREEMENT_DELETE_RESET });
+            history.push("/agreement");
         }
-        console.log("Agreement: ",agreement)
-        //console.log("Agreement length: ", Object.keys(agreement).length); 
 
-        if (agreement && Object.keys(agreement).length>0) {
-            console.log("NAME: ",agreement.agreement.name); 
-            console.log("ID: ",agreement.agreement.id); 
-            console.log("agreementId: ",agreementId); 
-
-            if (!agreement.agreement.name || agreement.agreement.id !== agreementId) {
+        //load product data
+        if (agreement) {
+            if (!agreement.name || agreement.id !== agreementId) {
                 dispatch(listAgreementDetails(agreementId));
-              }
-              else{
-                setName(agreement.agreement.name);
-                setServiceIds(agreement.services.map(service => service.id));
-
-              }
-          }
-      }, [dispatch, history, successUpdate, agreementId, agreement]);
-
-      useEffect(() => {
-          dispatch(listAgreementDetails(agreementId));
-      }, [dispatch, agreementId]);
+            } else {
+                //set states
+                setName(agreement.name);
+                setMaxDailyFood(agreement.max_daily_food);
+                setMaxDailyLaundry(agreement.max_daily_laundry);
+                setMaxDailyHydration(agreement.max_daily_hydration);
+                setUserId(agreement.user_id);
+            }
+        }
+    }, [dispatch, history, agreementId, agreement, successUpdate]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -85,10 +74,6 @@ const AgreementEditScreen = ({ history, match }) => {
 
         if (!name) {
             errorsCheck.name = "Nombre es requerido";
-        }
-        if(serviceIds.length<1){
-            errorsCheck.serviceIds = "Debe seleccionar al menos  un servicio";
-
         }
 
         if (Object.keys(errorsCheck).length > 0) {
@@ -101,20 +86,14 @@ const AgreementEditScreen = ({ history, match }) => {
             dispatch(
                 updateAgreement({
                     id: agreementId,
-                    name: name,
-                    serviceIds: serviceIds,
+                    name,
+                    max_daily_food,
+                    max_daily_laundry,
+                    max_daily_hydration,
+                    user_id: userId,
                 })
             );
         }
-    };
-
-    const handleCheckboxChange = (id) => {
-        if (serviceIds.includes(id)) {
-            setServiceIds(serviceIds.filter((sid) => sid !== id));
-        } else {
-            setServiceIds([...serviceIds, id]);
-        }
-        console.log("SERVICIOS AÑADIDOS: ",serviceIds)
     };
 
     const renderForm = () => (
@@ -126,19 +105,29 @@ const AgreementEditScreen = ({ history, match }) => {
                 setData={setName}
                 errors={errors}
             />
-            <div>
-                {services && services.map((service) => (
-                    <div key={service.id}>
-                        <input
-                            type="checkbox"
-                            id={service.id}
-                            checked={serviceIds.includes(service.id)}
-                            onChange={() => handleCheckboxChange(service.id)}
-                        />
-                        <label htmlFor={service.id}>{service.name}</label>
-                    </div>
-                ))}
-            </div>
+                <Input
+                        name={"Tope de Alimentación:"}
+                        type={"number"}
+                        data={max_daily_food}
+                        setData={setMaxDailyFood}
+                        errors={errors}
+                    />
+
+                    <Input
+                        name={"Tope de Lavanderia:"}
+                        type={"number"}
+                        data={max_daily_laundry}
+                        setData={setMaxDailyLaundry}
+                        errors={errors}
+                    />
+
+                    <Input
+                        name={"Tope de Hidratación:"}
+                        type={"number"}
+                        data={max_daily_hydration}
+                        setData={setMaxDailyHydration}
+                        errors={errors}
+                    />
             
             <hr />
             <button type="submit" className="btn btn-success">

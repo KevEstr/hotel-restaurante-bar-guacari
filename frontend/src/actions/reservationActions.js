@@ -64,7 +64,7 @@ export const listReservations =
 
 //create a category
 export const createReservation = (reservation) => async (dispatch, getState) => {
-    const { price, start_date, end_date, note, quantity, clientId, roomId, paymentId, is_paid} = reservation;
+    const { price, start_date, end_date, note, quantity, clientId, roomId, paymentId, is_paid, services} = reservation;
 
     try {
         dispatch({
@@ -85,7 +85,7 @@ export const createReservation = (reservation) => async (dispatch, getState) => 
         };
 
         //create category
-        const { data } = await axios.post("/api/reservations", { price, start_date, end_date, note, quantity, clientId, roomId, paymentId, is_paid }, config);
+        const { data } = await axios.post("/api/reservations", { price, start_date, end_date, note, quantity, clientId, roomId, paymentId, is_paid, services }, config);
         dispatch({
             type: RESERVATION_CREATE_SUCCESS,
             payload: data,

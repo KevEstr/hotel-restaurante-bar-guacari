@@ -19,7 +19,7 @@ import {
 
 //get all clients with pagination
 export const listClients =
-    (keyword = "", pageNumber = "") =>
+    (keyword = "", pageNumber = "", hasReservation = false) =>
     async (dispatch, getState) => {
         try {
             dispatch({
@@ -39,10 +39,14 @@ export const listClients =
             };
 
             //get all clients
-            const { data } = await axios.get(
-                `/api/clients?keyword=${keyword}&pageNumber=${pageNumber}`,
-                config
-            );
+            // Construir la URL con los parámetros
+        let url = `/api/clients?keyword=${keyword}&pageNumber=${pageNumber}`;
+        if (hasReservation===true) {
+            url += `&has_reservation=true`;
+        }
+
+        // Obtener todos los clientes
+        const { data } = await axios.get(url, config);
 
             dispatch({
                 type: CLIENT_LIST_SUCCESS,

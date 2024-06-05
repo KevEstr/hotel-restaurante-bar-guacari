@@ -37,7 +37,7 @@ module.exports = {
         allowNull: false
       },
       has_reservation: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.BOOLEAN,
         allowNull: false
       },
       createdAt: {

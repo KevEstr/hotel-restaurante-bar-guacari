@@ -84,6 +84,9 @@ const ProductEditScreen = ({match }) => {
                 setName(product.name);
                 setPrice(product.price);
                 setStock(product.stock);
+                if(product.stock<0){
+                    alert("INVENTARIO NEGATIVO: Se recomienda realizar inventario total de producto y resgitrarlo como entrada.");
+                }
                 setCategory(product.categoryId);
                 setIsComposite(product.isComposite);
                 setIsSimple(!product.isComposite);

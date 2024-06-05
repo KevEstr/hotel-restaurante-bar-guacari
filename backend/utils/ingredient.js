@@ -96,7 +96,7 @@ exports.verifyStock = async (productData) => {
     return true;
 };
 
-exports.updateStockAndCreateMovement = async (productData, userId, orderId, condition, isUpdate) => {
+exports.updateStockAndCreateMovement = async (productData, userId, orderId, condition, isUpdate, flag) => {
     if(isUpdate===true){
         //throw new Error(`IS UPDATE productData ${JSON.stringify(productData, null, 2)}`);
         productData.forEach(async productPair =>  {
@@ -105,7 +105,7 @@ exports.updateStockAndCreateMovement = async (productData, userId, orderId, cond
           
             // Comprueba si la cantidad en OrderProduct de newProduct es igual a la cantidad de oldProduct
             if (newProduct.quantity !== oldProduct.OrderProduct.quantity) {
-                const quantityChange = newProduct.quantity - oldProduct.OrderProduct.quantity;
+                let quantityChange = newProduct.quantity - oldProduct.OrderProduct.quantity;
             if (quantityChange > 0) {
                 // Es una salida
                 if (oldProduct.isComposite===true) {
@@ -121,7 +121,7 @@ exports.updateStockAndCreateMovement = async (productData, userId, orderId, cond
                                 userId: userId,
                                 ingredientId: ingredient.id,
                                 quantity: Number(ingredient.ProductIngredient.quantity) * Number(quantityChange),
-                                type: 'Salida', // Tipo de movimiento: salida
+                                type: 'salida', // Tipo de movimiento: salida
                                 concept: `Salida de inventario por modificación en la orden ${orderId}`,
                                 totalPrice: Number(ingredient.ProductIngredient.quantity) * Number(quantityChange) * Number(ingredientStock.averagePrice),
                             });
@@ -145,7 +145,7 @@ exports.updateStockAndCreateMovement = async (productData, userId, orderId, cond
                         userId: userId,
                         productId: oldProduct.id,
                         quantity: quantityToDeduct,
-                        type: 'Salida', // Tipo de movimiento: salida
+                        type: 'salida', // Tipo de movimiento: salida
                         concept: `Salida de inventario por modificación en la orden ${orderId}`,
                         totalPrice: quantityToDeduct * Number(productStock.averagePrice),
                     });
@@ -155,7 +155,7 @@ exports.updateStockAndCreateMovement = async (productData, userId, orderId, cond
                 }
             } else {
                 //ES UNA ENTRADA
-                quantityChange = abs(quantityChange);
+                quantityChange = -Number(quantityChange);
                 if (oldProduct.isComposite===true) {
                     if (oldProduct.ingredients){
                         for (let ingredient of oldProduct.ingredients) {
@@ -230,8 +230,10 @@ exports.updateStockAndCreateMovement = async (productData, userId, orderId, cond
                                     userId: userId,
                                     ingredientId: ingredient.id,
                                     quantity: Number(ingredient.ProductIngredient.quantity) * Number(quantity),
-                                    type: 'Salida', // Tipo de movimiento: salida
-                                    concept: `Salida de inventario por creación de la orden ${orderId}`,
+                                    type: 'salida', // Tipo de movimiento: salida
+                                    concept: flag 
+                                    ? `Salida de inventario por creación de la orden ${orderId}` 
+                                    : `Salida de inventario por modificación de la orden ${orderId}`,
                                     totalPrice: Number(ingredient.ProductIngredient.quantity) * Number(quantity) * Number(ingredientStock.averagePrice),
                                 });
                 
@@ -253,8 +255,10 @@ exports.updateStockAndCreateMovement = async (productData, userId, orderId, cond
                             userId: userId,
                             productId: product.id,
                             quantity: quantityToDeduct,
-                            type: 'Salida', // Tipo de movimiento: salida
-                            concept: `Salida de inventario por creación de la orden ${orderId}`,
+                            type: 'salida', // Tipo de movimiento: salida
+                            concept: flag 
+                                    ? `Salida de inventario por creación de la orden ${orderId}` 
+                                    : `Salida de inventario por modificación de la orden ${orderId}`,
                             totalPrice: quantityToDeduct * Number(productStock.averagePrice),
                         });
                         if (!movement) {
@@ -286,7 +290,9 @@ exports.updateStockAndCreateMovement = async (productData, userId, orderId, cond
                                     ingredientId: ingredient.id,
                                     quantity: Number(ingredient.ProductIngredient.quantity) * Number(quantity),
                                     type: 'entrada', // Tipo de movimiento: salida
-                                    concept: `Entrada de inventario por creación de la orden ${orderId}`,
+                                    concept: flag 
+                                    ? `Entrada de inventario por creación de la orden ${orderId}` 
+                                    : `Entrada de inventario por modificación de la orden ${orderId}`,
                                     totalPrice: Number(ingredient.ProductIngredient.quantity) * Number(quantity) * Number(ingredientStock.averagePrice),
                                 });
                 
@@ -308,8 +314,10 @@ exports.updateStockAndCreateMovement = async (productData, userId, orderId, cond
                             userId: userId,
                             productId: product.id,
                             quantity: quantityToDeduct,
-                            type: 'Entrada', // Tipo de movimiento: entrada
-                            concept: `Entrada de inventario por creación de la orden ${orderId}`,
+                            type: 'entrada', // Tipo de movimiento: entrada
+                            concept: flag 
+                                    ? `Entrada de inventario por creación de la orden ${orderId}` 
+                                    : `Entrada de inventario por modificación de la orden ${orderId}`,
                             totalPrice: quantityToDeduct * Number(productStock.averagePrice),
                         });
                         if (!movement) {

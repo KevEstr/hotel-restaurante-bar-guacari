@@ -28,6 +28,8 @@ import {
 import { listOrderDetails, updateOrder } from "../../actions/orderActions";
 import { listClients } from "../../actions/clientActions";
 import { listTables } from "../../actions/tableActions";
+import { listUsers, register } from "../../actions/userActions";
+
 
 const OrderEditScreen = ({ history, match }) => {
     const orderId = parseInt(match.params.id);
@@ -42,6 +44,8 @@ const OrderEditScreen = ({ history, match }) => {
     const [errors, setErrors] = useState({});
     const [ingredientStocks, setIngredientStocks] = useState({});
     const [productStocks, setProductStocks] = useState({});
+    const [user, setUser] = useState(null);
+
 
 
     const dispatch = useDispatch();
@@ -58,6 +62,11 @@ const OrderEditScreen = ({ history, match }) => {
 
     const tableList = useSelector((state) => state.tableList);
     const { tables } = tableList;
+
+    const userList = useSelector((state) => state.userList);
+    const { loading:usersLoading, error:usersError, users, page, pages } = userList;
+
+    
 
     //order edit state
     const orderUpdate = useSelector((state) => state.orderUpdate);
@@ -85,12 +94,16 @@ const OrderEditScreen = ({ history, match }) => {
             console.log("ORDEN PREVIA: ",order)
             if (!order.id || order.id !== orderId) {
                 dispatch(listOrderDetails(orderId));
+                //dispatch(listUsers());
+                
             } else {
                 //set states
                 setTable(order.table ? order.table.id : null);
                 setClient(order.client ? order.client.id : null);
                 setNote(order.note ? order.note : note);
                 setDelivery(order.delivery ? order.delivery : delivery);
+                setUser(order.user.id? order.user.id : null)
+                console.log("Usuarios: ", users)
 
                 if (order.products) {
                     /* Format products */
@@ -125,6 +138,9 @@ const OrderEditScreen = ({ history, match }) => {
 
         if (productsInOrder.length < 1) {
             errorsCheck.products = "Órden no puede estar vacía";
+        }
+        if (!user) {
+            errorsCheck.user = "Usuario es requerido";
         }
 
         if (Object.keys(errorsCheck).length > 0) {
@@ -169,6 +185,7 @@ const OrderEditScreen = ({ history, match }) => {
                 products: productsInOrder,
                 delivery: delivery,
                 note: note,
+                userId: user,
             };
             console.log("ORDEN A ACTUALIZAR: ",order)
             dispatch(updateOrder(order));
@@ -236,7 +253,11 @@ const OrderEditScreen = ({ history, match }) => {
     );
 
     const searchClients = (e) => {
-        dispatch(listClients(e.target.value));
+        dispatch(listClients(e.target.value,"",true));
+    };
+
+    const searchUsers = (e) => {
+        dispatch(listUsers(e.target.value,"",true));
     };
 
     const renderClientsSelect = () => (
@@ -244,11 +265,25 @@ const OrderEditScreen = ({ history, match }) => {
             <Select
                 data={client}
                 setData={setClient}
-                items={clients}
+                items={clients.filter(client => client.has_reservation)}
                 search={searchClients}
             />
             {errors.client && (
                 <Message message={errors.client} color={"warning"} />
+            )}
+        </>
+    );
+
+    const renderUserSelect = () => (
+        <>
+            <Select
+                data={user}
+                setData={setUser}
+                items={users.filter(user => user.roleId!==1 && user.roleId!==null)}
+                search={searchUsers}
+            />
+            {errors.user && (
+                <Message message={errors.user} color={"warning"} />
             )}
         </>
     );
@@ -306,9 +341,15 @@ const OrderEditScreen = ({ history, match }) => {
                                         <div className="col-12 col-lg-12">
                                             {renderCart()}
                                             <div>
+                                            <h3 className="card-title">Selecciona tu nombre:</h3>
+                                            <div className="col-12 col-md-6">
+                                                    {renderUserSelect()}
+                                                </div>
+                                                <h3 className="card-title">Selecciona la mesa:</h3>
                                                 <div className="col-12 col-md-6">
                                                     {renderTablesSelect()}
                                                 </div>
+                                                <h3 className="card-title">Selecciona el cliente:</h3>
                                                 <div className="col-12 col-md-6">
                                                     {renderClientsSelect()}
                                                 </div>
