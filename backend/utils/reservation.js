@@ -1,7 +1,6 @@
 const Room = require("../models").Room;
 const Reservation = require("../models").Reservation;
 
-
 /* check stock of each product */
 exports.reservation = async (list) => {
     for (let index = 0; index < list.length; index++) {

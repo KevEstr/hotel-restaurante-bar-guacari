@@ -26,24 +26,10 @@ import {
     CLIENT_ORDER_LIST_REQUEST,
     CLIENT_ORDER_LIST_SUCCESS,
     CLIENT_ORDER_LIST_FAIL,
-    CLIENT_ORDER_LIST_RESET,
+    CLIENT_ORDERS_REQUEST,
+    CLIENT_ORDERS_SUCCESS,
+    CLIENT_ORDERS_FAIL
 } from "../constants/orderConstants";
-
-export const orderListByClientReducer = (
-    state = { loading: true, orders: [] },
-    action
-) => {
-    switch (action.type) {
-        case "ORDER_LIST_BY_CLIENT_REQUEST":
-            return { ...state, loading: true };
-        case "ORDER_LIST_BY_CLIENT_SUCCESS":
-            return { ...state, loading: false, orders: action.payload };
-        case "ORDER_LIST_BY_CLIENT_FAIL":
-            return { ...state, loading: false, error: action.payload };
-        default:
-            return state;
-    }
-};
 
 export const orderListReducer = (
     state = { loading: true, orders: [] },
@@ -63,22 +49,11 @@ export const orderListReducer = (
             return { loading: false, error: action.payload };
         case ORDER_LIST_RESET:
             return { orders: [] };
-        case CLIENT_ORDER_LIST_REQUEST:
-            return { ...state, loading: true };
-        case CLIENT_ORDER_LIST_SUCCESS:
-            return {
-                ...state,
-                loading: false,
-                clientOrders: action.payload,
-            };
-        case CLIENT_ORDER_LIST_FAIL:
-            return { ...state, loading: false, error: action.payload };
-        case CLIENT_ORDER_LIST_RESET:
-            return { ...state, clientOrders: [] };
         default:
             return state;
     }
-    };    
+};
+
 export const statisticsReducer = (
     state = {
         loading: true,
@@ -179,6 +154,35 @@ export const orderDeleteReducer = (state = {}, action) => {
             return { loading: false, error: action.payload };
         case ORDER_DELETE_RESET:
             return {};
+        default:
+            return state;
+    }
+};
+
+export const clientOrderListReducer = (
+    state = { loading: true, clientOrders: [] },
+    action
+) => {
+    switch (action.type) {
+        case CLIENT_ORDER_LIST_REQUEST:
+            return { loading: true };
+        case CLIENT_ORDER_LIST_SUCCESS:
+            return { loading: false, clientOrders: action.payload };
+        case CLIENT_ORDER_LIST_FAIL:
+            return { loading: false, error: action.payload };
+        default:
+            return state;
+    }
+};
+
+export const clientOrdersReducer = (state = { orders: [] }, action) => {
+    switch (action.type) {
+        case CLIENT_ORDERS_REQUEST:
+            return { loading: true };
+        case CLIENT_ORDERS_SUCCESS:
+            return { loading: false, orders: action.payload };
+        case CLIENT_ORDERS_FAIL:
+            return { loading: false, error: action.payload };
         default:
             return state;
     }

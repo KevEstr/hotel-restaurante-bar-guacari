@@ -16,6 +16,9 @@ import OrderEditScreen from "./screens/order/OrderEditScreen";
 import TableScreen from "./screens/table/TableScreen";
 import TableEditScreen from "./screens/table/TableEditScreen";
 
+import ServiceScreen from "./screens/service/ServiceScreen";
+import ServiceEditScreen from "./screens/service/ServiceEditScreen";
+
 import IngredientScreen from "./screens/ingredient/IngredientScreen";
 import IngredientMovementScreen from "./screens/ingredient/IngredientMovementScreen";
 import IngredientEditScreen from "./screens/ingredient/IngredientEditScreen";
@@ -55,9 +58,7 @@ const Main = () => {
     const { userInfo } = userLogin;
 
     return (
-        
         <>
-        
             <Header />
             <Menu />
 
@@ -118,6 +119,13 @@ const Main = () => {
                     />
 
                     <PrivateRoute path="/room" component={RoomScreen} />
+
+                    <PrivateRoute
+                        path="/service/:id/edit"
+                        component={ServiceEditScreen}
+                    />
+
+                    <PrivateRoute path="/service" component={ServiceScreen} />
 
                     <PrivateRoute path="/activeReservation" component={ActiveReservationsScreen} />
 

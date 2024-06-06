@@ -25,6 +25,9 @@ import {
     RESERVATION_STATISTICS_FAIL,
     RESERVATION_STATISTICS_RESET,
     RESERVATION_CREATE_RESET,
+    CLIENT_RESERVATIONS_REQUEST,
+    CLIENT_RESERVATIONS_SUCCESS,
+    CLIENT_RESERVATIONS_FAIL
 } from "../constants/reservationConstants";
 
 export const reservationListReducer = (
@@ -149,6 +152,19 @@ export const reservationDeleteReducer = (state = {}, action) => {
             return { loading: false, error: action.payload };
         case RESERVATION_DELETE_RESET:
             return {};
+        default:
+            return state;
+    }
+};
+
+export const clientReservationsReducer = (state = { reservations: [] }, action) => {
+    switch (action.type) {
+        case CLIENT_RESERVATIONS_REQUEST:
+            return { loading: true };
+        case CLIENT_RESERVATIONS_SUCCESS:
+            return { loading: false, reservations: action.payload };
+        case CLIENT_RESERVATIONS_FAIL:
+            return { loading: false, error: action.payload };
         default:
             return state;
     }

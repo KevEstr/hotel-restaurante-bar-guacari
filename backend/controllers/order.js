@@ -23,38 +23,6 @@ const {
     updateStockAndCreateMovement
 } = require("../utils/ingredient");
 
-// @desc    Fetch orders by client ID
-// @route   GET /api/orders/client/:id
-// @access  Private
-exports.getOrdersByClientId = asyncHandler(async (req, res) => {
-    const clientId = req.params.id;
-
-    const orders = await Order.findAll({
-        where: { clientId },
-        include: [
-            {
-                model: Product,
-                as: 'products',
-                through: { model: OrderProduct, as: "orderProducts" }
-            },
-            {
-                model: Client,
-                as: 'client',
-            },
-            {
-                model: Table,
-                as: 'table',
-            },
-        ],
-    });
-
-    if (orders) {
-        res.json(orders);
-    } else {
-        res.status(404);
-        throw new Error('Orders not found');
-    }
-});
 
 //@desc     Get all orders
 //@route    GET /api/orders
@@ -425,4 +393,15 @@ exports.getStatistics = asyncHandler(async (req, res) => {
         sales,
         orders,
     });
+});
+
+exports.getClientOrders = asyncHandler(async (req, res) => {
+    const clientId = req.params.id;
+    const orders = await Order.findAll({ where: { clientId } });
+    if (orders) {
+        res.json(orders);
+    } else {
+        res.status(404);
+        throw new Error('Orders not found');
+    }
 });

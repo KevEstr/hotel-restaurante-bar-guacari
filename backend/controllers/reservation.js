@@ -22,56 +22,46 @@ const {
 //@route    POST /api/orders
 //@access   Private/user
 exports.createReservation = asyncHandler(async (req, res) => {
-    //get data from request
-    const {price, start_date, end_date, quantity, clientId, roomId, note, paymentId, is_paid, services} = req.body;
-    console.log("Cuerpo de la solicitud:", req.body);
+    const { price, start_date, end_date, quantity, clientId, note, paymentId, is_paid, rooms, total, services } = req.body;
 
+    const createdReservation = await Reservation.create({
+        price,
+        start_date,
+        end_date,
+        quantity,
+        clientId,
+        userId: req.user.id,
+        note,
+        paymentId,
+        is_paid,
+        total,
+    });
 
-    try {
-        const createdReservation = await Reservation.create({
-            price,
-            start_date,
-            end_date,
-            quantity,
-            roomId: roomId,
-            clientId: clientId,
-            userId: req.user.id,
-            note: note,
-            paymentId: paymentId,
-            is_paid: is_paid,
-                });
+    if (services && services.length > 0) {
+        await Promise.all(services.map(async (service) => {
+            await ReservationService.create({
+                reservationId: createdReservation.id,
+                serviceId: service.id,
+                maxLimit: service.maxLimit,
+            });
+        }));
+    }
 
-        // Create the entry in the RoomReservation table
-        await RoomReservation.create({
-            roomId,
-            reservationId: createdReservation.id,
-            active_status: true,
-        });
+    if (rooms && rooms.length > 0) {
+        await Promise.all(rooms.map(async (roomId) => {
+            await RoomReservation.create({
+                reservationId: createdReservation.id,
+                roomId,
+                active_status: true,
+            });
 
-        const room = await Room.findByPk(roomId);
-        if (room) {
+            const room = await Room.findByPk(roomId);
             room.active_status = true;
             await room.save();
-        }
-
-        if (services && services.length > 0) {
-            await Promise.all(services.map(async (service) => {
-                await ReservationService.create({
-                    reservationId: createdReservation.id,
-                    serviceId: service.id,
-                    maxLimit: service.maxLimit,
-                });
-            }));
-        }
-
-        //update table to occupied
-        await updateRoom(createdReservation.roomId, true);
-
-        res.status(201).json(createdReservation);
-    } catch (error) {
-        console.error("Error creating reservation:", error);
-        res.status(500).json({ message: "Error creating reservation", services });
+        }));
     }
+
+    res.status(201).json(createdReservation);
 });
 
 //@desc     Get all orders
@@ -192,17 +182,17 @@ exports.updateReservation = asyncHandler(async (req, res) => {
     });
 
     if (reservation) {
-        const { price, start_date, end_date, quantity, clientId, roomId, note, paymentId, is_paid, services } = req.body;
+        const { price, start_date, end_date, quantity, clientId, note, paymentId, is_paid, total, services} = req.body;
 
         if (price !== undefined) reservation.price = price;
         if (start_date !== undefined) reservation.start_date = start_date;
         if (end_date !== undefined) reservation.end_date = end_date;
         if (quantity !== undefined) reservation.quantity = quantity;
         if (clientId !== undefined) reservation.clientId = clientId;
-        if (roomId !== undefined) reservation.roomId = roomId;
         if (note !== undefined) reservation.note = note;
         if (paymentId !== undefined) reservation.paymentId = paymentId;
         if (is_paid !== undefined) reservation.is_paid = is_paid;
+        if (total !== undefined) reservation.total = total;
         await ReservationService.destroy({ where: { reservationId: reservation.id } });
 
         if (services && services.length > 0) {
@@ -267,28 +257,60 @@ exports.getStatisticsReservation = asyncHandler(async (req, res) => {
         },
         include: { all: true, nested: true },
         attributes: {
-            exclude: ["userId", "clientId", "roomId"],
+            exclude: ["userId", "clientId"],
         },
     });
 
 })
 
-
 exports.updateReservationEnd = asyncHandler(async (req, res) => {
-    const reservation = await Reservation.findByPk(req.params.id);
+    const reservation = await Reservation.findByPk(req.params.id, {
+        include: [Room],
+    });
 
     if (reservation) {
-        if (reservation.roomId) {
-            const room = await Room.findByPk(reservation.roomId);
+        await Promise.all(reservation.rooms.map(async (room) => {
             room.active_status = false;
-            room.save();
-        }
+            await room.save();
+        }));
 
         reservation.is_paid = true;
+        
         const updatedReservation = await reservation.save();
         res.json(updatedReservation);
     } else {
         res.status(404);
-        throw new Error("Reservation not found");
+        throw new Error('Reservation not found');
+    }
+});
+
+exports.getClientReservations = asyncHandler(async (req, res) => {
+    const clientId = req.params.id;
+    const reservations = await Reservation.findAll({ where: { clientId } });
+    if (reservations) {
+        res.json(reservations);
+    } else {
+        res.status(404);
+        throw new Error('Reservations not found');
+    }
+});
+
+exports.getRoomsByReservation = asyncHandler(async (req, res) => {
+    try {
+        const reservationId = req.params.reservationId;
+        const rooms = await RoomReservation.findAll({
+            where: { reservationId },
+            include: [
+                {
+                    model: Room,
+                    as: 'room',
+                },
+            ],
+        });
+
+        res.json(rooms.map(roomReservation => roomReservation.room));
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
     }
 });

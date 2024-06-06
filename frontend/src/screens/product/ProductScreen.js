@@ -17,6 +17,7 @@ import { listProducts, createProduct  } from "../../actions/productActions";
 import { listCategories } from "../../actions/categoryActions";
 import { listIngredients } from "../../actions/ingredientActions";
 import { modalStyles } from "../../utils/styles";
+import useWindowSize from '../../utils/sizeWindow';
 
 Modal.setAppElement("#root");
 
@@ -33,6 +34,7 @@ const ProductScreen = ({ history }) => {
     const [isSimple, setIsSimple] = useState(false);
     const [isComposite, setIsComposite] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(null);
+    const { width } = useWindowSize(); // Obtén el ancho de la ventana
 
     const dispatch = useDispatch();
 
@@ -148,72 +150,116 @@ const ProductScreen = ({ history }) => {
             <Modal
                 style={{
                     content: {
-                        top: '50%',
-                        left: '50%',
-                        right: 'auto',
-                        bottom: 'auto',
-                        marginRight: '-50%',
-                        transform: 'translate(-50%, -50%)',
-                        width: 'auto',
-                        maxHeight: '90vh',
-                        maxWidth: '90vh',
-                        minWidth: '90vh',
+                        top: "50%",
+                        left: width < 768 ? "50%" : "57%",
+                        right: "auto",
+                        bottom: "auto",
+                        marginRight: "-50%",
+                        transform: "translate(-50%, -50%)",
+                        width: "auto",
+                        maxHeight: "90vh",
+                        minHeight: "70vh",
+                        // Usamos min-width y max-width para definir el tamaño base del modal
+                        minWidth: "60%",
+                        maxWidth: "80%"
                     },
+                    "@media (min-width: 768px)": {
+                        // Media query para dispositivos medianos y grandes
+                        content: {
+                            minWidth: "60vh",
+                            maxWidth: "100vh"
+                        }
+                    },
+                    "@media (min-width: 1024px)": {
+                        // Media query para dispositivos grandes
+                        content: {
+                            minWidth: "80vh",
+                            maxWidth: "150vh"
+                        }
+                    }
                 }}
                 isOpen={modalIsOpen}
                 onRequestClose={() => setModalIsOpen(false)}
             >
                 <LoaderHandler loading={createLoading} error={createError} />
-                <h2>Formulario Creación</h2>
-                <form onSubmit={handleSubmit}>
-                    <Input name={"nombre"} type={"text"} data={name} setData={setName} errors={errors} />
-                    {errors.name && <Message message={errors.name} color={"warning"} />}
-                    <Input name={"precio de venta"} type={"number"} data={price} setData={setPrice} errors={errors} />
-                    {errors.price && <Message message={errors.price} color={"warning"} />}
-                    <label>Categoría:</label>
-                    {renderCategoriesSelect()}
-                    {errors.category && <Message message={errors.category} color={"warning"} />}
-                    <hr />
-                    <label>Tipo de producto</label>
-                    <div className="form-check">
-                        <input
-                            type="checkbox"
-                            className="form-check-input"
-                            id="simpleProduct"
-                            checked={isSimple}
-                            onChange={handleSimpleChange}
-                        />
-                        <label className="form-check-label" htmlFor="simpleProduct">
-                            Producto Simple
-                        </label>
-                    </div>
-                    <div className="form-check">
-                        <input
-                            type="checkbox"
-                            className="form-check-input"
-                            id="compositeProduct"
-                            checked={isComposite}
-                            onChange={handleCompositeChange}
-                        />
-                        <label className="form-check-label" htmlFor="compositeProduct">
-                            Producto Compuesto
-                        </label>
-                    </div>
+                <h2>Creación de Productos</h2>
+
+    <form onSubmit={handleSubmit}>
+
+    <div className="row">
+        <div className="col-md-6" style={{marginTop: '10px'}}>
+            <Input name={"nombre"} type={"text"} data={name} setData={setName} errors={errors} />
+            {errors.name && <Message message={errors.name} color={"warning"} />}
+        </div>
+        <div className="col-md-6" style={{marginTop: '10px'}}>
+            <Input name={"precio de venta"} type={"number"} data={price} setData={setPrice} errors={errors} />
+            {errors.price && <Message message={errors.price} color={"warning"} />}
+        </div>
+    </div>
+
+    <div className="container">
+    <div className="row">
+        <div className="col-12 col-md-4 mb-3">
+            <label>Categoría:</label>
+            {renderCategoriesSelect()}
+            {errors.category && <Message message={errors.category} color={"warning"} />}
+        </div>
+        <div className="col-12 col-md-4 mb-3">
+            <hr />
+            <label>Tipo de producto</label>
+            <div className="form-check">
+                <input
+                    type="checkbox"
+                    className="form-check-input"
+                    id="simpleProduct"
+                    checked={isSimple}
+                    onChange={handleSimpleChange}
+                />
+                <label className="form-check-label" htmlFor="simpleProduct">
+                    Producto Simple
+                </label>
+            </div>
+        </div>
+        <div className="col-12 col-md-4 mb-3">
+            <hr />
+            <label>&nbsp;</label> {/* Esta etiqueta sirve para alinear mejor los checkboxes */}
+            <div className="form-check">
+                <input
+                    type="checkbox"
+                    className="form-check-input"
+                    id="compositeProduct"
+                    checked={isComposite}
+                    onChange={handleCompositeChange}
+                />
+                <label className="form-check-label" htmlFor="compositeProduct">
+                    Producto Compuesto
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
 
                     {isComposite && (
                         <>
-                            <label>Ingredientes</label>
-                            <div>
+                            <div style={{ display: 'inline-block', marginLeft: '20px', marginTop: '50px' }}>
                                 {renderIngredientsTable()}
+                            </div>
+                            <div style={{ display: 'inline-block', marginLeft: '45px', marginTop: '50px' }}>
                                 {renderIngredientsCart()}
+                            </div>
+                            <div style={{ marginTop: '10px' }}>
+                            
                             </div>
                         </>
                     )}
-
+                    <div style={{marginTop: '150px'}}>
                     <button type="submit" className="btn btn-primary">
-                        Confirmar
-                    </button>
+                                Confirmar
+                            </button>
+
                     <ModalButton modal={modalIsOpen} setModal={setModalIsOpen} classes={"btn-danger float-right"} />
+                    </div>
+
                 </form>
             </Modal>
         </>
@@ -252,6 +298,14 @@ const ProductScreen = ({ history }) => {
 
     return (
         <>
+            <style>
+                {`
+                .flex-container {
+                    display: flex;
+                    gap: 20px;
+                }
+                `}
+            </style>
             <HeaderContent name={"Productos"} />
             <section className="content">
                 <div className="container-fluid">

@@ -104,9 +104,9 @@ const Menu = ({ history }) => {
                                     </Link>
                                 </li>
                                 <li className="nav-item">
-                                    <Link to="/reservation" className="nav-link">
+                                    <Link to="/service" className="nav-link">
                                         <i className="nav-icon fas fa-solid fa-soap" />{" "}
-                                        <p> Lavandería </p>
+                                        <p> Servicios </p>
                                     </Link>
                                 </li>
 

@@ -20,7 +20,7 @@ import { RESERVATION_CREATE_RESET } from "../../constants/reservationConstants";
 import { allRooms } from "../../actions/roomActions";
 import { listClients } from "../../actions/clientActions";
 import { createReservation, updateClientHasReservation } from "../../actions/reservationActions";
-import { getServices, listServices } from '../../actions/serviceActions';
+import { listServices } from '../../actions/serviceActions';
 import { listAgreements } from '../../actions/agreementActions';
 
 
@@ -33,6 +33,7 @@ const ReservationCreateScreen = ({ history, match }) => {
         roomFromUrl ? parseInt(match.params.id) : null
     );
 
+    const [selectedRooms, setSelectedRooms] = useState([]);
     const [reservationId, setReservationId] = useState(null);
     const [client, setClient] = useState(null);
     const [note, setNote] = useState("");
@@ -41,11 +42,13 @@ const ReservationCreateScreen = ({ history, match }) => {
     const [start_date, setStartDate] = useState("");
     const [end_date, setEndDate] = useState("");
     const [quantity, setQuantity] = useState(null);
-    const [clientAgreementId, setClientAgreementId] = useState(null);
     const [selectedServices, setSelectedServices] = useState([]);
     const [clientAgreement, setClientAgreement] = useState(null);
 
 
+    const [total, setTotal] = useState(0);
+
+    const [clientAgreementId, setClientAgreementId] = useState(null);
 
     const dispatch = useDispatch();
 
@@ -74,7 +77,8 @@ const ReservationCreateScreen = ({ history, match }) => {
     }, [dispatch, history, userInfo]);*/
 
     useEffect(() => {
-        dispatch(getServices());
+        dispatch(allRooms());
+        dispatch(listClients())
   }, [dispatch]);
 
   useEffect(() => {
@@ -154,14 +158,15 @@ const ReservationCreateScreen = ({ history, match }) => {
             setErrors({});
         }
 
-        console.log("Servicios seleccionados:", selectedServices);
-
-
         if (Object.keys(errorsCheck).length === 0) {
+            /* Calculate Total */
+            const calculatedTotal = calculateTotal(start_date, end_date, price);
+            setTotal(calculatedTotal);
+
             /* Create reservation */
             const reservation = {
                 clientId: client,
-                roomId: room,
+                rooms: selectedRooms,
                 price: price,
                 start_date: start_date,
                 end_date: end_date,
@@ -171,6 +176,7 @@ const ReservationCreateScreen = ({ history, match }) => {
                 is_paid: 0,
                 services: selectedServices,
 
+                total: calculatedTotal,
             };
             /* Make request */
 
@@ -190,15 +196,30 @@ const ReservationCreateScreen = ({ history, match }) => {
         dispatch(allRooms(e.target.value));
     };
 
+    const calculateTotal = (startDate, endDate, pricePerDay) => {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const diffTime = Math.abs(end - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Milliseconds to days
+        return diffDays * pricePerDay;
+    };
+
     const renderRoomsSelect = () => (
         <>
-            <Select
-                data={room}
-                setData={setRoom}
-                items={filterFreeRooms()}
-                search={searchRooms}
-            />
-            {errors.room && <Message message={errors.room} color={"warning"} />}
+            <h5>Selecciona las habitaciones:</h5>
+            {filterFreeRooms().map((room) => (
+                <div key={room.id}>
+                    <label>
+                        <input
+                            type="checkbox"
+                            checked={selectedRooms.includes(room.id)}
+                            onChange={() => handleRoomSelection(room.id)}
+                        />
+                        Habitación {room.id}
+                    </label>
+                </div>
+            ))}
+            {errors.rooms && <Message message={errors.rooms} color={"warning"} />}
         </>
     );
 
@@ -244,6 +265,16 @@ const ReservationCreateScreen = ({ history, match }) => {
             Confirmar
         </button>
     );
+
+    const handleRoomSelection = (roomId) => {
+        setSelectedRooms((prevSelectedRooms) => {
+            if (prevSelectedRooms.includes(roomId)) {
+                return prevSelectedRooms.filter((id) => id !== roomId);
+            } else {
+                return [...prevSelectedRooms, roomId];
+            }
+        });
+    };
 
     return (
         <>

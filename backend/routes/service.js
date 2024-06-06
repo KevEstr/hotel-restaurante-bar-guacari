@@ -1,8 +1,31 @@
-const express = require('express');
-const { getServices, createService } = require('../controllers/service');
-const { protect } = require("../middleware/authMiddleware");
+const express = require("express");
 const router = express.Router();
+const { protect } = require("../middleware/authMiddleware");
+const {
+    getServices,
+    getAllServices,
+    createService,
+    getService,
+    updateService,
+    deleteService,
+} = require("../controllers/service");
 
-router.route("/").get(protect,getServices).post(protect, createService)
+// VALIDATORS
+const { serviceCreateValidator } = require("../validators/service");
+const { runValidation } = require("../validators");
+
+//ROUTES
+router
+    .route("/")
+    .get(protect, getServices)
+    .post(protect, serviceCreateValidator, runValidation, createService);
+
+router.route("/all").get(protect, getAllServices);
+
+router
+    .route("/:id")
+    .get(protect, getService)
+    .put(protect, updateService)
+    .delete(protect, deleteService);
 
 module.exports = router;

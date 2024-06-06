@@ -9,8 +9,7 @@ import LoaderHandler from "../../components/loader/LoaderHandler";
 import { BigSpin } from "../../components/loader/SvgLoaders";
 import Modal from "react-modal";
 import ModalButton from "../../components/ModalButton";
-
-
+import { FormattedDate, FormattedTime } from "../../utils/formattedDate"; // Asegúrate de ajustar la ruta según tu estructura de archivos
 
 /* constants */
 import { RESERVATION_UPDATE_RESET } from "../../constants/reservationConstants";
@@ -18,7 +17,9 @@ import { RESERVATION_UPDATE_RESET } from "../../constants/reservationConstants";
 /* actions */
 import {
     listReservationsDetails,
-    updateReservationToEnd
+    updateReservationToEnd,
+    updateReservationToPaid,
+    listReservationsByClient
 } from "../../actions/reservationActions";
 
 import { listOrdersByClient, listOrders } from "../../actions/orderActions";
@@ -28,6 +29,12 @@ import { CLIENT_ORDER_LIST_REQUEST, CLIENT_ORDER_LIST_SUCCESS, CLIENT_ORDER_LIST
 import { listAgreements } from '../../actions/agreementActions';
 
 import { modalStyles } from "../../utils/styles";
+
+import { listOrdersClient } from "../../actions/orderActions";
+
+import { updateRoom } from "../../actions/roomActions";
+
+import generateInvoice from "../../utils/generateInvoice";
 
 const ReservationViewScreen = ({ history, match }) => {
     const reservationId = parseInt(match.params.id);
@@ -39,15 +46,6 @@ const ReservationViewScreen = ({ history, match }) => {
     const { loading, error, reservation } = reservationDetails;
     const [modal, setModal] = useState(false);
 
-    // Estado de las órdenes generales
-    const orderList = useSelector(state => state.orderList);
-    const { loading: loadingOrders, error:errorOrders, orders } = orderList;
-
-    // Estado de las órdenes asociadas al cliente específico
-    const orderListByClient = useSelector(state => state.orderListByClient);
-    const { loading: loadingByClient, error: errorByClient, orders: clientOrders } = orderListByClient|| {};
-    //order edit state
-
     const [clientAgreement, setClientAgreement] = useState(null);
 
     const agreementList = useSelector((state) => state.agreementList);
@@ -55,6 +53,14 @@ const ReservationViewScreen = ({ history, match }) => {
 
 
     
+    const clientReservations = useSelector(state => state.clientReservations);
+    const { loading: loadingReservations, error: errorReservations, reservations: clientReservationsList } = clientReservations;
+
+    // Estado de las órdenes asociadas al cliente específico
+    const clientOrders = useSelector(state => state.clientOrders);
+    const { loading: loadingOrders, error: errorOrders, orders: clientOrdersList } = clientOrders;
+
+    //order edit state
     const reservationUpdate = useSelector((state) => state.reservationUpdate);
     const {
         loading: loadingUpdate,
@@ -75,23 +81,21 @@ const ReservationViewScreen = ({ history, match }) => {
             if (!reservation.id || reservation.id !== reservationId) {
                 dispatch(listReservationsDetails(reservationId));
             }
-            AgreementName(reservation.client);
-            console.log("RESERVACIÖN: ",reservation)
-            /*else {
+            else {
                 // Si la reserva está correctamente cargada, cargar las órdenes del cliente
-                dispatch(listOrdersByClient(reservation.clientId));
-                dispatch(listOrders(reservation.clientId))
-            }*/
+                dispatch(listOrdersClient(reservation.clientId));
+                dispatch(listReservationsByClient(reservation.clientId));
+            }
             
         }
-    }, [dispatch, reservation, reservationId]);
+
+    }, [dispatch, history, reservation, reservationId, successUpdate]);
 
     const AgreementName = (selectedClient) => {
         const selectedClientAgreement = agreements.find(agreement => agreement.id === selectedClient.agreementId);
         setClientAgreement(selectedClientAgreement ? selectedClientAgreement.name : null);
 
     };
-
     const handleEdit = (e) => {
         e.preventDefault();
         history.push(`/reservation/${reservationId}/edit`);
@@ -241,10 +245,60 @@ const ReservationViewScreen = ({ history, match }) => {
         e.preventDefault();
         const updatedReservation = {
             id: reservationId,
+            is_paid: true,
         };
         setModal(false);
-        dispatch(updateReservationToEnd(updatedReservation));
+        dispatch(updateReservationToPaid(updatedReservation));
+
+        const rooms = reservation.room;
+    await Promise.all(rooms.map(async (room) => {
+        // Cambiar el estado de la habitación a false
+        const updatedRoom = { ...room, active_status: false };
+        // Realizar la actualización en el backend
+        await dispatch(updateRoom(updatedRoom)); // Necesitas tener una acción para actualizar la habitación
+    }));
+        generateInvoice(reservation, clientOrdersList, clientReservationsList);
     };
+
+    const renderReservations = () => {
+        if (loadingReservations) return <BigSpin />;
+        if (errorReservations) return <div>Error: {errorReservations}</div>;
+    
+        return (
+            <div>
+                <h3>Reservas del Cliente:</h3>
+                {clientReservationsList && clientReservationsList.length > 0 ? (
+                    clientReservationsList.map((reservation) => (
+                        <div key={reservation.id} className="card mb-3">
+                            <div className="card-header">
+                                Reserva #{reservation.id}
+                            </div>
+                            <div className="card-body">
+                                <h5 className="card-title"> </h5>
+                                {reservation.rooms && reservation.rooms.length > 0 && (
+                                    <div>
+                                        <h5>Habitaciones Asociadas:</h5>
+                                        {reservation.rooms.map((room, index) => (
+                                            <div key={index}>
+                                                <h6>ID de habitación:</h6>
+                                                <p>{room.id}</p>
+                                                <h6>Nombre de la habitación:</h6>
+                                                <p>{room.name}</p>
+                                                {/* Agrega más detalles de la habitación si es necesario */}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    <p>No hay reservas para este cliente.</p>
+                )}
+            </div>
+        );
+    };
+    
 
     const renderOrders = () => {
         if (loadingOrders) return <BigSpin />;
@@ -340,7 +394,6 @@ const ReservationViewScreen = ({ history, match }) => {
                 {/* Render Orders */}
                 <div className="card">
                     <div className="card-body">
-                        {console.log("ORDENES: ",orders)}
                         {renderOrders()}
                     </div>
                 </div>

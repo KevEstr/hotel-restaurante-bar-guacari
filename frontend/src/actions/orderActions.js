@@ -21,6 +21,10 @@ import {
     CLIENT_ORDER_LIST_REQUEST,
     CLIENT_ORDER_LIST_SUCCESS,
     CLIENT_ORDER_LIST_FAIL,
+    CLIENT_ORDERS_REQUEST,
+    CLIENT_ORDERS_SUCCESS,
+    CLIENT_ORDERS_FAIL,
+
 } from "../constants/orderConstants";
 
 import { 
@@ -102,7 +106,7 @@ export const listOrdersByClient = (clientId) => async (dispatch, getState) => {
             },
         };
 
-        const { data } = await axios.get(`/api/orders/client/${clientId}`, config);
+        const { data } = await axios.get(`/api/orders/allorder/${clientId}`, config);
 
         dispatch({
             type: CLIENT_ORDER_LIST_SUCCESS,
@@ -359,3 +363,44 @@ export const deleteOrder = (id) => async (dispatch, getState) => {
         });
     }
 };
+
+export const listOrdersClient = (clientId) => async (dispatch, getState) => {
+    try {
+        dispatch({ type: CLIENT_ORDERS_REQUEST });
+
+        const { userLogin: { userInfo } } = getState();
+
+        const config = {
+            headers: {
+                Authorization: `Bearer ${userInfo.token}`
+            }
+        };
+
+        const { data } = await axios.get(`/api/orders/client/${clientId}`, config);
+
+        // Aquí puedes modificar la estructura de los datos para incluir los detalles de los productos asociados a cada orden
+        const ordersWithProducts = data.map(async (order) => {
+            const { data: orderDetails } = await axios.get(`/api/orders/${order.id}`, config);
+            return {
+                ...order,
+                products: orderDetails.products
+            };
+        });
+
+        // Espera a que todas las solicitudes de detalles de órdenes se completen
+        const ordersWithProductsData = await Promise.all(ordersWithProducts);
+
+        dispatch({
+            type: CLIENT_ORDERS_SUCCESS,
+            payload: ordersWithProductsData
+        });
+    } catch (error) {
+        dispatch({
+            type: CLIENT_ORDERS_FAIL,
+            payload: error.response && error.response.data.message
+                ? error.response.data.message
+                : error.message,
+        });
+    }
+};
+

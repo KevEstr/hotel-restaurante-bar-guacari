@@ -2,7 +2,6 @@ import { createStore, combineReducers, applyMiddleware } from "redux";
 import thunk from "redux-thunk";
 import { composeWithDevTools } from "redux-devtools-extension";
 import { sectionReducer } from './reducers/sectionReducer';
-import { serviceListReducer, serviceCreateReducer } from './reducers/serviceReducers';
 
 import {
     userLoginReducer,
@@ -33,6 +32,14 @@ import {
     tableDetailsReducer,
     tableUpdateReducer,
 } from "./reducers/tableReducers";
+
+import {
+    serviceAllReducer,
+    serviceListReducer,
+    serviceCreateReducer,
+    serviceDetailsReducer,
+    serviceUpdateReducer,
+} from "./reducers/serviceReducers";
 
 import {
     roomListReducer,
@@ -69,7 +76,7 @@ import {
     orderDetailsReducer,
     orderUpdateReducer,
     statisticsReducer,
-    orderListByClientReducer,
+    clientOrdersReducer,
 } from "./reducers/orderReducers";
 
 import {
@@ -90,17 +97,12 @@ import{
     reservationCreateReducer,
     reservationDetailsReducer,
     reservationUpdateReducer,
+    clientReservationsReducer
 } from "./reducers/reservationReducers";
 
 const reducer = combineReducers({
 
-    serviceList: serviceListReducer,
-    serviceCreate: serviceCreateReducer,
-
     roleList: roleListReducer,
-
-
-    orderListByClient: orderListByClientReducer,
 
     ingredientMovementList: ingredientMovementListReducer,
     ingredientMovementDetails: ingredientMovementDetailsReducer,
@@ -141,6 +143,12 @@ const reducer = combineReducers({
     tableDetails: tableDetailsReducer,
     tableUpdate: tableUpdateReducer,
 
+    serviceAll: serviceAllReducer,
+    serviceList: serviceListReducer,
+    serviceCreate: serviceCreateReducer,
+    serviceDetails: serviceDetailsReducer,
+    serviceUpdate: serviceUpdateReducer,
+
     roomList: roomListReducer,
     roomCreate: roomCreateReducer,
     roomDetails: roomDetailsReducer,
@@ -161,6 +169,8 @@ const reducer = combineReducers({
     reservationCreate: reservationCreateReducer,
     reservationDetails: reservationDetailsReducer,
     reservationUpdate: reservationUpdateReducer,
+    clientReservations: clientReservationsReducer,
+    clientOrders: clientOrdersReducer,
 
     section: sectionReducer
 });

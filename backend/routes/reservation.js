@@ -8,6 +8,8 @@ const {
     updateReservation,
     deleteReservation,
     updateReservationEnd,
+    getClientReservations,
+    getRoomsByReservation
 } = require("../controllers/reservation");
 
 // VALIDATORS
@@ -27,7 +29,9 @@ router
 
 router.post("/:id/pay", protect, updateReservationEnd);
 
+router.route('/client/:id').get(protect, getClientReservations);
 
-    
+router.get("/:reservationId/rooms", protect, getRoomsByReservation);
+
 
 module.exports = router;

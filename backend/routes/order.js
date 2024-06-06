@@ -10,7 +10,7 @@ const {
     updateOrderDelivery,
     deleteOrder,
     getStatistics,
-    getOrdersByClientId, 
+    getClientOrders,
 } = require("../controllers/order");
 
 // VALIDATORS
@@ -22,7 +22,6 @@ router
     .route("/")
     .post(protect, orderCreateValidator, runValidation, createOrder)
     .get(protect, getOrders);
-    //.get(protect, getOrdersByClientId);
 
 router.route("/statistics").get(getStatistics);
 
@@ -35,7 +34,7 @@ router
 router.post("/:id/pay", protect, updateOrderPay);
 router.post("/:id/delivery", protect, updateOrderDelivery);
 
-router.get("/api/orders/client/:id/",protect, getOrdersByClientId);
+router.route('/client/:id').get(protect, getClientOrders);
 
 
 module.exports = router;

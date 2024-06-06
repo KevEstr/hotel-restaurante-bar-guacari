@@ -13,7 +13,7 @@ import {
 import { listReservationsDetails, updateReservation } from "../../actions/reservationActions";
 import { listClients } from "../../actions/clientActions";
 import { listRooms } from "../../actions/roomActions";
-import { getServices, listServices } from '../../actions/serviceActions';
+import { listServices } from '../../actions/serviceActions';
 
 
 const ReservationEditScreen = ({ history, match }) => {
@@ -29,7 +29,7 @@ const ReservationEditScreen = ({ history, match }) => {
     const [errors, setErrors] = useState({});
     const [clientAgreementId, setClientAgreementId] = useState(null);
     const [selectedServices, setSelectedServices] = useState([]);
-
+    const [total, setTotal] = useState(0);
     const dispatch = useDispatch();
 
     const reservationDetails = useSelector((state) => state.reservationDetails);
@@ -47,9 +47,6 @@ const ReservationEditScreen = ({ history, match }) => {
     const reservationUpdate = useSelector((state) => state.reservationUpdate);
     const { loading: loadingUpdate, success: successUpdate, errorUpdate } = reservationUpdate;
 
-    useEffect(() => {
-        dispatch(getServices());
-  }, [dispatch]);
 
     useEffect(() => {
         dispatch(listServices());
@@ -73,6 +70,7 @@ const ReservationEditScreen = ({ history, match }) => {
                 setQuantity(reservation.quantity || "");
                 setSelectedServices(reservation.service || []);
                 console.log("RESERVACIÓN A EDITAR: ", reservation)
+                setTotal(reservation.total || "");
             }
         }
     }, [dispatch, history, reservation, reservationId, successUpdate]);
@@ -103,6 +101,7 @@ const ReservationEditScreen = ({ history, match }) => {
                 quantity,
                 note,
                 services: selectedServices,
+                total,
             };
 
             dispatch(updateReservation(reservationData));

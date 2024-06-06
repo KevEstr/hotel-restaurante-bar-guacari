@@ -41,9 +41,9 @@ module.exports = (sequelize, DataTypes) => {
             quantity: DataTypes.INTEGER,
             userId: DataTypes.INTEGER,
             clientId: DataTypes.INTEGER,
-            roomId: DataTypes.INTEGER,
             paymentId: DataTypes.INTEGER,
             is_paid: DataTypes.BOOLEAN,
+            total: DataTypes.INTEGER,
             
         },
         {

@@ -15,6 +15,7 @@ import Pagination from "../../components/Pagination";
 /* Actions */
 import { createAgreement, listAgreements } from "../../actions/agreementActions";
 import { getServices } from '../../actions/serviceActions';
+import { listServices } from "../../actions/serviceActions"; 
 
 /* Styles */
 import { modalStyles } from "../../utils/styles";
@@ -23,9 +24,6 @@ const AgreementScreen = ({ history, match }) => {
     const [modalIsOpen, setModalIsOpen] = useState(false);
 
     const [name, setName] = useState("");
-    const [max_daily_food, setMaxDailyFood] = useState("");
-    const [max_daily_laundry, setMaxDailyLaundry] = useState("");
-    const [max_daily_hydration, setMaxDailyHydration] = useState("");
     const [userId, setUserId] = useState("");
     const [errors, setErrors] = useState({});
     const [keyword, setKeyword] = useState("");
@@ -43,7 +41,7 @@ const AgreementScreen = ({ history, match }) => {
 
     const serviceList = useSelector((state) => state.serviceList);
     const { services } = serviceList;
-
+    const [selectedServices, setSelectedServices] = useState([]);
 
     const agreementCreate = useSelector((state) => state.agreementCreate);
     const {
@@ -53,16 +51,14 @@ const AgreementScreen = ({ history, match }) => {
     } = agreementCreate;
 
     useEffect(() => {
-        dispatch(getServices());
         dispatch(listAgreements(keyword, pageNumber));
+        dispatch(listServices());
 
         if (createSuccess) {
             setName("");
-            setMaxDailyFood("");
-            setMaxDailyLaundry("");
-            setMaxDailyHydration("");
             setUserId("");
             setModalIsOpen(false);
+            setSelectedServices([]);
         }
     }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess]);
 
@@ -84,23 +80,12 @@ const AgreementScreen = ({ history, match }) => {
         if (Object.keys(errorsCheck).length === 0) {
             const agreement = {
                 name: name,
-                serviceIds: serviceIds,
+                userId: userId,
+                selectedServices: selectedServices,
             };
-            console.log("Convenio a crear: ", agreement)
+
             dispatch(createAgreement(agreement));
-
-            setName('');
-            setServiceIds([]);
         }
-    };
-
-    const handleCheckboxChange = (id) => {
-        if (serviceIds.includes(id)) {
-            setServiceIds(serviceIds.filter((sid) => sid !== id));
-        } else {
-            setServiceIds([...serviceIds, id]);
-        }
-        console.log("SERVICIOS AÑADIDOS: ",serviceIds)
     };
 
     const renderModalCreateAgreement = () => (
@@ -126,19 +111,25 @@ const AgreementScreen = ({ history, match }) => {
                         errors={errors}
                     />
                     <div>
-                    {services.map((service) => (
-                        <div key={service.id}>
-                            <input
-                                type="checkbox"
-                                id={service.id}
-                                onChange={() => handleCheckboxChange(service.id)}
-                            />
-                            <label htmlFor={service.id}>{service.name}</label>
-                        </div>
-                        ))}
+                        <label htmlFor="services">Servicios</label>
+                        <select
+                            id="services"
+                            multiple
+                            value={selectedServices}
+                            onChange={(e) =>
+                                setSelectedServices(
+                                    Array.from(e.target.selectedOptions, (option) => option.value)
+                                )
+                            }
+                            className="form-control"
+                        >
+                            {services.map((service) => (
+                                <option key={service.id} value={service.id}>
+                                    {service.name}
+                                </option>
+                            ))}
+                        </select>
                     </div>
-                    
-
                     <hr />
                     <button type="submit" className="btn btn-primary">
                         Confirmar
@@ -154,6 +145,7 @@ const AgreementScreen = ({ history, match }) => {
         </>
     );
 
+    
     const renderTable = () => (
         <table className="table table-hover text-nowrap">
             <thead>

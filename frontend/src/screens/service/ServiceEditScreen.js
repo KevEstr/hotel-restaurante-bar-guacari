@@ -2,74 +2,66 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 /* Components */
-import HeaderContent from "../../components/HeaderContent";
 import Input from "../../components/form/Input";
+import HeaderContent from "../../components/HeaderContent";
 import ButtonGoBack from "../../components/ButtonGoBack";
+import LoaderHandler from "../../components/loader/LoaderHandler";
 
 /* Constants */
 import {
-    AGREEMENT_UPDATE_RESET,
-    AGREEMENT_DETAILS_RESET,
-    AGREEMENT_DELETE_RESET,
-} from "../../constants/agreementConstants";
+    SERVICE_UPDATE_RESET,
+    SERVICE_DETAILS_RESET,
+    SERVICE_DELETE_RESET,
+} from "../../constants/serviceConstants";
 
 /* Actions */
-import {
-    updateAgreement,
-    listAgreementDetails,
-} from "../../actions/agreementActions";
-import LoaderHandler from "../../components/loader/LoaderHandler";
+import { listServiceDetails, updateService } from "../../actions/serviceActions";
 
-const AgreementEditScreen = ({ history, match }) => {
+const ServiceEditScreen = ({ history, match }) => {
 
-    const agreementId = parseInt(match.params.id);
+    const serviceId = parseInt(match.params.id);
     const [name, setName] = useState("");
-    const [max_daily_food, setMaxDailyFood] = useState("");
-    const [max_daily_laundry, setMaxDailyLaundry] = useState("");
-    const [max_daily_hydration, setMaxDailyHydration] = useState("");
-    const [userId, setUserId] = useState("");
-
     const [errors, setErrors] = useState({});
     const dispatch = useDispatch();
-    
-    //category details state
-    const agreementDetails = useSelector((state) => state.agreementDetails);
-    const { loading, error, agreement } = agreementDetails;
+    const userLogin = useSelector((state) => state.userLogin);
+    const { userInfo } = userLogin;
 
-    //category update state
-    const agreementUpdate = useSelector((state) => state.agreementUpdate);
+    //table details state
+    const serviceDetails = useSelector((state) => state.serviceDetails);
+    const { loading, error, service } = serviceDetails;
+
+    //table update state
+    const serviceUpdate = useSelector((state) => state.serviceUpdate);
     const {
         loading: loadingUpdate,
         error: errorUpdate,
         success: successUpdate,
-    } = agreementUpdate;
+    } = serviceUpdate;
 
     useEffect(() => {
         //after update redirect to users
         if (successUpdate) {
-            dispatch({ type: AGREEMENT_UPDATE_RESET });
-            dispatch({ type: AGREEMENT_DETAILS_RESET });
-            dispatch({ type: AGREEMENT_DELETE_RESET });
-            history.push("/agreement");
+            dispatch({ type: SERVICE_UPDATE_RESET });
+            dispatch({ type: SERVICE_DETAILS_RESET });
+            dispatch({ type: SERVICE_DELETE_RESET });
+
+            history.push("/service");
         }
 
-        //load product data
-        if (agreement) {
-            if (!agreement.name || agreement.id !== agreementId) {
-                dispatch(listAgreementDetails(agreementId));
+        //load table data
+        if (service) {
+            if (!service.name || service.id !== serviceId) {
+                dispatch(listServiceDetails(serviceId));
             } else {
                 //set states
-                setName(agreement.name);
-                setMaxDailyFood(agreement.max_daily_food);
-                setMaxDailyLaundry(agreement.max_daily_laundry);
-                setMaxDailyHydration(agreement.max_daily_hydration);
-                setUserId(agreement.user_id);
+                setName(service.name);
             }
         }
-    }, [dispatch, history, agreementId, agreement, successUpdate]);
+    }, [dispatch, history, serviceId, service, successUpdate]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
         let errorsCheck = {};
 
         if (!name) {
@@ -83,16 +75,11 @@ const AgreementEditScreen = ({ history, match }) => {
         }
 
         if (Object.keys(errorsCheck).length === 0) {
-            dispatch(
-                updateAgreement({
-                    id: agreementId,
-                    name,
-                    max_daily_food,
-                    max_daily_laundry,
-                    max_daily_hydration,
-                    user_id: userId,
-                })
-            );
+            const serviceUpdated = {
+                id: serviceId,
+                name: name,
+            };
+            dispatch(updateService(serviceUpdated));
         }
     };
 
@@ -105,30 +92,6 @@ const AgreementEditScreen = ({ history, match }) => {
                 setData={setName}
                 errors={errors}
             />
-                <Input
-                        name={"Tope de Alimentación:"}
-                        type={"number"}
-                        data={max_daily_food}
-                        setData={setMaxDailyFood}
-                        errors={errors}
-                    />
-
-                    <Input
-                        name={"Tope de Lavanderia:"}
-                        type={"number"}
-                        data={max_daily_laundry}
-                        setData={setMaxDailyLaundry}
-                        errors={errors}
-                    />
-
-                    <Input
-                        name={"Tope de Hidratación:"}
-                        type={"number"}
-                        data={max_daily_hydration}
-                        setData={setMaxDailyHydration}
-                        errors={errors}
-                    />
-            
             <hr />
             <button type="submit" className="btn btn-success">
                 Confirmar
@@ -139,7 +102,8 @@ const AgreementEditScreen = ({ history, match }) => {
     return (
         <>
             {/* Content Header (Page header) */}
-            <HeaderContent name={"Convenios"} />
+            <HeaderContent name={"Habitaciones"} />
+
             {/* Main content */}
 
             <section className="content">
@@ -149,9 +113,7 @@ const AgreementEditScreen = ({ history, match }) => {
                         <div className="col-12 col-md-6">
                             <div className="card">
                                 <div className="card-header">
-                                    <h3 className="card-title">
-                                        Editar Convenio
-                                    </h3>
+                                    <h3 className="card-title">Editar Habitaciones</h3>
                                 </div>
                                 {/* /.card-header */}
                                 <div className="card-body">
@@ -178,4 +140,4 @@ const AgreementEditScreen = ({ history, match }) => {
     );
 };
 
-export default AgreementEditScreen;
+export default ServiceEditScreen;

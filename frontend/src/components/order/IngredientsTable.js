@@ -171,7 +171,7 @@ const IngredientsTable = ({
                 loader={<BigSpin />}
             />
 
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '-100px' }}>
                 <Pagination pages={pages} page={page} setPage={setPageNumber} />
             </div>
 
