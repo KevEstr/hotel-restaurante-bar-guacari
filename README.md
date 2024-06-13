@@ -109,13 +109,3 @@ Project Link: [https://github.com/mono789/hotel-restaurante-bar-guacari](https:/
 <!-- ACKNOWLEDGEMENTS -->
 
 <!-- PREVIEW -->
-
-## Preview
-
-![dashboard](https://i.ibb.co/YZStk7w/restobar.png)
-![in_place_orders](https://i.ibb.co/HhmMpwP/inplace.png)
-![compra](https://i.ibb.co/0mSLtW4/COMPRA.png)
-![order-view](https://i.ibb.co/8sWPrVM/EDIT-ORDER.png)
-![orders](https://i.ibb.co/XkCXXct/ORDENES.png)
-![users](https://i.ibb.co/cDWsgw7/USERS.png)
-![profile](https://i.ibb.co/CBPjKFg/profile.png)
