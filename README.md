@@ -25,10 +25,7 @@
 
 ## About the Project
 
-![]()
-[![Restobar Screen Shot](https://i.ibb.co/YZStk7w/restobar.png)](https://restobar-example.herokuapp.com/)
-
-Restaurant Management App made with NodeJS, Express, MySQL, ReactJS y Redux.
+Restaurant-Hotel Management App made with NodeJS, Express, MySQL, ReactJS y Redux.
 
 App para la Administración de Restaurante-Hotel desarrollada con NodeJS, Express, MySQL, ReactJS y Redux.
 
@@ -105,24 +102,11 @@ App para la Administración de Restaurante-Hotel desarrollada con NodeJS, Expres
 Juan Andrés Rivera - juanandresrivera0@gmail.com 
 Phone: 3243219890
 
-Kevin Esstrada Del Valle - estradak325@gmail.com Phone: 3005771152
+Kevin Estrada Del Valle - estradak325@gmail.com Phone: 3005771152
 
 Project Link: [https://github.com/mono789/hotel-restaurante-bar-guacari](https://github.com/mono789/hotel-restaurante-bar-guacari)
 
 <!-- ACKNOWLEDGEMENTS -->
-
-## Acknowledgements
-
--   [express-async-handler](https://github.com/Abazhenov/express-async-handler)
--   [express-validator](https://express-validator.github.io/docs/)
--   [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken)
--   [multer](https://github.com/expressjs/multer)
--   [nodemon](https://github.com/remy/nodemon)
--   [bcrypt](https://github.com/kelektiv/node.bcrypt.js)
--   [redux-thunk](https://github.com/reduxjs/redux-thunk)
--   [axios](https://github.com/axios/axios)
--   [font awesome](https://fontawesome.com)
--   [create-react-app](https://github.com/facebook/create-react-app)
 
 <!-- PREVIEW -->
 
