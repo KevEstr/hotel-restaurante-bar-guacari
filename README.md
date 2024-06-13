@@ -1,19 +1,3 @@
-<!-- PROJECT LOGO -->
-<br />
-<p align="center">
- <a href="https://github.com/matias-rivera/restobar/">
-    <img src="./logo.png" alt="Logo" width="80" height="80">
-  </a>
-
-  <h3 align="center">RESTOBAR</h3>
-
-  <p align="center">
-    Restaurant Management App.
-    <br />
-    <a href="https://restobar-example.herokuapp.com/"><strong>View DEMO »</strong></a>
-    <br />
-  </p>
-</p>
 
 <!-- TABLE OF CONTENTS -->
 <details open="open">
@@ -29,10 +13,8 @@
       <a href="#getting-started">Getting Started</a>
       <ul>
          <li><a href="#installation">Installation</a></li>
-        <li><a href="#run-with-docker">Run with Docker</a></li>
       </ul>
     </li>
-    <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgements">Acknowledgements</a></li>
     <li><a href="#preview">Preview</a></li>
@@ -48,7 +30,7 @@
 
 Restaurant Management App made with NodeJS, Express, MySQL, ReactJS y Redux.
 
-App para la Administración de Restaurante desarrollada con NodeJS, Express, MySQL, ReactJS y Redux.
+App para la Administración de Restaurante-Hotel desarrollada con NodeJS, Express, MySQL, ReactJS y Redux.
 
 ### Built With
 
@@ -64,17 +46,15 @@ App para la Administración de Restaurante desarrollada con NodeJS, Express, MyS
 
 ## Getting Started
 
-There are two ways to start this project. The first one which needs some configuration and the easy one, with docker.
-
 ### Installation
 
 1. Clone the repo
 
     ```sh
-    git clone https://github.com/matias-rivera/restobar.git
+    git clone https://github.com/mono789/hotel-restaurante-bar-guacari.git
     ```
 
-2. You will need to install a [Mysql Server](https://www.mysql.com/), i think that [WAMP](https://www.wampserver.com/en/) is an easy tool to get started. Then create a database.
+2. You will need to install a [Mysql Server](https://www.mysql.com/), [WAMP](https://www.wampserver.com/en/) is also an easy tool to get started. Then create a database.
 
 3. Go to "backend", install the dependencies.
 
@@ -118,36 +98,16 @@ There are two ways to start this project. The first one which needs some configu
     ```sh
     npm start
     ```
-
-### Run with Docker
-
-1. Install [Docker](https://www.docker.com/). More information [here](https://docs.docker.com/desktop/windows/install/).
-
-2. Clone the repo
-
-    ```sh
-    git clone https://github.com/matias-rivera/restobar.git
-    ```
-
-3. Run Docker compose
-    ```sh
-    docker-compose up --build
-    ```
-4. It should start at "localhost:3000".
-
-<!-- LICENSE -->
-
-## License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-
 <!-- CONTACT -->
 
 ## Contact
 
-Matías Rivera - jnmatiasrivera@gmail.com
+Juan Andrés Rivera - juanandresrivera0@gmail.com 
+Phone: 3243219890
 
-Project Link: [https://github.com/matias-rivera/restobar/](https://github.com/matias-rivera/restobar/)
+Kevin Esstrada Del Valle - estradak325@gmail.com Phone: 3005771152
+
+Project Link: [https://github.com/mono789/hotel-restaurante-bar-guacari](https://github.com/mono789/hotel-restaurante-bar-guacari)
 
 <!-- ACKNOWLEDGEMENTS -->
 
