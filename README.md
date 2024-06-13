@@ -16,8 +16,6 @@
       </ul>
     </li>
     <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgements">Acknowledgements</a></li>
-    <li><a href="#preview">Preview</a></li>
   </ol>
 </details>
 
