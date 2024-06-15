@@ -28,6 +28,7 @@ import { ORDER_CREATE_RESET } from "../../constants/orderConstants";
 import { listTables } from "../../actions/tableActions";
 import { listClients } from "../../actions/clientActions";
 import { createOrder, listProductDetails } from "../../actions/orderActions";
+import { listPayments } from '../../actions/paymentActions';
 
 import { allTables } from "../../actions/tableActions"
 
@@ -64,10 +65,13 @@ const OrderCreateScreen = ({ match }) => {
     const [ingredientStocks, setIngredientStocks] = useState({});
     const [productStocks, setProductStocks] = useState({});
     const [user, setUser] = useState(null);
-
-
+    const [paymentId, setPaymentId] = useState(null);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const dispatch = useDispatch();
+
+    const paymentList = useSelector((state) => state.paymentList);
+    const { payments, error: errorPayments } = paymentList;
 
     const userLogin = useSelector((state) => state.userLogin);
     const { userInfo } = userLogin;
@@ -100,6 +104,7 @@ const OrderCreateScreen = ({ match }) => {
     useEffect(() => {
         dispatch(listUsers());
         dispatch(listClients("", "", true)); // Load clients with reservation on mount
+        dispatch(listPayments());
     }, [dispatch]);
 
     useEffect(() => {
@@ -154,6 +159,7 @@ const OrderCreateScreen = ({ match }) => {
                 delivery: delivery,
                 note: note,
                 userId: user,
+                paymentId: paymentId,
             };
             /* Make request */
             console.log("ORDEN A CREAR: ",order)
@@ -161,6 +167,10 @@ const OrderCreateScreen = ({ match }) => {
         }
     };
 
+    const toggleDropdown = () => {
+        setIsDropdownOpen(!isDropdownOpen);
+    };
+    
     /* Filter tables */
     const filterFreeTables = () => {
         const mappedTables = tables.filter((table) => {
@@ -169,29 +179,49 @@ const OrderCreateScreen = ({ match }) => {
         return mappedTables;
     };
 
-    const handleCategoryFilter = (categoryId) => {
-        setSelectedCategory(categoryId === selectedCategory ? null : categoryId);
+    const handleCategoryFilter = (categoryName) => {
+        setSelectedCategory(categoryName === selectedCategory ? null : categoryName);
     };
     
-    const renderCategoryButtons = () => (
-        <>
-            {categories.map((category) => (
+    const renderCategoryDropdown = () => (
+        <div className="d-flex justify-content-between align-items-center">
+            <h3 className="card-title mb-0">Crear órden</h3>
+            <div className="dropdown">
                 <button
-                    key={category.id}
-                    className={`btn ${selectedCategory === category.id ? 'btn-primary' : 'btn-outline-primary'}`}
-                    onClick={() => handleCategoryFilter(category.id)}
+                    className="btn btn-primary dropdown-toggle"
+                    type="button"
+                    onClick={toggleDropdown}
                 >
-                    {category.name}
+                    Filtro
                 </button>
-            ))}
-        </>
+                <div
+                    className={`dropdown-menu dropdown-menu-right ${isDropdownOpen ? 'show' : ''}`}
+                    style={{ minWidth: '200px' }}
+                >
+                    {categories.map((category) => (
+                        <button
+                            key={category.id}
+                            className={`dropdown-item ${
+                                selectedCategory === category.id ? 'active' : ''
+                            }`}
+                            onClick={() => handleCategoryFilter(category.name)}
+                        >
+                            {category.name}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        </div>
     );
+    
+
     const renderProductsTable = () => (
         
         <ProductsTable
             productsInOrder={productsInOrder}
             setProductsInOrder={setProductsInOrder}
             selectedCategory={selectedCategory} 
+            setSelectedCategory={setSelectedCategory}
             keyword={keyword}
             setKeyword={setKeyword}
             ingredientStocks={ingredientStocks}
@@ -264,7 +294,7 @@ const OrderCreateScreen = ({ match }) => {
             <Select
                 data={user}
                 setData={setUser}
-                items={users.filter(user => user.roleId!==1 && user.roleId!==null)}
+                items={users.filter(user => user.roleId!==2 && user.roleId!==null)}
             />
             {errors.user && (
                 <Message message={errors.user} color={"warning"} />
@@ -294,6 +324,19 @@ const OrderCreateScreen = ({ match }) => {
         </button>
     );
 
+    const renderPaymentSelect = () => (
+        <>
+            <Select
+                data={paymentId}
+                setData={setPaymentId}
+                items={payments.map(payment => ({ id: payment.id, name: payment.name }))}
+            />
+            {errors.paymentId && (
+                <Message message={errors.paymentId} color={"warning"} />
+            )}
+        </>
+    );
+    
     const productLoader = () => {
         let tableSkeleton = [];
         for (let i = 0; i < 16; i++) {
@@ -334,41 +377,57 @@ const OrderCreateScreen = ({ match }) => {
                         <div className="col-12">
                             <div className="card">
                                 <div className="card-header">
-                                    <h3 className="card-title">Crear órden</h3>
+                                    <h3 className="card-title"> </h3>
+                                    {renderCategoryDropdown()}
                                     <Loader variable={loading} />
                                     <Message message={error} color={"danger"} />
                                 </div>
                                 {/* /.card-header */}
                                 <div className="card-body">
                                     <div className="row">
-                                    {renderCategoryButtons()}
                                         <div className="col-12 col-lg-12">
                                             {renderProductsTable()}
                                             {console.log("Productos seleccionados: ",productsInOrder)}
                                         </div>
                                     </div>
                                     <div className="col-12 col-lg-12">
-                                            {renderCart()}
-                                            <div >
-                                                <h3 className="card-title">Selecciona tu nombre:</h3>
-                                                <div className="col-12 col-md-6">
-                                                    {renderUserSelect()}
-                                                </div>
-                                                <h3 className="card-title">Selecciona la mesa:</h3>
-                                                <div className="col-12 col-md-6">
-                                                    {renderTablesSelect()}
-                                                </div>
-                                                <h3 className="card-title">Selecciona el cliente:</h3>
-                                                <div className="col-12 col-md-6">
-                                                    {renderClientsSelect()}
-                                                </div>
-                                            </div>
-                                            <div className="mt-4">
-                                                {renderDeliveryCheckbox()}
-                                            </div>
-                                            {renderNoteTextarea()}
-                                        </div>
-                                    {renderSubmitButton()}
+                                    {renderCart()}
+                                    <hr />
+
+    <div style={{marginTop: '40px'}}>
+    <div className="row">
+    <div className="col-12 col-md-5">
+        Selecciona tu nombre:
+        <div className="form-group">
+            {renderUserSelect()}
+        </div>
+    </div>
+    <div className="col-12 col-md-5">
+        Selecciona la mesa:
+        <div className="form-group">
+            {renderTablesSelect()}
+        </div>
+    </div>
+</div>
+
+<div className="row">
+    <div className="col-12 col-md-5">
+        Selecciona el cliente:
+        <div className="form-group">
+            {renderClientsSelect()}
+        </div>
+    </div>
+    <div className="col-12 col-md-5">
+        Selecciona el tipo de pago:
+        <div className="form-group">
+            {renderPaymentSelect()}
+        </div>
+    </div>
+</div>
+</div>
+</div>
+{renderSubmitButton()}
+
                                 </div>
                                 {/* /.card-body */}
                             </div>

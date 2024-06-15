@@ -1,5 +1,6 @@
 "use strict";
 const { Model } = require("sequelize");
+const {ReservationAudit } = require('../models');
 module.exports = (sequelize, DataTypes) => {
 
     class Reservation extends Model {
@@ -28,8 +29,10 @@ module.exports = (sequelize, DataTypes) => {
                 as: "service",
             });
             
-
             this.belongsTo(models.User, { foreignKey: "userId", as: "user" });
+
+            this.belongsTo(models.Payment, { foreignKey: 'paymentId', as: 'payment' });
+            
         }
     }
     Reservation.init(
@@ -49,7 +52,28 @@ module.exports = (sequelize, DataTypes) => {
         {
             sequelize,
             modelName: "Reservation",
+            hooks: {
+                afterCreate: async (reservation, options) => {
+                    const payment = await sequelize.models.Payment.findByPk(reservation.paymentId);
+                    if (payment) {
+                        payment.total_accumulated += reservation.total;
+                        await payment.save();
+                    }
+                },
+            },
         }
     );
+
+    Reservation.addHook('beforeDestroy', async (reservation, options) => {
+        await sequelize.models.ReservationAudit.create({
+            reservationId: reservation.id,
+            concept: options.concept,
+            deletedAt: new Date(),
+            deletedBy: options.userId, 
+        });
+    });
+
+
     return Reservation;
+    
 };

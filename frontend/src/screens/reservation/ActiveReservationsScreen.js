@@ -20,8 +20,8 @@ const ActiveReservationsScreen = ({ history }) => {
     const userLogin = useSelector((state) => state.userLogin);
     const { userInfo } = userLogin;
 
-    const roomList = useSelector((state) => state.roomList);
-    const { loading, error, rooms } = roomList;
+    const roomAll = useSelector((state) => state.roomAll);
+    const { loading, error, rooms } = roomAll;
 
     useEffect(() => {
         dispatch(allRooms());
@@ -72,10 +72,10 @@ const ActiveReservationsScreen = ({ history }) => {
             <Link
                 to={`/reservation/create/${room.id}/room`}
                 key={room.id}
-                className="btn btn-block btn-success btn-lg"
+                className="btn btn-block btn-danger btn-lg"
             >
                 <p className="text-center my-0">
-                    <i className="fas fa-utensils float-left my-1"></i>
+                    <i className="fas fa-solid fa-bed float-left my-1"></i>
                     {room.name}
                 </p>
             </Link>

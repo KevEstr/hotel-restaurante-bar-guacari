@@ -169,3 +169,21 @@ export const clientReservationsReducer = (state = { reservations: [] }, action) 
             return state;
     }
 };
+
+export const reservationAllListReducer = (state = { reservations: [] }, action) => {
+    switch (action.type) {
+        case RESERVATION_LIST_REQUEST:
+            return { loading: true, reservations: [] };
+        case RESERVATION_LIST_SUCCESS:
+            return {
+                loading: false,
+                reservations: action.payload.reservations,
+                pages: action.payload.pages,
+                page: action.payload.page,
+            };
+        case RESERVATION_LIST_FAIL:
+            return { loading: false, error: action.payload };
+        default:
+            return state;
+    }
+};

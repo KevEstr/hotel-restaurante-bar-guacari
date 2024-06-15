@@ -32,7 +32,7 @@ const Menu = ({ history }) => {
         <aside className="main-sidebar sidebar-dark-primary elevation-4">
 
                     {/* SECCIÓN QUE LE CORRESPONDE AL MENU DEL HOTEL */}
-                    <Link to={"/dashboard"} className="brand-link">
+                    <Link to={"/hotel"} className="brand-link">
                         <img
                             src="/guacari.png"
                             alt="Guacarí Logo"
@@ -67,7 +67,7 @@ const Menu = ({ history }) => {
                                 data-accordion="false"
                             >
                                 <li className="nav-item">
-                                    <Link to="/dashboard" className="nav-link">
+                                    <Link to="/hotel" className="nav-link">
                                         <i className="nav-icon fas fa-tachometer-alt" />{" "}
                                         <p> Dashboard</p>
                                     </Link>
@@ -107,6 +107,13 @@ const Menu = ({ history }) => {
                                     <Link to="/service" className="nav-link">
                                         <i className="nav-icon fas fa-solid fa-soap" />{" "}
                                         <p> Servicios </p>
+                                    </Link>
+                                </li>
+
+                                <li className="nav-item">
+                                    <Link to="/reservation" className="nav-link">
+                                        <i className="nav-icon far fa-clipboard" />{" "}
+                                        <p> Historial</p>
                                     </Link>
                                 </li>
 

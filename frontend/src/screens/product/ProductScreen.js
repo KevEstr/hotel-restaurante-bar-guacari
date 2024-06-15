@@ -13,7 +13,7 @@ import Pagination from "../../components/Pagination";
 import Message from "../../components/Message";
 import IngredientsCart from "../../components/order/IngredientsCart";
 import IngredientsTable from "../../components/order/IngredientsTable";
-import { listProducts, createProduct  } from "../../actions/productActions";
+import { listProducts, createProduct, deleteProduct } from "../../actions/productActions";
 import { listCategories } from "../../actions/categoryActions";
 import { listIngredients } from "../../actions/ingredientActions";
 import { modalStyles } from "../../utils/styles";
@@ -35,6 +35,8 @@ const ProductScreen = ({ history }) => {
     const [isComposite, setIsComposite] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(null);
     const { width } = useWindowSize(); // Obtén el ancho de la ventana
+    const [productIdToDelete, setProductIdToDelete] = useState(null);
+    const [confirmDelete, setConfirmDelete] = useState(false);
 
     const dispatch = useDispatch();
 
@@ -50,14 +52,18 @@ const ProductScreen = ({ history }) => {
     const productCreate = useSelector((state) => state.productCreate);
     const { loading: createLoading, success: createSuccess, error: createError } = productCreate;
 
+    const productDelete = useSelector((state) => state.productDelete || {});
+    const { success: deleteSuccess } = productDelete;
+
     useEffect(() => {
         if (createSuccess) {
             resetForm();
             setModalIsOpen(false);
         }
         dispatch(listProducts(keyword, pageNumber,selectedCategory));
-    }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess, selectedCategory]);
+    }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess, selectedCategory, deleteSuccess]);
 
+    
     const resetForm = () => {
         setName("");
         setPrice(0);
@@ -144,6 +150,42 @@ const ProductScreen = ({ history }) => {
         <IngredientsTable ingredientsInOrder={ingredientsInOrder} setIngredientsInOrder={setIngredientsInOrder} />
     );
 
+    const renderDeleteConfirmationModal = () => (
+        <Modal
+            style={modalStyles}
+            isOpen={confirmDelete}
+            onRequestClose={() => setConfirmDelete(false)}
+        >
+            <h2 style={{ fontSize: "24px", fontWeight: 'normal' }}>Confirmar Eliminación</h2>
+            <hr />
+            <p>¿Estás seguro que deseas eliminar esta categoría?</p>
+            <div className="d-flex justify-content-center mt-4">
+                <button
+                    onClick={() => handleDelete(productIdToDelete)}
+                    className="btn btn-danger mx-2"
+                >
+                    Confirmar
+                </button>
+                <button
+                    onClick={() => setConfirmDelete(false)}
+                    className="btn btn-secondary mx-2"
+                >
+                    Cancelar
+                </button>
+            </div>
+        </Modal>
+    );
+
+    const handleDelete = (id) => {
+        dispatch(deleteProduct(id));
+        setConfirmDelete(false);
+    };
+
+    const handleDeleteClick = (id) => {
+        setProductIdToDelete(id);
+        setConfirmDelete(true);
+    };
+
     const renderModalCreateProduct = () => (
         <>
             <ModalButton modal={modalIsOpen} setModal={setModalIsOpen} classes={"btn-success btn-lg mb-2"} />
@@ -158,7 +200,7 @@ const ProductScreen = ({ history }) => {
                         transform: "translate(-50%, -50%)",
                         width: "auto",
                         maxHeight: "90vh",
-                        minHeight: "70vh",
+                        minHeight: "50vh",
                         // Usamos min-width y max-width para definir el tamaño base del modal
                         minWidth: "60%",
                         maxWidth: "80%"
@@ -182,88 +224,91 @@ const ProductScreen = ({ history }) => {
                 onRequestClose={() => setModalIsOpen(false)}
             >
                 <LoaderHandler loading={createLoading} error={createError} />
-                <h2>Creación de Productos</h2>
+                <h2 style={{fontSize: "24px", fontWeight: 'normal'}}>Creación de Productos</h2>
+                <hr />
 
-    <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit}>
 
-    <div className="row">
-        <div className="col-md-6" style={{marginTop: '10px'}}>
-            <Input name={"nombre"} type={"text"} data={name} setData={setName} errors={errors} />
-            {errors.name && <Message message={errors.name} color={"warning"} />}
-        </div>
-        <div className="col-md-6" style={{marginTop: '10px'}}>
-            <Input name={"precio de venta"} type={"number"} data={price} setData={setPrice} errors={errors} />
-            {errors.price && <Message message={errors.price} color={"warning"} />}
-        </div>
-    </div>
-
-    <div className="container">
-    <div className="row">
-        <div className="col-12 col-md-4 mb-3">
-            <label>Categoría:</label>
-            {renderCategoriesSelect()}
-            {errors.category && <Message message={errors.category} color={"warning"} />}
-        </div>
-        <div className="col-12 col-md-4 mb-3">
-            <hr />
-            <label>Tipo de producto</label>
-            <div className="form-check">
-                <input
-                    type="checkbox"
-                    className="form-check-input"
-                    id="simpleProduct"
-                    checked={isSimple}
-                    onChange={handleSimpleChange}
-                />
-                <label className="form-check-label" htmlFor="simpleProduct">
-                    Producto Simple
-                </label>
+                <div className="row justify-content-center">
+                <div className="col-md-3" style={{marginTop: '10px'}}>
+                    <Input name={"nombre"} type={"text"} data={name} setData={setName} errors={errors} />
+                    {errors.name && <Message message={errors.name} color={"warning"} />}
+                </div>
+                <div className="col-md-3 offset-md-1" style={{marginTop: '10px'}}>
+                    <Input name={"precio de venta"} type={"number"} data={price} setData={setPrice} errors={errors} />
+                    {errors.price && <Message message={errors.price} color={"warning"} />}
+                </div>
+                <div className="col-md-4 offset-md-1" style={{marginTop: '10px'}}>
+                    <label style={{ fontWeight: 'normal' }}>Categoría:</label>
+                    {renderCategoriesSelect()}
+                    {errors.category && <Message message={errors.category} color={"warning"} />}
+                </div>
             </div>
-        </div>
-        <div className="col-12 col-md-4 mb-3">
-            <hr />
-            <label>&nbsp;</label> {/* Esta etiqueta sirve para alinear mejor los checkboxes */}
-            <div className="form-check">
-                <input
-                    type="checkbox"
-                    className="form-check-input"
-                    id="compositeProduct"
-                    checked={isComposite}
-                    onChange={handleCompositeChange}
-                />
-                <label className="form-check-label" htmlFor="compositeProduct">
-                    Producto Compuesto
-                </label>
-            </div>
+
+                <div className="container">
+                    <div className="row justify-content-center">
+                        <div className="col-12 col-md-4 mb-3" style={{ textAlign: 'center', marginTop: '10px' }}>
+                            <div className="form-check">
+                                <input
+                                    type="checkbox"
+                                    className="form-check-input"
+                                    id="simpleProduct"
+                                    checked={isSimple}
+                                    onChange={handleSimpleChange}
+                                />
+                                <label className="form-check-label" htmlFor="simpleProduct">
+                                    Producto Simple
+                                </label>
+                            </div>
+                        </div>
+                        <div className="col-12 col-md-4 mb-3" style={{ textAlign: 'center', marginTop: '10px' }}>
+                            <div className="form-check">
+                                <input
+                                    type="checkbox"
+                                    className="form-check-input"
+                                    id="compositeProduct"
+                                    checked={isComposite}
+                                    onChange={handleCompositeChange}
+                                />
+                                <label className="form-check-label" htmlFor="compositeProduct">
+                                    Producto Compuesto
+                                </label>
+                            </div>
         </div>
     </div>
 </div>
 
-                    {isComposite && (
-                        <>
-                            <div style={{ display: 'inline-block', marginLeft: '20px', marginTop: '50px' }}>
+{isComposite && (
+                    
+                    <div className="container">
+                        <hr />
+                        <div className="row justify-content-center" style={{ marginTop: '50px' }}>
+                            <div className="col-12 col-md-6" style={{ textAlign: 'center' }}>
                                 {renderIngredientsTable()}
                             </div>
-                            <div style={{ display: 'inline-block', marginLeft: '45px', marginTop: '50px' }}>
+                            <div className="col-12 col-md-6" style={{ textAlign: 'center' }}>
                                 {renderIngredientsCart()}
                             </div>
-                            <div style={{ marginTop: '10px' }}>
-                            
-                            </div>
-                        </>
-                    )}
-                    <div style={{marginTop: '150px'}}>
-                    <button type="submit" className="btn btn-primary">
+                        </div>
+                    </div>
+                )}
+
+                <div className="container" style={{ marginTop: isComposite ? '100px' : '20px' }}>
+                    <div className="row justify-content-center">
+                        <div className="col-12 col-md-6" style={{ textAlign: 'center' }}>
+                            <button type="submit" className="btn btn-primary">
                                 Confirmar
                             </button>
-
-                    <ModalButton modal={modalIsOpen} setModal={setModalIsOpen} classes={"btn-danger float-right"} />
+                        </div>
+                        <div className="col-12 col-md-6" style={{ textAlign: 'center' }}>
+                            <ModalButton modal={modalIsOpen} setModal={setModalIsOpen} classes={"btn-danger"} />
+                        </div>
                     </div>
-
-                </form>
-            </Modal>
-        </>
-    );
+                </div>
+            </form>
+        </Modal>
+    </>
+);
 
     const renderProductsTable = () => (
         <table className="table table-hover text-nowrap">
@@ -286,9 +331,15 @@ const ProductScreen = ({ history }) => {
                         <td className="d-none d-sm-table-cell">{product.createdAt.slice(0, 10)}</td>
                         <td className="d-none d-sm-table-cell">{product.category.name}</td>
                         <td>
-                            <Link to={`/product/${product.id}/edit`} className="btn btn-warning btn-lg">
+                            <Link to={`/product/${product.id}/edit`} className="btn btn-warning btn-lg mr-3">
                                 Editar
                             </Link>
+                            <button
+                                onClick={() => handleDeleteClick(product.id)}
+                                className="btn btn-danger btn-lg"
+                            >
+                                Eliminar
+                            </button>
                         </td>
                     </tr>
                 ))}
@@ -310,6 +361,7 @@ const ProductScreen = ({ history }) => {
             <section className="content">
                 <div className="container-fluid">
                     {renderModalCreateProduct()}
+                    {renderDeleteConfirmationModal()}
 
                     <div className="row">
                         <div className="col-12">

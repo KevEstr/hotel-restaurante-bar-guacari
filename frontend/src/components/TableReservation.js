@@ -10,7 +10,7 @@ const Table = ({ room }) => {
                     : "/activeReservation"
             }
         >
-            <div className="small-box bg-danger">
+            <div className="small-box bg-info">
                 <div className="inner">
                     <h3>{room.name}</h3>
                     <p>
@@ -21,7 +21,7 @@ const Table = ({ room }) => {
                     </p>
                 </div>
                 <div className="icon">
-                    <i className="fas fa-user-friends"></i>
+                    <i className="fas fa-solid"></i>
                 </div>
                 <div className="small-box-footer">
                     Más info <i className="fa fa-arrow-circle-right" />

@@ -1,20 +1,29 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+
+/* Components */
 import Message from "../../components/Message";
 import Loader from "../../components/Loader";
 import HeaderContent from "../../components/HeaderContent";
 import ButtonGoBack from "../../components/ButtonGoBack";
+
+/* Form components */
 import Textarea from "../../components/form/Textarea";
+
+/* Order components */
 import Select from "../../components/Select";
+
+/* Constants */
 import {
     RESERVATION_DETAILS_RESET,
     RESERVATION_UPDATE_RESET,
 } from "../../constants/reservationConstants";
+
+/* Actions */
 import { listReservationsDetails, updateReservation } from "../../actions/reservationActions";
 import { listClients } from "../../actions/clientActions";
 import { listRooms } from "../../actions/roomActions";
 import { listServices } from '../../actions/serviceActions';
-
 
 const ReservationEditScreen = ({ history, match }) => {
     const reservationId = parseInt(match.params.id);
@@ -27,7 +36,6 @@ const ReservationEditScreen = ({ history, match }) => {
     const [note, setNote] = useState("");
     const [quantity, setQuantity] = useState("");
     const [errors, setErrors] = useState({});
-    const [clientAgreementId, setClientAgreementId] = useState(null);
     const [selectedServices, setSelectedServices] = useState([]);
     const [total, setTotal] = useState(0);
     const dispatch = useDispatch();
@@ -46,7 +54,6 @@ const ReservationEditScreen = ({ history, match }) => {
 
     const reservationUpdate = useSelector((state) => state.reservationUpdate);
     const { loading: loadingUpdate, success: successUpdate, errorUpdate } = reservationUpdate;
-
 
     useEffect(() => {
         dispatch(listServices());
@@ -69,7 +76,6 @@ const ReservationEditScreen = ({ history, match }) => {
                 setEndDate(reservation.end_date || "");
                 setQuantity(reservation.quantity || "");
                 setSelectedServices(reservation.service || []);
-                console.log("RESERVACIÓN A EDITAR: ", reservation)
                 setTotal(reservation.total || "");
             }
         }
@@ -111,20 +117,15 @@ const ReservationEditScreen = ({ history, match }) => {
     const handleServiceChange = (e, serviceId) => {
         const { name, value } = e.target;
         setSelectedServices((prevServices) => {
-            // Verifica si se está deseleccionando el servicio
             if (value === "") {
-                // Elimina el servicio del estado
                 return prevServices.filter((service) => service.id !== serviceId);
             } else {
-                // Verifica si el servicio ya está en selectedServices
                 const serviceExists = prevServices.find((service) => service.id === serviceId);
                 if (serviceExists) {
-                    // Actualiza el límite máximo del servicio existente
                     return prevServices.map((service) =>
                         service.id === serviceId ? { ...service, [name]: value } : service
                     );
                 } else {
-                    // Agrega el servicio seleccionado al estado
                     return [
                         ...prevServices,
                         { id: serviceId, maxLimit: value }
@@ -136,16 +137,13 @@ const ReservationEditScreen = ({ history, match }) => {
 
     const handleAddService = (service) => {
         const isSelected = selectedServices.some(item => item.id === service.id);
-    
+
         if (isSelected) {
-            // Si el servicio ya está seleccionado, lo quitamos
             setSelectedServices(prevServices => prevServices.filter(item => item.id !== service.id));
         } else {
-            // Si el servicio no está seleccionado, lo agregamos
             setSelectedServices(prevServices => [...prevServices, { id: service.id, maxLimit: '', name: service.name }]);
         }
     };
-
 
     const filterFreeRooms = () => {
         return rooms.filter((roomItem) => roomItem.active_status === false || roomItem.id === room);
@@ -189,7 +187,6 @@ const ReservationEditScreen = ({ history, match }) => {
 
     const renderPriceInput = () => (
         <>
-            <label htmlFor="price">Precio:</label>
             <input
                 type="number"
                 id="price"
@@ -205,7 +202,6 @@ const ReservationEditScreen = ({ history, match }) => {
 
     const renderQuantityInput = () => (
         <>
-            <label htmlFor="quantity">Cantidad de Personas:</label>
             <input
                 type="number"
                 id="quantity"
@@ -221,7 +217,6 @@ const ReservationEditScreen = ({ history, match }) => {
 
     const renderStartDateSelect = () => (
         <>
-            <label htmlFor="startDate">Fecha de Inicio:</label>
             <input
                 type="date"
                 id="startDate"
@@ -237,7 +232,6 @@ const ReservationEditScreen = ({ history, match }) => {
 
     const renderEndDateSelect = () => (
         <>
-            <label htmlFor="endDate">Fecha de Fin:</label>
             <input
                 type="date"
                 id="endDate"
@@ -260,44 +254,47 @@ const ReservationEditScreen = ({ history, match }) => {
         />
     );
 
-    const renderServices =() => (
+    const renderServices = () => (
         <>
-        <div>
-            <label htmlFor="servicios">Servicios</label>
-            <div>
+            <div className="form-group">
+    <div className="row">
+        <div className="col-md-6">
             {selectedServices &&
-            selectedServices.map((service) => (
-                <div key={service.id}>
-                <label>
-                    <input
-                    type="checkbox"
-                    value={service.id}
-                    checked={selectedServices.some(
-                        (selectedService) => selectedService.id === service.id
-                    )}
-                    onChange={() => handleAddService(service)}
-                    />
-                    {service.name}
-                </label>
-                </div>
-            ))}
-        </div>
+                selectedServices.map((service) => (
+                    <div key={service.id} className="form-check form-check-inline mr-3">
+                        <input
+                            type="checkbox"
+                            className="form-check-input"
+                            value={service.id}
+                            checked={selectedServices.some(
+                                (selectedService) => selectedService.id === service.id
+                            )}
+                            onChange={() => handleAddService(service)}
+                        />
+                        <label className="form-check-label">{service.name}</label>
+                    </div>
+                ))}
             {errors.selectedServices && <Message message={errors.selectedServices} color={"warning"} />}
-        </div>{console.log("Servicios seleccionados: ",selectedServices)}
-        {selectedServices.map((service) => (
-            <div key={service.id}>
-                <label htmlFor={`maxLimit-${service.id}`}>
-                Tope Máximo para {service.name}
-                </label>
-                <input
-                type="number"
-                id={`maxLimit-${service.id}`}
-                name="maxLimit"
-                value={service.ReservationService ? service.ReservationService.maxLimit : ''}
-                onChange={(e) => handleServiceChange(e, service.id)}
-                />
+        </div>
+        <div className="col-md-6">
+            <div className="row">
+                {selectedServices.map((service) => (
+                    <div key={service.id} className="col-md-6 form-group">
+                        <label htmlFor={`maxLimit-${service.id}`} style={{ fontWeight: 'normal' }}>Tope Máximo para {service.name}</label>
+                        <input
+                            type="number"
+                            id={`maxLimit-${service.id}`}
+                            name="maxLimit"
+                            value={service.ReservationService ? service.ReservationService.maxLimit : ''}
+                            onChange={(e) => handleServiceChange(e, service.id)}
+                            className="form-control"
+                        />
+                    </div>
+                ))}
             </div>
-            ))}
+        </div>
+    </div>
+</div>
         </>
     );
 
@@ -331,46 +328,62 @@ const ReservationEditScreen = ({ history, match }) => {
                                 </div>
                                 <div className="card-body">
                                     <div className="row">
-                                        <div className="col-12 col-lg-6">
-                                            <div className="col-12 col-md-6">
-                                                Cambiar Fecha de Inicio:
+                                        <div className="col-md-12">
+                                            <div className="form-group">
+                                                <div className="row">
+                                                    <div className="col-md-4">
+                                                    Selecciona el cliente:
+                                                    {renderClientsSelect()}
+                                                    </div>
+                                                <div className="col-md-4">
+                                                Selecciona la habitación:
+                                                {renderRoomsSelect()}
+                                            </div>
+                                        <div className="col-md-4">
+                                            Cantidad de personas:
+                                            {renderQuantityInput()}
+                                        </div>
+                                        
+                                </div>
+                                    </div>
+                                        <div className="row">
+                                            <div className="col-md-4">
+                                                Fecha de Inicio:
                                                 {renderStartDateSelect()}
                                             </div>
-                                            <div className="col-12 col-md-6">
-                                                Cambiar Fecha de Finalización:
+
+                                            <div className="col-md-4">
+                                                Fecha de Fin:
                                                 {renderEndDateSelect()}
                                             </div>
 
-                                            <div className="col-12 col-md-6">
-                                                Cambiar Servicios:
+                                            <div className="col-md-4">
+                                                Precio:
+                                                {renderPriceInput()}
+                                            </div>
+
+                                        </div>
+
+                                        <div className="row">
+                                            <div className="col-md-8" style={{marginTop:'10px'}}>
+                                                Servicios:
                                                 {renderServices()}
                                             </div>
                                         </div>
-                                        <div className="col-12 col-lg-6">
-                                            <div className="row">
-                                                <div className="col-12 col-md-6">
-                                                    Cambiar Habitación:
-                                                    {renderRoomsSelect()}
-                                                </div>
-                                                <div className="col-12 col-md-6">
-                                                    Cambiar Cliente:
-                                                    {renderClientsSelect()}
-                                                </div>
-                                                <div className="col-12 col-md-6">
-                                                    {renderPriceInput()}
-                                                </div>
-                                                <div className="col-12 col-md-6">
-                                                    {renderQuantityInput()}
-                                                </div>
 
-                                        
-                                            </div>
-                                            <div className="mt-4">
+
+                                            
+                                            <div className="form-group">
                                                 {renderNoteTextarea()}
                                             </div>
                                         </div>
+                                        <div className="col-md-6">
+                                
+                                        </div>
                                     </div>
-                                    {renderSubmitButton()}
+                                        <div className="col-md-12 text-center">
+                                            {renderSubmitButton()}
+                                    </div>
                                 </div>
                             </div>
                         </div>

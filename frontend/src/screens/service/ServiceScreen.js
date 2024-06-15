@@ -13,7 +13,7 @@ import Pagination from "../../components/Pagination";
 import LoaderHandler from "../../components/loader/LoaderHandler";
 
 /* Actions */
-import { listServices, createService } from "../../actions/serviceActions";
+import { listServices, createService, deleteService } from "../../actions/serviceActions";
 
 /* Styles */
 import { modalStyles } from "../../utils/styles";
@@ -27,6 +27,10 @@ const ServiceScreen = ({ history }) => {
     const [pageNumber, setPageNumber] = useState(1);
     const [modalIsOpen, setModalIsOpen] = useState(false);
 
+    const [confirmDelete, setConfirmDelete] = useState(false);
+    const [serviceIdToDelete, setServiceIdToDelete] = useState(null);
+
+
     const dispatch = useDispatch();
 
     const userLogin = useSelector((state) => state.userLogin);
@@ -34,6 +38,10 @@ const ServiceScreen = ({ history }) => {
 
     const serviceList = useSelector((state) => state.serviceList);
     const { loading, error, services, page, pages } = serviceList;
+
+    const serviceDelete = useSelector((state) => state.serviceDelete || {});
+    const { success: deleteSuccess } = serviceDelete;
+
 
     const serviceCreate = useSelector((state) => state.serviceCreate);
     const {
@@ -49,7 +57,7 @@ const ServiceScreen = ({ history }) => {
             setModalIsOpen(false);
             dispatch(listServices(keyword, pageNumber)); // <-- Vuelve a cargar la lista de habitaciones
         }
-    }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess]);
+    }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess, deleteSuccess]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -75,6 +83,42 @@ const ServiceScreen = ({ history }) => {
         }
     };
 
+    const renderDeleteConfirmationModal = () => (
+        <Modal
+            style={modalStyles}
+            isOpen={confirmDelete}
+            onRequestClose={() => setConfirmDelete(false)}
+        >
+            <h2 style={{ fontSize: "24px", fontWeight: 'normal' }}>Confirmar Eliminación</h2>
+            <hr />
+            <p>¿Estás seguro que deseas eliminar este servicio?</p>
+            <div className="d-flex justify-content-center mt-4">
+                <button
+                    onClick={() => handleDelete(serviceIdToDelete)}
+                    className="btn btn-danger mx-2"
+                >
+                    Confirmar
+                </button>
+                <button
+                    onClick={() => setConfirmDelete(false)}
+                    className="btn btn-secondary mx-2"
+                >
+                    Cancelar
+                </button>
+            </div>
+        </Modal>
+    );
+
+    const handleDelete = (id) => {
+        dispatch(deleteService(id));
+        setConfirmDelete(false);
+    };
+
+    const handleDeleteClick = (id) => {
+        setServiceIdToDelete(id);
+        setConfirmDelete(true);
+    };
+
     const renderService = () => {
         return (
             <table className="table table-hover text-nowrap">
@@ -97,10 +141,16 @@ const ServiceScreen = ({ history }) => {
                             <td>
                                 <Link
                                     to={`/service/${service.id}/edit`}
-                                    className="btn btn-warning btn-lg"
+                                    className="btn btn-warning btn-lg mr-3"
                                 >
                                     Editar
                                 </Link>
+                                <button
+                                onClick={() => handleDeleteClick(service.id)}
+                                className="btn btn-danger btn-lg"
+                            >
+                                Eliminar
+                            </button>
                             </td>
                         </tr>
                     ))}
@@ -121,11 +171,12 @@ const ServiceScreen = ({ history }) => {
                 isOpen={modalIsOpen}
                 onRequestClose={() => setModalIsOpen(false)}
             >
-                <h2>Create Form</h2>
+                <h2 style={{fontSize: "32px", fontWeight: 'normal'}}>Creación de Servicios</h2>
+                <hr />
                 <LoaderHandler loading={createLoading} error={createError} />
                 <form onSubmit={handleSubmit}>
                     <Input
-                        name={"nombre o número"}
+                        name={"Nombre del Servicio"}
                         type={"text"}
                         data={name}
                         setData={setName}
@@ -154,6 +205,7 @@ const ServiceScreen = ({ history }) => {
             <section className="content">
                 <div className="container-fluid">
                     {renderModalCreateService()}
+                    {renderDeleteConfirmationModal()}
 
                     <div className="row">
                         <div className="col-12">

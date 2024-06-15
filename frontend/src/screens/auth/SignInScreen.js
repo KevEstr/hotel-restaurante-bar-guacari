@@ -61,7 +61,7 @@ const SignInScreen = ({ history }) => {
                                         </div>
                                     </div>
                                     <h3 className="login-heading mb-4">
-                                        Welcome back!
+                                        Bienvenido de Vuelta!
                                     </h3>
 
                                     {loading && <Loader variable={loading} />}

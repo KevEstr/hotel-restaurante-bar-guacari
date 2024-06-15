@@ -185,6 +185,7 @@ const Main = () => {
                     />
                     <PrivateRoute path="/" component={DashboardScreen} />
                     <Route component={NotFoundScreen} />
+
                 </Switch>
             </div>
             <Footer />

@@ -9,41 +9,36 @@ import Search from "../../components/Search";
 import LoaderHandler from "../../components/loader/LoaderHandler";
 import Pagination from "../../components/Pagination";
 
-
 /* Actions */
-import { listReservations } from "../../actions/reservationActions";
+import { listAllReservations } from "../../actions/reservationActions";
+
 
 const ReservationScreen = ({ history }) => {
     const [pageNumber, setPageNumber] = useState(1);
     const [keyword, setKeyword] = useState("");
-
 
     const dispatch = useDispatch();
 
     const userLogin = useSelector((state) => state.userLogin);
     const { userInfo } = userLogin;
 
-    const reservationList = useSelector((state) => state.reservationList);
-    const { loading, error, reservations, page, pages } = reservationList;
-
+    const reservationAllList = useSelector((state) => state.reservationAllList);
+    const { loading, error, reservations, page, pages } = reservationAllList;
     
-
     useEffect(() => {
-        dispatch(listReservations({ keyword, pageNumber}));
+        console.log("Dispatching listReservations with keyword:", keyword, "and pageNumber:", pageNumber);
+        dispatch(listAllReservations({ keyword, pageNumber}));
     }, [dispatch, history, userInfo, pageNumber, keyword]);
 
     const renderCreateButton = () => (
         <Link to="/activeReservation">
             <button className="btn btn-success btn-lg">
-                <i className="fas fa-edit" /> Nueva reservación
+                <i className="fas fa-edit" /> Nueva Reserva
             </button>
         </Link>
     );
 
-
-
     const renderTable = () => (
-        // console.log(reservations);
         <table className="table table-hover text-nowrap">
             <thead>
                 <tr>
@@ -57,11 +52,19 @@ const ReservationScreen = ({ history }) => {
             </thead>
             <tbody>
                 {reservations.map((reservation) => (
-                    
                     <tr key={reservation.id}>
                         <td>{reservation.id}</td>
                         <td>{reservation.client.name}</td>
                         <td className="d-none d-sm-table-cell h4">
+                            {reservation.room ? (
+                                <span className={"badge bg-primary"}>
+                                    {reservation.room.name}
+                                </span>
+                            ) : (
+                                <span className={"badge bg-info"}>
+                                    DOMICILIO
+                                </span>
+                            )}
                         </td>
                         <td>
                             {reservation.is_paid ? (
@@ -76,7 +79,7 @@ const ReservationScreen = ({ history }) => {
                         </td>
                         <td className="d-none d-sm-table-cell h4">
                             <span className={"badge bg-success"}>
-                                ${reservation.price}
+                                ${reservation.total}
                             </span>
                         </td>
                         <td>
@@ -97,7 +100,7 @@ const ReservationScreen = ({ history }) => {
         <>
             <div className="card ">
                 <div className="card-header">
-                    <h3 className="card-title">Todas las reservaciones</h3>
+                    <h3 className="card-title">Todas las reservas</h3>
                     <div className="card-tools">
                         <Search
                             keyword={keyword}

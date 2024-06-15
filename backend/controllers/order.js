@@ -6,8 +6,8 @@ const Table = require("../models").Table;
 const Product = require("../models").Product;
 const Ingredient = require("../models").Ingredient;
 const OrderProduct = require("../models").OrderProduct;
-
-
+const Payment = require("../models").Payment;
+const OrderAudit = require("../models").OrderAudit;
 
 
 //utils
@@ -151,7 +151,7 @@ const findDifferences = (oldProducts, newProducts) => {
 //@access   Private/user
 exports.createOrder = asyncHandler(async (req, res) => {
     //get data from request
-    const { total, tableId, clientId, products, delivery, note, userId } = req.body;
+    const { total, tableId, clientId, products, delivery, note, userId, paymentId } = req.body;
 
     try {
         // Verificar si hay suficiente inventario
@@ -162,6 +162,7 @@ exports.createOrder = asyncHandler(async (req, res) => {
             clientId: clientId,
             delivery: delivery,
             note: note,
+            paymentId: paymentId,
         });
 
         // Crear productos en la orden
@@ -232,7 +233,7 @@ const adjustInventoryForChanges = async (productChanges, userId, orderId) => {
 //@access   Private/user
 exports.updateOrder = asyncHandler(async (req, res) => {
     const orderId = req.params.id;
-    const { total, tableId, clientId, products, delivery, note, userId } = req.body;
+    const { total, tableId, clientId, products, delivery, note, userId, paymentId } = req.body;
 
     try {
         const order = await Order.findByPk(orderId);
@@ -253,6 +254,7 @@ exports.updateOrder = asyncHandler(async (req, res) => {
         order.note = note;
         order.tableId = !delivery ? tableId : null;
         order.userId= userId;
+        order.paymentId = paymentId;
 
         const oldProducts = await order.getProducts({
             include: [
@@ -319,15 +321,32 @@ exports.updateOrderDelivery = asyncHandler(async (req, res) => {
 //@access   Private/user
 exports.deleteOrder = asyncHandler(async (req, res) => {
     const order = await Order.findByPk(req.params.id);
-
+  
     if (order) {
-        await order.destroy();
-        res.json({ message: "Order removed" });
+      // Guardar los datos de la reservación en la tabla de auditoría
+      await OrderAudit.create({
+        orderId: order.id,
+        concept: req.body.reason,
+        deletedAt: new Date(),
+        deletedBy: req.user.id,
+      });
+  
+      const table = await Table.findByPk(order.tableId);
+
+      if (table) {
+        table.occupied = false;
+        await table.save();
+      }
+
+      await order.destroy();
+
+      res.json({ message: 'Order removed' });
     } else {
-        res.status(404);
-        throw new Error("Order not found");
+      res.status(404);
+      throw new Error('Order not found');
     }
-});
+  });
+
 
 //@desc     Get statistics
 //@route    POST /api/orders/statistics

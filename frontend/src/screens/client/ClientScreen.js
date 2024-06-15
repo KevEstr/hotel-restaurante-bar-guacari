@@ -16,7 +16,7 @@ import Message from "../../components/Message";
 
 
 /* Actions */
-import { createClient, listClients } from "../../actions/clientActions";
+import { createClient, listClients, deleteClient} from "../../actions/clientActions";
 import { listAgreements } from "../../actions/agreementActions";
 
 
@@ -43,7 +43,8 @@ const ClientScreen = ({ history, match}) => {
     const [email, setEmail] = useState("");
     const [dni, setDni] = useState("");
     const [has_reservation, setHasReservation] = useState(false);
-
+    const [confirmDelete, setConfirmDelete] = useState(false);
+    const [clientIdToDelete, setClientIdToDelete] = useState(null);
 
     const [errors, setErrors] = useState({});
 
@@ -52,6 +53,8 @@ const ClientScreen = ({ history, match}) => {
     const userLogin = useSelector((state) => state.userLogin);
     const { userInfo } = userLogin;
 
+    const clientDelete = useSelector((state) => state.clientDelete || {});
+    const { success: deleteSuccess } = clientDelete;
 
     const clientList = useSelector((state) => state.clientList);
     const { loading, error, clients, page, pages } = clientList;
@@ -78,7 +81,44 @@ const ClientScreen = ({ history, match}) => {
             setModalIsOpen(false);
             setHasReservation(false);
         }
-    }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess]);
+    }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess, deleteSuccess]);
+
+    const renderDeleteConfirmationModal = () => (
+        <Modal
+            style={modalStyles}
+            isOpen={confirmDelete}
+            onRequestClose={() => setConfirmDelete(false)}
+        >
+            <h2 style={{ fontSize: "24px", fontWeight: 'normal' }}>Confirmar Eliminación</h2>
+            <hr />
+            <p>¿Estás seguro que deseas eliminar este cliente?</p>
+            <div className="d-flex justify-content-center mt-4">
+                <button
+                    onClick={() => handleDelete(clientIdToDelete)}
+                    className="btn btn-danger mx-2"
+                >
+                    Confirmar
+                </button>
+                <button
+                    onClick={() => setConfirmDelete(false)}
+                    className="btn btn-secondary mx-2"
+                >
+                    Cancelar
+                </button>
+            </div>
+        </Modal>
+    );
+
+    const handleDelete = (id) => {
+        dispatch(deleteClient(id));
+        setConfirmDelete(false);
+    };
+
+    const handleDeleteClick = (id) => {
+        setClientIdToDelete(id);
+        setConfirmDelete(true);
+    };
+
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -150,63 +190,81 @@ const ClientScreen = ({ history, match}) => {
                 onRequestClose={() => setModalIsOpen(false)}
             >
                 <LoaderHandler loading={createLoading} error={createError} />
-                <h2>Create Form</h2>
-                <form onSubmit={handleSubmit}>
-                    <Input
-                        name={"nombre"}
-                        type={"text"}
-                        data={name}
-                        setData={setName}
-                        errors={errors}
-                    />
-                    <Input
-                        name={"dirección"}
-                        type={"text"}
-                        data={address}
-                        setData={setAddress}
-                        errors={errors}
-                    />
-                    <Input
-                        name={"tel"}
-                        type={"text"}
-                        data={phone}
-                        setData={setPhone}
-                        errors={errors}
-                    />
-                    <Input
-                        name={"email"}
-                        type={"email"}
-                        data={email}
-                        setData={setEmail}
-                        errors={errors}
-                    />
-                    <Input
-                        name={"CC"}
-                        type={"text"}
-                        data={dni}
-                        setData={setDni}
-                        errors={errors}
-                    />
-
-                    <label>Convenio:</label>
-                    {renderAgreementsSelect()}
-                    {errors.agreement && (
-                        <Message message={errors.agreement} color={"warning"} />
-                    )}
-
-                    <hr />
-                    <button type="submit" className="btn btn-primary">
-                        Confirmar
-                    </button>
-                    <ModalButton
-                        modal={modalIsOpen}
-                        setModal={setModalIsOpen}
-                        classes={"btn-danger float-right"}
-                    />
+                <h2 style={{ fontSize: "24px", fontWeight: 'normal' }}>Creación de Clientes</h2>
+                <hr />
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ flex: '1 1 45%' }}>
+                        <Input
+                            name={"nombre"}
+                            type={"text"}
+                            data={name}
+                            setData={setName}
+                            errors={errors}
+                        />
+                    </div>
+                    <div style={{ flex: '1 1 45%' }}>
+                        <Input
+                            name={"dirección"}
+                            type={"text"}
+                            data={address}
+                            setData={setAddress}
+                            errors={errors}
+                        />
+                    </div>
+                    <div style={{ flex: '1 1 45%' }}>
+                        <Input
+                            name={"tel"}
+                            type={"text"}
+                            data={phone}
+                            setData={setPhone}
+                            errors={errors}
+                        />
+                    </div>
+                    <div style={{ flex: '1 1 45%' }}>
+                        <Input
+                            name={"email"}
+                            type={"email"}
+                            data={email}
+                            setData={setEmail}
+                            errors={errors}
+                        />
+                    </div>
+                    <div style={{ flex: '1 1 45%' }}>
+                        <Input
+                            name={"CC"}
+                            type={"text"}
+                            data={dni}
+                            setData={setDni}
+                            errors={errors}
+                        />
+                    </div>
+                    <div style={{ flex: '1 1 45%' }}>
+                        <label style={{fontWeight: 'normal'}}>Convenio:</label>
+                        {renderAgreementsSelect()}
+                        {errors.agreement && (
+                            <Message message={errors.agreement} color={"warning"} />
+                        )}
+                    </div>
+                    <div style={{ flex: '1 1 100%' }}>
+                        <hr />
+                    </div>
+                    <div style={{ flex: '1 1 45%' }}>
+                        <button type="submit" className="btn btn-primary">
+                            Confirmar
+                        </button>
+                    </div>
+                    <div style={{ flex: '1 1 45%' }}>
+                        <ModalButton
+                            modal={modalIsOpen}
+                            setModal={setModalIsOpen}
+                            classes={"btn-danger float-right"}
+                        />
+                    </div>
                 </form>
             </Modal>
         </>
     );
+    
 
     const renderClientsTable = () => (
         <table className="table table-hover text-nowrap">
@@ -251,10 +309,16 @@ const ClientScreen = ({ history, match}) => {
                         <td>
                             <Link
                                 to={`/client/${client.id}/edit`}
-                                className="btn btn-warning btn-lg"
+                                className="btn btn-warning btn-lg mr-3"
                             >
                                 Editar
                             </Link>
+                            <button
+                                onClick={() => handleDeleteClick(client.id)}
+                                className="btn btn-danger btn-lg"
+                            >
+                                Eliminar
+                            </button>
                         </td>
                     </tr>
                 ))}
@@ -269,6 +333,7 @@ const ClientScreen = ({ history, match}) => {
             <section className="content">
                 <div className="container-fluid">
                     {renderModalCreateClient()}
+                    {renderDeleteConfirmationModal()}
                     <div className="row">
                         <div className="col-12">
                             <div className="card">

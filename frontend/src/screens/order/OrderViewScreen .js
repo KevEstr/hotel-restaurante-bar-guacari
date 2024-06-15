@@ -11,12 +11,13 @@ import ModalButton from "../../components/ModalButton";
 import { BigSpin } from "../../components/loader/SvgLoaders";
 
 /* constants */
-import { ORDER_UPDATE_RESET } from "../../constants/orderConstants";
+import { ORDER_UPDATE_RESET, ORDER_DELETE_RESET } from "../../constants/orderConstants";
 
 /* actions */
 import {
     listOrderDetails,
     updateOrderToPaid,
+    deleteOrder,
 } from "../../actions/orderActions";
 
 /* Styles */
@@ -36,6 +37,13 @@ const OrderViewScreen = ({ history, match }) => {
     const orderDetails = useSelector((state) => state.orderDetails);
     const { loading, error, order } = orderDetails;
 
+    
+    const [deleteModal, setDeleteModal] = useState(false);
+    const [concept, setConcept] = useState("");
+
+    const [reason, setReason] = useState('');
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+
     //order edit state
     const orderUpdate = useSelector((state) => state.orderUpdate);
     const {
@@ -44,9 +52,17 @@ const OrderViewScreen = ({ history, match }) => {
         errorUpdate,
     } = orderUpdate;
 
+    const orderDelete = useSelector((state) => state.orderDelete);
+    const {
+        loading: loadingDelete,
+        success: successDelete,
+        error: errorDelete,
+    } = orderDelete;
+
     useEffect(() => {
-        if (successUpdate) {
+        if (successUpdate || successDelete) {
             dispatch({ type: ORDER_UPDATE_RESET });
+            dispatch({ type: ORDER_DELETE_RESET });
             if (order.delivery) {
                 history.push("/delivery");
             } else {
@@ -58,7 +74,7 @@ const OrderViewScreen = ({ history, match }) => {
                 dispatch(listOrderDetails(orderId));
             }
         }
-    }, [dispatch, history, order, orderId, successUpdate]);
+    }, [dispatch, history, order, orderId, successUpdate, successDelete]);
 
     const renderModalPay = () => (
         <Modal
@@ -122,6 +138,57 @@ const OrderViewScreen = ({ history, match }) => {
                 </div>
             </div>
         );
+
+        const renderDeleteOrderButton = () => (
+            <div className="card">
+              <div className="card-header bg-danger">Eliminar Órden</div>
+              <div className="card-body">
+                <button className="btn btn-block" onClick={() => setShowDeleteModal(true)}>
+                  <ViewBox
+                    title={`ELIMINAR`}
+                    paragraph={`Click para eliminar`}
+                    icon={"fas fa-trash"}
+                    color={"bg-danger"}
+                  />
+                </button>
+              </div>
+            </div>
+          );
+
+          const renderDeleteOrderModal = () => (
+            <Modal
+              style={modalStyles}
+              isOpen={showDeleteModal}
+              onRequestClose={() => setShowDeleteModal(false)}
+            >
+              <h2 className="text-center">Eliminar Órden</h2>
+              <p className="text-center">Ingrese la razón por la que desea eliminar la órden:</p>
+              <form onSubmit={handleDeleteOrder}>
+                <div className="form-group">
+                  <textarea
+                    className="form-control"
+                    rows="3"
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                  ></textarea>
+                </div>
+                <button type="submit" className="btn btn-danger">
+                  Eliminar
+                </button>
+                <ModalButton
+                  modal={showDeleteModal}
+                  setModal={setShowDeleteModal}
+                  classes={"btn-secondary float-right"}
+                />
+              </form>
+            </Modal>
+          );
+
+        const handleDeleteOrder = () => {
+            console.log('Intentando eliminar la orden');
+            dispatch(deleteOrder(orderId, reason));
+            setShowDeleteModal(false);
+          };
 
     const renderOrderProducts = () => (
         <table
@@ -250,8 +317,24 @@ const OrderViewScreen = ({ history, match }) => {
             <div className="card-body">
                 <button className="btn btn-block" onClick={handleEdit}>
                     <ViewBox
-                        title={`Editar órden`}
+                        title={`EDITAR`}
                         paragraph={`Click para editar`}
+                        icon={"fas fa-edit"}
+                        color={"bg-warning"}
+                    />
+                </button>
+            </div>
+        </div>
+    );
+
+    const renderOrderDelete = () => (
+        <div className="card">
+            <div className="card-header bg-warning">Eliminar órden</div>
+            <div className="card-body">
+                <button className="btn btn-block" onClick={() => setDeleteModal(true)}>
+                    <ViewBox
+                        title={`Eliminar órden`}
+                        paragraph={`Click para eliminar`}
                         icon={"fas fa-edit"}
                         color={"bg-warning"}
                     />
@@ -302,11 +385,14 @@ const OrderViewScreen = ({ history, match }) => {
         </div>
     );
 
+    
+
     return (
         <>
             {/* Content Header (Page header) */}
             <HeaderContent name={"Órdenes"} />
             <LoaderHandler loading={loadingUpdate} error={errorUpdate} />
+            <LoaderHandler loading={loadingDelete} error={errorDelete} />
             {/* Main content */}
             <section className="content">
                 <div className="container-fluid">
@@ -346,9 +432,16 @@ const OrderViewScreen = ({ history, match }) => {
                         <LoaderHandler
                             loading={loading}
                             error={error}
+                            render={renderDeleteOrderButton}
+                            loader={<BigSpin />}
+                        />
+                        <LoaderHandler
+                            loading={loading}
+                            error={error}
                             render={renderPayButton}
                             loader={<BigSpin />}
                         />
+                        {renderDeleteOrderModal()}
                     </div>
                 </div>
                 {/* /.container-fluid */}

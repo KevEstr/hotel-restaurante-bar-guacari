@@ -11,8 +11,7 @@ const { Service, sequelize } = require("../models");
 //@access   Private/ingredient
 
 exports.createAgreement = asyncHandler(async (req, res) => {
-    const { name, serviceIds } = req.body;
-    const userId = req.user.id;
+    const { name, serviceIds, userId } = req.body;
     console.log("NOMBRE: ", name);
     console.log("USUARIO: ", userId);
     console.log("SERVICIOS IDS: ", serviceIds);
@@ -39,7 +38,7 @@ exports.createAgreement = asyncHandler(async (req, res) => {
             console.log("SERVICIOS PARA CONVENIO CREADO: ", services);
 
             // Añadir servicios al acuerdo
-            await createdAgreement.addServices(services, { transaction });
+            await createdAgreement.addService(services, { transaction });
             console.log("CONVENIO CON SERVICIOS: ", createdAgreement);
         }
 
@@ -103,7 +102,7 @@ exports.getAgreement = asyncHandler(async (req, res) => {
         }
 
         // Obtener los servicios asociados al acuerdo
-        const services = await agreement.getServices();
+        const services = await agreement.getService();
 
         res.json({ agreement, services });
     } catch (error) {
@@ -158,7 +157,7 @@ exports.updateAgreement = asyncHandler(async (req, res) => {
             console.log("SERVICIOS PARA CONVENIO ACTUALIZADO: ", services);
 
             // Actualizar servicios al acuerdo
-            await agreement.setServices(services, { transaction });
+            await agreement.setService(services, { transaction });
             console.log("CONVENIO CON SERVICIOS ACTUALIZADOS: ", agreement);
         }
 

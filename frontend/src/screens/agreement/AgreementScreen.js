@@ -13,7 +13,7 @@ import Search from "../../components/Search";
 import Pagination from "../../components/Pagination";
 
 /* Actions */
-import { createAgreement, listAgreements } from "../../actions/agreementActions";
+import { createAgreement, listAgreements, deleteAgreement } from "../../actions/agreementActions";
 import { getServices } from '../../actions/serviceActions';
 import { listServices } from "../../actions/serviceActions"; 
 
@@ -37,11 +37,17 @@ const AgreementScreen = ({ history, match }) => {
     const userLogin = useSelector((state) => state.userLogin);
     const { userInfo } = userLogin;
 
+    const [confirmDelete, setConfirmDelete] = useState(false);
+    const [agreementIdToDelete, setAgreementIdToDelete] = useState(null);
+
     const [serviceIds, setServiceIds] = useState([]);
 
     const serviceList = useSelector((state) => state.serviceList);
     const { services } = serviceList;
     const [selectedServices, setSelectedServices] = useState([]);
+
+    const agreementDelete = useSelector((state) => state.agreementDelete || {});
+    const { success: deleteSuccess } = agreementDelete;
 
     const agreementCreate = useSelector((state) => state.agreementCreate);
     const {
@@ -60,7 +66,7 @@ const AgreementScreen = ({ history, match }) => {
             setModalIsOpen(false);
             setSelectedServices([]);
         }
-    }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess]);
+    }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess, deleteSuccess]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -80,12 +86,62 @@ const AgreementScreen = ({ history, match }) => {
         if (Object.keys(errorsCheck).length === 0) {
             const agreement = {
                 name: name,
-                userId: userId,
-                selectedServices: selectedServices,
+                userId: userInfo._id,
+                serviceIds : selectedServices,
             };
 
+            console.log("agreement: ", agreement);
             dispatch(createAgreement(agreement));
         }
+    };
+
+    const renderDeleteConfirmationModal = () => (
+        <Modal
+            style={modalStyles}
+            isOpen={confirmDelete}
+            onRequestClose={() => setConfirmDelete(false)}
+        >
+            <h2 style={{ fontSize: "24px", fontWeight: 'normal' }}>Confirmar Eliminación</h2>
+            <hr />
+            <p>¿Estás seguro que deseas eliminar este convenio?</p>
+            <div className="d-flex justify-content-center mt-4">
+                <button
+                    onClick={() => handleDelete(agreementIdToDelete)}
+                    className="btn btn-danger mx-2"
+                >
+                    Confirmar
+                </button>
+                <button
+                    onClick={() => setConfirmDelete(false)}
+                    className="btn btn-secondary mx-2"
+                >
+                    Cancelar
+                </button>
+            </div>
+        </Modal>
+    );
+
+    const handleDelete = (id) => {
+        dispatch(deleteAgreement(id));
+        setConfirmDelete(false);
+    };
+
+    const handleDeleteClick = (id) => {
+        setAgreementIdToDelete(id);
+        setConfirmDelete(true);
+    };
+
+    const handleCheckboxChange = (serviceId) => {
+        setSelectedServices((prevSelected) => {
+            if (prevSelected.includes(serviceId)) {
+                console.log("selectedServices: ",selectedServices)
+                return prevSelected.filter((id) => id !== serviceId);
+            } else {
+                console.log("selectedServices: ",selectedServices)
+                return [...prevSelected, serviceId];
+            }
+        });
+        
     };
 
     const renderModalCreateAgreement = () => (
@@ -100,7 +156,8 @@ const AgreementScreen = ({ history, match }) => {
                 isOpen={modalIsOpen}
                 onRequestClose={() => setModalIsOpen(false)}
             >
-                <h2>Formulario creación</h2>
+                <h2 style={{fontWeight: 'normal' }}>Creación de Convenios</h2>
+                <hr />
                 <LoaderHandler loading={createLoading} error={createError} />
                 <form onSubmit={handleSubmit}>
                     <Input
@@ -111,24 +168,24 @@ const AgreementScreen = ({ history, match }) => {
                         errors={errors}
                     />
                     <div>
-                        <label htmlFor="services">Servicios</label>
-                        <select
-                            id="services"
-                            multiple
-                            value={selectedServices}
-                            onChange={(e) =>
-                                setSelectedServices(
-                                    Array.from(e.target.selectedOptions, (option) => option.value)
-                                )
-                            }
-                            className="form-control"
-                        >
+                        <label style={{fontWeight: 'normal' }}>Servicios</label>
+                        <div className="form-group">
                             {services.map((service) => (
-                                <option key={service.id} value={service.id}>
-                                    {service.name}
-                                </option>
+                                <div key={service.id} className="form-check">
+                                    <input
+                                        type="checkbox"
+                                        id={`service-${service.id}`}
+                                        value={service.id}
+                                        checked={selectedServices.includes(service.id)}
+                                        onChange={() => handleCheckboxChange(service.id)}
+                                        className="form-check-input"
+                                    />
+                                    <label htmlFor={`service-${service.id}`} className="form-check-label">
+                                        {service.name}
+                                    </label>
+                                </div>
                             ))}
-                        </select>
+                        </div>
                     </div>
                     <hr />
                     <button type="submit" className="btn btn-primary">
@@ -167,10 +224,18 @@ const AgreementScreen = ({ history, match }) => {
                         <td>
                         <Link
                                 to={`/agreements/${agreement.id}/edit`}
-                                className="btn btn-warning btn-lg"
+                                className="btn btn-warning btn-lg mr-3"
                             >
                                 Editar
                             </Link>
+
+                            <button
+                                onClick={() => handleDeleteClick(agreement.id)}
+                                className="btn btn-danger btn-lg"
+                            >
+                                Eliminar
+                            </button>
+
                         </td>
                     </tr>
                 ))}
@@ -187,6 +252,7 @@ const AgreementScreen = ({ history, match }) => {
             <section className="content">
                 <div className="container-fluid">
                     {renderModalCreateAgreement()}
+                    {renderDeleteConfirmationModal()}
 
                     <div className="row">
                         <div className="col-12">

@@ -13,19 +13,19 @@ import Search from "../../components/Search";
 import Pagination from "../../components/Pagination";
 
 /* Actions */
-import { createCategory, listCategories } from "../../actions/categoryActions";
+import { createCategory, listCategories, deleteCategory } from "../../actions/categoryActions";
 
 /* Styles */
 import { modalStyles } from "../../utils/styles";
 
 const CategoryScreen = ({ history, match }) => {
     const [modalIsOpen, setModalIsOpen] = useState(false);
-
     const [name, setName] = useState("");
-
     const [errors, setErrors] = useState({});
     const [keyword, setKeyword] = useState("");
     const [pageNumber, setPageNumber] = useState(1);
+    const [confirmDelete, setConfirmDelete] = useState(false);
+    const [categoryIdToDelete, setCategoryIdToDelete] = useState(null);
 
     const dispatch = useDispatch();
 
@@ -34,6 +34,9 @@ const CategoryScreen = ({ history, match }) => {
 
     const userLogin = useSelector((state) => state.userLogin);
     const { userInfo } = userLogin;
+
+    const categoryDelete = useSelector((state) => state.categoryDelete || {});
+    const { success: deleteSuccess } = categoryDelete;
 
     const categoryCreate = useSelector((state) => state.categoryCreate);
     const {
@@ -49,7 +52,7 @@ const CategoryScreen = ({ history, match }) => {
             setName("");
             setModalIsOpen(false);
         }
-    }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess]);
+    }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess, deleteSuccess]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -75,6 +78,42 @@ const CategoryScreen = ({ history, match }) => {
         }
     };
 
+    const renderDeleteConfirmationModal = () => (
+        <Modal
+            style={modalStyles}
+            isOpen={confirmDelete}
+            onRequestClose={() => setConfirmDelete(false)}
+        >
+            <h2 style={{ fontSize: "24px", fontWeight: 'normal' }}>Confirmar Eliminación</h2>
+            <hr />
+            <p>¿Estás seguro que deseas eliminar esta categoría?</p>
+            <div className="d-flex justify-content-center mt-4">
+                <button
+                    onClick={() => handleDelete(categoryIdToDelete)}
+                    className="btn btn-danger mx-2"
+                >
+                    Confirmar
+                </button>
+                <button
+                    onClick={() => setConfirmDelete(false)}
+                    className="btn btn-secondary mx-2"
+                >
+                    Cancelar
+                </button>
+            </div>
+        </Modal>
+    );
+
+    const handleDelete = (id) => {
+        dispatch(deleteCategory(id));
+        setConfirmDelete(false);
+    };
+
+    const handleDeleteClick = (id) => {
+        setCategoryIdToDelete(id);
+        setConfirmDelete(true);
+    };
+
     const renderModalCreateCategory = () => (
         <>
             <ModalButton
@@ -87,7 +126,8 @@ const CategoryScreen = ({ history, match }) => {
                 isOpen={modalIsOpen}
                 onRequestClose={() => setModalIsOpen(false)}
             >
-                <h2>Formulario creación</h2>
+                <h2 style={{fontSize: "24px", fontWeight: 'normal'}}>Creación de Categorías</h2>
+                <hr />
                 <LoaderHandler loading={createLoading} error={createError} />
                 <form onSubmit={handleSubmit}>
                     <Input
@@ -139,6 +179,14 @@ const CategoryScreen = ({ history, match }) => {
                                 Editar
                             </Link>
                         </td>
+                        <td>
+                            <button
+                                onClick={() => handleDeleteClick(category.id)}
+                                className="btn btn-danger btn-lg"
+                            >
+                                Eliminar
+                            </button>
+                        </td>
                     </tr>
                 ))}
             </tbody>
@@ -154,6 +202,7 @@ const CategoryScreen = ({ history, match }) => {
             <section className="content">
                 <div className="container-fluid">
                     {renderModalCreateCategory()}
+                    {renderDeleteConfirmationModal()}
 
                     <div className="row">
                         <div className="col-12">

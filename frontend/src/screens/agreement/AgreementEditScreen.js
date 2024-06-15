@@ -135,7 +135,7 @@ const AgreementEditScreen = ({ history, match }) => {
                             checked={serviceIds.includes(service.id)}
                             onChange={() => handleCheckboxChange(service.id)}
                         />
-                        <label htmlFor={service.id}>{service.name}</label>
+                        <label htmlFor={service.id}>{ service.name}</label>
                     </div>
                 ))}
             </div>

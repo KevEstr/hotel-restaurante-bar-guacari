@@ -3,7 +3,7 @@ const Room = require("../models").Room;
 const Reservation = require("../models").Reservation;
 const RoomReservation = require("../models").RoomReservation;
 
-const { Op } = require("sequelize");
+const { Op, Sequelize  } = require("sequelize");
 
 //@desc     Create a ingredient
 //@route    POST /api/ingredients
@@ -118,4 +118,30 @@ exports.updateRoomStatus = asyncHandler(async (req, res) => {
         res.status(404);
         throw new Error("Room not found");
     }
+});
+
+exports.getAllRooms = asyncHandler(async (req, res) => {
+    const rooms = await Room.findAll({
+        include: [
+            {
+                model: Reservation,
+                as: "reservations",
+                through: {
+                    attributes: []
+                },
+                where: {
+                    id: {
+                        [Op.in]: Sequelize.literal(`(
+                            SELECT MAX(Reservations.id) 
+                            FROM Reservations
+                            INNER JOIN RoomReservations ON Reservations.id = RoomReservations.reservationId
+                            WHERE RoomReservations.roomId = Room.id
+                        )`)
+                    }
+                },
+                required: false // Para incluir habitaciones sin reservas
+            }
+        ],
+    });
+    res.json(rooms);
 });

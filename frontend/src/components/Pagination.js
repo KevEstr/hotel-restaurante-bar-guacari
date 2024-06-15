@@ -1,6 +1,11 @@
 import React from "react";
 
 const Pagination = ({ pages, page, setPage }) => {
+    const handlePageChange = (e, pageNumber) => {
+        e.preventDefault(); // Previene el envío del formulario
+        setPage(pageNumber);
+    };
+
     return (
         pages > 1 && (
             <nav>
@@ -8,7 +13,7 @@ const Pagination = ({ pages, page, setPage }) => {
                     <li className="page-item">
                         <button
                             className="page-link"
-                            onClick={() => setPage(page - 1)}
+                            onClick={(e) => handlePageChange(e, page - 1)}
                             disabled={page < 2}
                         >
                             Anterior
@@ -22,8 +27,8 @@ const Pagination = ({ pages, page, setPage }) => {
                             }`}
                         >
                             <button
-                                className={`page-link `}
-                                onClick={() => setPage(x + 1)}
+                                className="page-link"
+                                onClick={(e) => handlePageChange(e, x + 1)}
                             >
                                 {x + 1}
                             </button>
@@ -33,7 +38,7 @@ const Pagination = ({ pages, page, setPage }) => {
                     <li className="page-item">
                         <button
                             className="page-link"
-                            onClick={() => setPage(page + 1)}
+                            onClick={(e) => handlePageChange(e, page + 1)}
                             disabled={page >= pages}
                         >
                             Siguiente

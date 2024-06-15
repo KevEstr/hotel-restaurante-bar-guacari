@@ -15,37 +15,30 @@ const IngredientsTable = ({
     setIngredientsInOrder,
     ingredientsAlreadyOrdered,
 }) => {
-    //add ingredient to order
     const dispatch = useDispatch();
     const [keyword, setKeyword] = useState("");
-    const [pageNumber, setPageNumber] = useState(0);
+    const [pageNumber, setPageNumber] = useState(1);
     const [ingredients, setIngredients] = useState([]);
+    const [pageSize] = useState(5);
 
     const addIngredient = (e, ingredient) => {
         e.preventDefault();
-
-        //ingredient object
         const ingredientIn = {
             id: ingredient.id,
             name: ingredient.name,
             quantity: 1,
         };
-        // Verifica si ingredientsInOrder es un array antes de intentar iterar sobre él
-    if (!Array.isArray(ingredientsInOrder)) {
-        // Si no es un array, inicialízalo como un array vacío
-        setIngredientsInOrder([ingredientIn]);
-    } else {
-        //ingredientInOrder es un array, procede a agregar el nuevo ingrediente
-        //if is already in order
-        if (!inOrder(ingredientIn, ingredientsInOrder)) {
-            setIngredientsInOrder([...ingredientsInOrder, ingredientIn]);
+        if (!Array.isArray(ingredientsInOrder)) {
+            setIngredientsInOrder([ingredientIn]);
         } else {
-            alert("Ingrediente ya está en la órden");
+            if (!inOrder(ingredientIn, ingredientsInOrder)) {
+                setIngredientsInOrder([...ingredientsInOrder, ingredientIn]);
+            } else {
+                alert("Ingrediente ya está en la órden");
+            }
         }
-    }
     };
 
-    //ingredient list state
     const ingredientList = useSelector((state) => state.ingredientList);
     const {
         loading: loadingIngredientList,
@@ -57,7 +50,7 @@ const IngredientsTable = ({
 
     useEffect(() => {
         dispatch(listIngredients(keyword, pageNumber));
-    }, [keyword, pageNumber]);
+    }, [keyword, pageNumber, dispatch]);
 
     useEffect(() => {
         if (ingredientsFromState) {
@@ -65,9 +58,8 @@ const IngredientsTable = ({
         }
     }, [ingredientsFromState]);
 
-    //check if ingredient is already in order
     const inOrder = (obj, list) => {
-        if (!list) return false; // Verifica si la lista está definida
+        if (!list) return false;
         for (let index = 0; index < list.length; index++) {
             if (obj.id === list[index].id) {
                 return list[index];
@@ -76,13 +68,13 @@ const IngredientsTable = ({
         return false;
     };
 
-    //refresh ingredients table
+    
+
     const refreshIngredients = (e) => {
         e.preventDefault();
         dispatch(listIngredients(keyword, pageNumber));
     };
 
-    //check stock to show
     const showStock = (ingredient) => {
         const ingredientInOrder = ingredientsInOrder.find(
             (ingredientIn) => ingredientIn.id === ingredient.id
@@ -111,50 +103,56 @@ const IngredientsTable = ({
         </button>
     );
 
-    const renderIngredients = () => (
-        <table id="ingredientsTable" className="table table-hover text-nowrap full-width-table align-items-center">
-            <thead
-                style={{
-                    color: "#fff",
-                }}
-                className="bg-info"
-            >
-                <tr>
-                    <th style={{ textAlign: "center" }}>Nombre</th>
-                    <th style={{ textAlign: "center" }}>Agregar</th>
-                </tr>
-            </thead>
-            <tbody style={{ textAlign: "center" }}>
-                {ingredients.map((ingredient) => (
-                    <tr key={ingredient.id}>
-                        <td>{ingredient.name}</td>
-                        {inOrder(ingredient, ingredientsInOrder) ? (
-                            <td className="text-center">
-                                <button disabled className="btn btn-primary">
-                                    Agregado
-                                </button>
-                            </td>
-                        ) : ingredient.stock > 0 ? (
-                            <td className="text-center">
-                                <button
-                                    className="btn btn-success"
-                                    onClick={(e) => addIngredient(e, ingredient)}
-                                >
-                                    <i className="fas fa-plus"></i>
-                                </button>
-                            </td>
-                        ) : (
-                            <td className="text-center">
-                                <button disabled className="btn btn-danger">
-                                    Sin inventario
-                                </button>
-                            </td>
-                        )}
+    const startIndex = (pageNumber - 1) * pageSize;
+    const endIndex = pageNumber * pageSize;
+    const ingredientsOnPage = ingredients.slice(startIndex, endIndex);
+
+    const renderIngredients = () => {
+        // Calcula el índice de inicio y fin de los ingredientes en la página actual
+        const startIndex = (pageNumber - 1) * pageSize;
+        const endIndex = pageNumber * pageSize;
+        const ingredientsOnPage = ingredients.slice(startIndex, endIndex);
+
+        return (
+            <table id="ingredientsTable" className="table table-hover text-nowrap full-width-table align-items-center">
+                <thead style={{ color: "#fff" }} className="bg-info">
+                    <tr>
+                        <th style={{ textAlign: "center" }}>Nombre</th>
+                        <th style={{ textAlign: "center" }}>Agregar</th>
                     </tr>
-                ))}
-            </tbody>
-        </table>
-    );
+                </thead>
+                <tbody style={{ textAlign: "center" }}>
+                    {ingredientsOnPage.map((ingredient) => (
+                        <tr key={ingredient.id}>
+                            <td>{ingredient.name}</td>
+                            {inOrder(ingredient, ingredientsInOrder) ? (
+                                <td className="text-center">
+                                    <button disabled className="btn btn-primary">
+                                        Agregado
+                                    </button>
+                                </td>
+                            ) : ingredient.stock > 0 ? (
+                                <td className="text-center">
+                                    <button
+                                        className="btn btn-success"
+                                        onClick={(e) => addIngredient(e, ingredient)}
+                                    >
+                                        <i className="fas fa-plus"></i>
+                                    </button>
+                                </td>
+                            ) : (
+                                <td className="text-center">
+                                    <button disabled className="btn btn-danger">
+                                        Sin inventario
+                                    </button>
+                                </td>
+                            )}
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        );
+    };
 
     return (
         <>
@@ -170,11 +168,10 @@ const IngredientsTable = ({
                 render={renderIngredients}
                 loader={<BigSpin />}
             />
-
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '-100px' }}>
-                <Pagination pages={pages} page={page} setPage={setPageNumber} />
+            {/* Mover el componente de paginación aquí */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+                <Pagination pages={Math.ceil(ingredients.length / pageSize)} page={page} setPage={setPageNumber} />
             </div>
-
         </>
     );
 };

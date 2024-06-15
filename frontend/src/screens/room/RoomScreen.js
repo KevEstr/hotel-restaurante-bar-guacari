@@ -13,7 +13,7 @@ import Pagination from "../../components/Pagination";
 import LoaderHandler from "../../components/loader/LoaderHandler";
 
 /* Actions */
-import { listRooms, createRoom } from "../../actions/roomActions";
+import { listRooms, createRoom, deleteRoom } from "../../actions/roomActions";
 
 /* Styles */
 import { modalStyles } from "../../utils/styles";
@@ -37,12 +37,18 @@ const RoomScreen = ({ history }) => {
     const roomList = useSelector((state) => state.roomList);
     const { loading, error, rooms, page, pages } = roomList;
 
+    const [confirmDelete, setConfirmDelete] = useState(false);
+    const [roomIdToDelete, setRoomIdToDelete] = useState(null);
+
     const roomCreate = useSelector((state) => state.roomCreate);
     const {
         loading: createLoading,
         success: createSuccess,
         error: createError,
     } = roomCreate;
+
+    const roomDelete = useSelector((state) => state.roomDelete || {});
+    const { success: deleteSuccess } = roomDelete;
 
     useEffect(() => {
         dispatch(listRooms(keyword, pageNumber));
@@ -52,7 +58,7 @@ const RoomScreen = ({ history }) => {
             setModalIsOpen(false);
             dispatch(listRooms(keyword, pageNumber)); // <-- Vuelve a cargar la lista de habitaciones
         }
-    }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess]);
+    }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess, deleteSuccess]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -79,6 +85,43 @@ const RoomScreen = ({ history }) => {
         }
     };
 
+    const renderDeleteConfirmationModal = () => (
+        <Modal
+            style={modalStyles}
+            isOpen={confirmDelete}
+            onRequestClose={() => setConfirmDelete(false)}
+        >
+            <h2 style={{ fontSize: "24px", fontWeight: 'normal' }}>Confirmar Eliminación</h2>
+            <hr />
+            <p>¿Estás seguro que deseas eliminar esta habitación?</p>
+            <div className="d-flex justify-content-center mt-4">
+                <button
+                    onClick={() => handleDelete(roomIdToDelete)}
+                    className="btn btn-danger mx-2"
+                >
+                    Confirmar
+                </button>
+                <button
+                    onClick={() => setConfirmDelete(false)}
+                    className="btn btn-secondary mx-2"
+                >
+                    Cancelar
+                </button>
+            </div>
+        </Modal>
+    );
+
+    const handleDelete = (id) => {
+        dispatch(deleteRoom(id));
+        setConfirmDelete(false);
+    };
+
+    const handleDeleteClick = (id) => {
+        setRoomIdToDelete(id);
+        setConfirmDelete(true);
+    };
+
+
     const renderRoom = () => {
         return (
             <table className="table table-hover text-nowrap">
@@ -103,10 +146,16 @@ const RoomScreen = ({ history }) => {
                             <td>
                                 <Link
                                     to={`/room/${room.id}/edit`}
-                                    className="btn btn-warning btn-lg"
+                                    className="btn btn-warning btn-lg mr-3"
                                 >
                                     Editar
                                 </Link>
+                                <button
+                                onClick={() => handleDeleteClick(room.id)}
+                                className="btn btn-danger btn-lg"
+                            >
+                                Eliminar
+                            </button>
                             </td>
                         </tr>
                     ))}
@@ -127,7 +176,8 @@ const RoomScreen = ({ history }) => {
                 isOpen={modalIsOpen}
                 onRequestClose={() => setModalIsOpen(false)}
             >
-                <h2>Create Form</h2>
+                <h2 style={{fontSize: "30px", fontWeight: 'normal'}}>Creación de Habitaciones</h2>
+                <hr />
                 <LoaderHandler loading={createLoading} error={createError} />
                 <form onSubmit={handleSubmit}>
                     <Input
@@ -160,6 +210,7 @@ const RoomScreen = ({ history }) => {
             <section className="content">
                 <div className="container-fluid">
                     {renderModalCreateRoom()}
+                    {renderDeleteConfirmationModal()}
 
                     <div className="row">
                         <div className="col-12">

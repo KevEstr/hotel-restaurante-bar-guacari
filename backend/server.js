@@ -29,10 +29,8 @@ const roomRoutes = require("./routes/room");
 const reservationRoutes = require("./routes/reservation");
 const agreementRoutes = require("./routes/agreement");
 const roleRoutes = require("./routes/role");
-
-// Importar rutas
 const serviceRoutes = require('./routes/service');
-
+const paymentRoutes = require('./routes/payment');
 
 /* Routes */
 app.use("/api/users", userRoutes);
@@ -49,8 +47,7 @@ app.use("/api/reservations", reservationRoutes);
 app.use("/api/agreements", agreementRoutes);
 app.use("/api/roles", roleRoutes);
 app.use("/api/services", serviceRoutes);
-
-
+app.use("/api/payments", paymentRoutes);
 
 
 const rootPath = path.resolve();

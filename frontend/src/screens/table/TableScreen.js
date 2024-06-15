@@ -13,7 +13,7 @@ import Pagination from "../../components/Pagination";
 import LoaderHandler from "../../components/loader/LoaderHandler";
 
 /* Actions */
-import { listTables } from "../../actions/tableActions";
+import { listTables, deleteTable } from "../../actions/tableActions";
 import { createTable } from "../../actions/tableActions";
 
 /* Styles */
@@ -29,11 +29,16 @@ const TableScreen = ({ history }) => {
     const [keyword, setKeyword] = useState("");
     const [pageNumber, setPageNumber] = useState(1);
     const [modalIsOpen, setModalIsOpen] = useState(false);
+    const [confirmDelete, setConfirmDelete] = useState(false);
+    const [tableIdToDelete, setTableIdToDelete] = useState(null);
 
     const dispatch = useDispatch();
 
     const userLogin = useSelector((state) => state.userLogin);
     const { userInfo } = userLogin;
+
+    const tableDelete = useSelector((state) => state.tableDelete || {});
+    const { success: deleteSuccess } = tableDelete;
 
     const tableList = useSelector((state) => state.tableList);
     const { loading, error, tables, page, pages } = tableList;
@@ -51,7 +56,7 @@ const TableScreen = ({ history }) => {
             setName("");
             setModalIsOpen(false);
         }
-    }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess]);
+    }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess, deleteSuccess]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -111,16 +116,58 @@ const TableScreen = ({ history }) => {
                             <td>
                                 <Link
                                     to={`/table/${table.id}/edit`}
-                                    className="btn btn-warning btn-lg"
+                                    className="btn btn-warning btn-lg mr-3"
                                 >
                                     Editar
                                 </Link>
+                                <button
+                                onClick={() => handleDeleteClick(table.id)}
+                                className="btn btn-danger btn-lg"
+                            >
+                                Eliminar
+                            </button>
                             </td>
                         </tr>
                     ))}
                 </tbody>
             </table>
         );
+    };
+
+    const renderDeleteConfirmationModal = () => (
+        <Modal
+            style={modalStyles}
+            isOpen={confirmDelete}
+            onRequestClose={() => setConfirmDelete(false)}
+        >
+            <h2 style={{ fontSize: "24px", fontWeight: 'normal' }}>Confirmar Eliminación</h2>
+            <hr />
+            <p>¿Estás seguro que deseas eliminar esta mesa?</p>
+            <div className="d-flex justify-content-center mt-4">
+                <button
+                    onClick={() => handleDelete(tableIdToDelete)}
+                    className="btn btn-danger mx-2"
+                >
+                    Confirmar
+                </button>
+                <button
+                    onClick={() => setConfirmDelete(false)}
+                    className="btn btn-secondary mx-2"
+                >
+                    Cancelar
+                </button>
+            </div>
+        </Modal>
+    );
+
+    const handleDelete = (id) => {
+        dispatch(deleteTable(id));
+        setConfirmDelete(false);
+    };
+
+    const handleDeleteClick = (id) => {
+        setTableIdToDelete(id);
+        setConfirmDelete(true);
     };
 
     const renderModalCreateTable = () => (
@@ -135,11 +182,12 @@ const TableScreen = ({ history }) => {
                 isOpen={modalIsOpen}
                 onRequestClose={() => setModalIsOpen(false)}
             >
-                <h2>Create Form</h2>
+                <h2 style={{fontSize: "32px", fontWeight: 'normal'}}>Creación de Mesas</h2>
+                <hr />
                 <LoaderHandler loading={createLoading} error={createError} />
                 <form onSubmit={handleSubmit}>
                     <Input
-                        name={"nombre o número"}
+                        name={"nombre o número de la mesa"}
                         type={"text"}
                         data={name}
                         setData={setName}
@@ -168,6 +216,7 @@ const TableScreen = ({ history }) => {
             <section className="content">
                 <div className="container-fluid">
                     {renderModalCreateTable()}
+                    {renderDeleteConfirmationModal()}
 
                     <div className="row">
                         <div className="col-12">

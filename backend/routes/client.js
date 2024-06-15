@@ -7,6 +7,7 @@ const {
     getClient,
     updateClient,
     deleteClient,
+    updateClientReservationStatus
 } = require("../controllers/client");
 
 // VALIDATORS
@@ -24,5 +25,8 @@ router
     .get(protect, getClient)
     .put(protect, updateClient)
     .delete(protect, deleteClient);
+
+router.put('/:id/updateReservationStatus', updateClientReservationStatus);
+
 
 module.exports = router;

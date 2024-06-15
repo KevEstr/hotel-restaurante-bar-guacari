@@ -61,7 +61,7 @@ export const listAgreements =
 
 //create a category
 export const createAgreement = (agreement) => async (dispatch, getState) => {
-    const { name, serviceIds } = agreement;
+    const { name, serviceIds, userId } = agreement;
 
     try {
         dispatch({
@@ -82,7 +82,7 @@ export const createAgreement = (agreement) => async (dispatch, getState) => {
         };
 
         //create category
-        const { data } = await axios.post("/api/agreements", { name, serviceIds }, config);
+        const { data } = await axios.post("/api/agreements", { name, serviceIds, userId}, config);
         dispatch({
             type: AGREEMENT_CREATE_SUCCESS,
             payload: data,

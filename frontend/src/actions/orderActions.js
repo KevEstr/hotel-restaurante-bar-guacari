@@ -24,6 +24,9 @@ import {
     CLIENT_ORDERS_REQUEST,
     CLIENT_ORDERS_SUCCESS,
     CLIENT_ORDERS_FAIL,
+    TABLE_UPDATE_REQUEST,
+    TABLE_UPDATE_SUCCESS,
+    TABLE_UPDATE_FAIL
 
 } from "../constants/orderConstants";
 
@@ -331,38 +334,42 @@ export const updateOrderToPaid = (order) => async (dispatch, getState) => {
 };
 
 //delete order
-export const deleteOrder = (id) => async (dispatch, getState) => {
+export const deleteOrder = (orderId, reason) => async (dispatch, getState) => {
     try {
-        dispatch({
-            type: ORDER_DELETE_REQUEST,
-        });
+      dispatch({
+        type: ORDER_DELETE_REQUEST,
+      });
 
-        //get user from state
-        const {
-            userLogin: { userInfo },
-        } = getState();
-        //headers
+      console.log('Enviando solicitud DELETE al backend');
+
+      const { userLogin: { userInfo } } = getState();
+
         const config = {
             headers: {
                 Authorization: `Bearer ${userInfo.token}`,
+                "Content-Type": "application/json",
             },
         };
 
-        //api call to delete order
-        await axios.delete(`/api/orders/${id}`, config);
-        dispatch({
-            type: ORDER_DELETE_SUCCESS,
-        });
+      // Enviar la solicitud para eliminar la orden
+      const { data } = await axios.delete(`/api/orders/${orderId}`,  {
+        data: { reason, concept: reason, deletedBy: userInfo.id }, ...config
+      });
+  
+      dispatch({
+        type: ORDER_DELETE_SUCCESS,
+        payload: data,
+      });
     } catch (error) {
-        dispatch({
-            type: ORDER_DELETE_FAIL,
-            payload:
-                error.response && error.response.data.message
-                    ? error.response.data.message
-                    : error.message,
-        });
+      dispatch({
+        type: ORDER_DELETE_FAIL,
+        payload:
+          error.response && error.response.data.message
+            ? error.response.data.message
+            : error.message,
+      }); 
     }
-};
+  };
 
 export const listOrdersClient = (clientId) => async (dispatch, getState) => {
     try {
@@ -403,4 +410,6 @@ export const listOrdersClient = (clientId) => async (dispatch, getState) => {
         });
     }
 };
+
+
 

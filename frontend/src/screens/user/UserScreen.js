@@ -14,7 +14,7 @@ import Pagination from "../../components/Pagination";
 import LoaderHandler from "../../components/loader/LoaderHandler";
 
 /* Actions */
-import { listUsers, register } from "../../actions/userActions";
+import { listUsers, register, deleteUser} from "../../actions/userActions";
 import { listRoles } from "../../actions/roleActions"; // importar la nueva acción
 import { allRoles } from "../../actions/roleActions"
 
@@ -44,6 +44,9 @@ const UserScreen = ({ history }) => {
     const userLogin = useSelector((state) => state.userLogin);
     const { userInfo } = userLogin;
 
+    const [confirmDelete, setConfirmDelete] = useState(false);
+    const [userIdToDelete, setUserIdToDelete] = useState(null);
+
     const userRegister = useSelector((state) => state.userRegister);
     const {
         loading: createLoading,
@@ -53,6 +56,9 @@ const UserScreen = ({ history }) => {
 
     const roleList = useSelector((state) => state.roleList);
     const { roles } = roleList; // Obtener roles desde el estado
+
+    const userDelete = useSelector((state) => state.userDelete || {});
+    const { success: deleteSuccess } = userDelete;
 
 
     useEffect(() => {
@@ -68,7 +74,7 @@ const UserScreen = ({ history }) => {
             setRoleId('');
             setModalIsOpen(false);
         }
-    }, [dispatch, userInfo, pageNumber, keyword, history, createSuccess]);
+    }, [dispatch, userInfo, pageNumber, keyword, history, createSuccess, deleteSuccess]);
 
     useEffect(() => {
         //dispatch(allRoles());
@@ -110,6 +116,42 @@ const UserScreen = ({ history }) => {
 
             dispatch(register(user));
         }
+    };
+
+    const renderDeleteConfirmationModal = () => (
+        <Modal
+            style={modalStyles}
+            isOpen={confirmDelete}
+            onRequestClose={() => setConfirmDelete(false)}
+        >
+            <h2 style={{ fontSize: "24px", fontWeight: 'normal' }}>Confirmar Eliminación</h2>
+            <hr />
+            <p>¿Estás seguro que deseas eliminar este usuario?</p>
+            <div className="d-flex justify-content-center mt-4">
+                <button
+                    onClick={() => handleDelete(userIdToDelete)}
+                    className="btn btn-danger mx-2"
+                >
+                    Confirmar
+                </button>
+                <button
+                    onClick={() => setConfirmDelete(false)}
+                    className="btn btn-secondary mx-2"
+                >
+                    Cancelar
+                </button>
+            </div>
+        </Modal>
+    );
+
+    const handleDelete = (id) => {
+        dispatch(deleteUser(id));
+        setConfirmDelete(false);
+    };
+
+    const handleDeleteClick = (id) => {
+        setUserIdToDelete(id);
+        setConfirmDelete(true);
     };
 
     const renderTable = () => (
@@ -163,13 +205,24 @@ const UserScreen = ({ history }) => {
                             {user.isAdmin ? (
                                 ""
                             ) : (
+                                <>
                                 <Link
                                     to={`/user/${user.id}/edit`}
-                                    className="btn btn-warning btn-lg"
+                                    className="btn btn-warning btn-lg mr-3"
                                 >
                                     Editar
                                 </Link>
+
+                                <button
+                                    onClick={() => handleDeleteClick(user.id)}
+                                    className="btn btn-danger btn-lg"
+                                >
+                                    Eliminar
+                                </button>
+                                </>
+
                             )}
+
                         </td>
                     </tr>
                 ))}
@@ -189,7 +242,8 @@ const UserScreen = ({ history }) => {
                 isOpen={modalIsOpen}
                 onRequestClose={() => setModalIsOpen(false)}
             >
-                <h2>Create Form</h2>
+                <h2>Creación de Usuarios</h2>
+                <hr />
                 <LoaderHandler loading={createLoading} error={createError} />
                 <form onSubmit={handleSubmit}>
                     <Input
@@ -217,9 +271,10 @@ const UserScreen = ({ history }) => {
                         name={"Admin"}
                         data={isAdmin}
                         setData={setIsAdmin}
+                        
                     />
                       <div className="form-group">
-                        <label htmlFor="role">Rol</label>
+                        <label htmlFor="role" style={{fontWeight: 'normal'}}>Rol</label>
                         <select
                             id="role"
                             name="role"
@@ -260,6 +315,7 @@ const UserScreen = ({ history }) => {
             <section className="content">
                 <div className="container-fluid">
                     {renderModalCreateUser()}
+                    {renderDeleteConfirmationModal()}
                     <div className="row">
                         <div className="col-12">
                             <div className="card">

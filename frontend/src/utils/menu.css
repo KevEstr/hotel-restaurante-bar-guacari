@@ -88,3 +88,23 @@
   border-radius: 8px; /* Bordes redondeados */
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Sombra para darle profundidad */
 }
+
+.category-cervezas-background {
+  background-color: #FDE17A; 
+}
+
+.category-hamburguesas-background {
+  background-color: #E34848ed;
+}
+
+.category-gaseosas-background {
+  background-color: #6ABBFE;
+}
+
+.category-pizza-background {
+  background-color: #A4FD7A;
+}
+
+.category-empanadas-background {
+  background-color: #F7B1FF;
+}

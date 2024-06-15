@@ -65,7 +65,7 @@ const ActiveOrdersScreen = ({ history }) => {
             <div key={table.id} className="col-12 col-md-6 col-lg-4 col-xl-3">
                 <Table table={table} />
             </div>
-        ));
+    ));
 
     const renderFreeTables = () =>
         filterTablesByState(false).map((table) => (

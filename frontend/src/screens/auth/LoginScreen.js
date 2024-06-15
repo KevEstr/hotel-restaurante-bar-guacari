@@ -36,11 +36,11 @@ const LoginScreen = ({ history }) => {
                 <div className="card">
                     <div className="card-header ">
                         <div className="login-logo">
-                            <b>Restobar</b>
+                            <b>Guacarí</b>
                             <div className="text-center">
                                 <img
                                     className="profile-user-img img-fluid img-circle"
-                                    src={"/logo.png"}
+                                    src={"/guacari.png"}
                                     alt="User profile picture"
                                 />
                             </div>
@@ -48,7 +48,7 @@ const LoginScreen = ({ history }) => {
                     </div>
                     <div className="card-body login-card-body">
                         <p className="login-box-msg">
-                            Sign in to start your session
+                           ¡Inicia sesión para continuar!
                         </p>
                         {loading && <Loader variable={loading} />}
                         {error && <Message message={error} color={"danger"} />}
@@ -57,7 +57,7 @@ const LoginScreen = ({ history }) => {
                                 <input
                                     type="email"
                                     className="form-control"
-                                    placeholder="Email"
+                                    placeholder="Correo Electrónico"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                 />
@@ -71,7 +71,7 @@ const LoginScreen = ({ history }) => {
                                 <input
                                     type="password"
                                     className="form-control"
-                                    placeholder="Password"
+                                    placeholder="Contraseña"
                                     value={password}
                                     onChange={(e) =>
                                         setPassword(e.target.value)
@@ -90,7 +90,7 @@ const LoginScreen = ({ history }) => {
                                         type="submit"
                                         className="btn btn-primary btn-block"
                                     >
-                                        Sign In
+                                        Iniciar
                                     </button>
                                 </div>
                             </div>
@@ -106,7 +106,7 @@ const LoginScreen = ({ history }) => {
                                 </button>
                                 <h5>
                                     <i className="icon fas fa-info" /> Test
-                                    Users
+                                    Por Ahora
                                 </h5>
                                 <p>admin@example.com</p>
                                 <p>user@example.com</p>

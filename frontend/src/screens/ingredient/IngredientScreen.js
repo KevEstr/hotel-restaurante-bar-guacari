@@ -10,7 +10,7 @@ import ModalButton from "../../components/ModalButton";
 import DataTableLoader from "../../components/loader/DataTableLoader";
 
 /* Actions */
-import { listIngredients, createIngredient } from "../../actions/ingredientActions";
+import { listIngredients, createIngredient, deleteIngredient } from "../../actions/ingredientActions";
 
 /* Styles */
 import { modalStyles } from "../../utils/styles";
@@ -38,8 +38,13 @@ const IngredientScreen = ({ history }) => {
 
     const userLogin = useSelector((state) => state.userLogin);
     const { userInfo } = userLogin;
-    
 
+    const [confirmDelete, setConfirmDelete] = useState(false);
+    const [ingredientIdToDelete, setIngredientIdToDelete] = useState(null);
+    
+    const ingredientDelete = useSelector((state) => state.ingredientDelete || {});
+    const { success: deleteSuccess } = ingredientDelete;
+    
     const ingredientCreate = useSelector((state) => state.ingredientCreate);
     const {
         loading: createLoading,
@@ -55,7 +60,43 @@ const IngredientScreen = ({ history }) => {
             setModalIsOpen(false);
         }
         dispatch(listIngredients(keyword, pageNumber));
-    }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess]);
+    }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess, deleteSuccess]);
+
+    const renderDeleteConfirmationModal = () => (
+        <Modal
+            style={modalStyles}
+            isOpen={confirmDelete}
+            onRequestClose={() => setConfirmDelete(false)}
+        >
+            <h2 style={{ fontSize: "24px", fontWeight: 'normal' }}>Confirmar Eliminación</h2>
+            <hr />
+            <p className="text-center">¿Estás seguro que deseas eliminar este ingrediente?</p>
+            <div className="d-flex justify-content-center mt-4">
+                <button
+                    onClick={() => handleDelete(ingredientIdToDelete)}
+                    className="btn btn-danger mx-2"
+                >
+                    Confirmar
+                </button>
+                <button
+                    onClick={() => setConfirmDelete(false)}
+                    className="btn btn-secondary mx-2"
+                >
+                    Cancelar
+                </button>
+            </div>
+        </Modal>
+    );
+
+    const handleDelete = (id) => {
+        dispatch(deleteIngredient(id));
+        setConfirmDelete(false);
+    };
+
+    const handleDeleteClick = (id) => {
+        setIngredientIdToDelete(id);
+        setConfirmDelete(true);
+    };
 
     useEffect(() => {
         const negativeStockIngredients = ingredients.filter(ingredient => ingredient.stock < 0);
@@ -99,9 +140,9 @@ const IngredientScreen = ({ history }) => {
 
     const RadioButtonGroup = ({ name, options, selectedOption, setSelectedOption, errors }) => {
         return (
-            <div>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}> {/* Flexbox para centrar y espaciar */}
                 {options.map(option => (
-                    <label key={option.value}>
+                    <label key={option.value} style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', marginRight: '20px' }}> {/* Flexbox para alinear verticalmente */}
                         <input
                             type="radio"
                             name={name}
@@ -109,7 +150,7 @@ const IngredientScreen = ({ history }) => {
                             checked={selectedOption === (option.value === 'true')}
                             onChange={(e) => setSelectedOption(e.target.value === 'true')}
                         />
-                        {option.label}
+                        <span>{option.label}</span>
                     </label>
                 ))}
                 {errors && errors[name] && <div className="error">{errors[name]}</div>}
@@ -136,25 +177,28 @@ const IngredientScreen = ({ history }) => {
                 onRequestClose={() => setModalIsOpen(false)}
             >
                 <LoaderHandler loading={createLoading} error={createError} />
-                <h2>Formulario Creación</h2>
+                <h2 style={{fontSize: "24px", fontWeight: 'normal'}}>Creación de Ingredientes</h2>
+                <hr />
 
                 <form onSubmit={handleSubmit}>
                     <Input
-                        name={"name"}
+                        name={"Nombre"}
                         type={"text"}
                         data={name}
                         setData={setName}
                         errors={errors}
                     />
-                    <label>Cantidad Por:</label>
 
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+                    <label style={{ fontWeight: 'normal', marginRight: '30px' }}>Cantidad Por:</label>
                     <RadioButtonGroup
-                    name="ingredientType"
-                    options={radioOptions}
-                    selectedOption={ingredientType}
-                    setSelectedOption={setIngredientType}
-                    errors={errors}
-                />
+                        name="ingredientType"
+                        options={radioOptions}
+                        selectedOption={ingredientType}
+                        setSelectedOption={setIngredientType}
+                        errors={errors}
+                    />
+                </div>
                     
 
                     <button type="submit" className="btn btn-primary">
@@ -197,10 +241,18 @@ const IngredientScreen = ({ history }) => {
                         <td>
                             <Link
                                 to={`/ingredient/${ingredient.id}/edit`}
-                                className="btn btn-warning btn-lg"
+                                className="btn btn-warning btn-lg mr-3"
                             >
                                 Editar
                             </Link>
+
+                            <button
+                                onClick={() => handleDeleteClick(ingredient.id)}
+                                className="btn btn-danger btn-lg"
+                            >
+                                Eliminar
+                            </button>
+
                         </td>
                     </tr>
                 ))}
@@ -216,6 +268,7 @@ const IngredientScreen = ({ history }) => {
             <section className="content">
                 <div className="container-fluid">
                     {renderModalCreateIngredient()}
+                    {renderDeleteConfirmationModal()}
 
                     <div className="row">
                         <div className="col-12">

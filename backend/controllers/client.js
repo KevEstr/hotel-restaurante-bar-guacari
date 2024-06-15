@@ -115,3 +115,19 @@ exports.deleteClient = asyncHandler(async (req, res) => {
         throw new Error("Client not found");
     }
 });
+
+exports.updateClientReservationStatus = asyncHandler(async (req, res) => {
+    const { has_reservation } = req.body;
+
+    const client = await Client.findByPk(req.params.id);
+
+    if (client) {
+        client.has_reservation = has_reservation;
+
+        const updatedClient = await client.save();
+        res.json(updatedClient);
+    } else {
+        res.status(404);
+        throw new Error("Client not found");
+    }
+});

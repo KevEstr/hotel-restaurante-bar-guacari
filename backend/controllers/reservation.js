@@ -3,16 +3,13 @@ const Reservation = require("../models").Reservation;
 const { Op } = require("sequelize");
 const Client = require("../models").Client;
 const Room = require("../models").Room;
+const Payment = require("../models").Payment;
 const RoomReservation = require("../models").RoomReservation;
 const { ReservationService } = require("../models");
 const Service = require("../models").Service
 const Agreement = require("../models").Agreement;
-const { AgreementService } = require("../models");
+const { AgreementService, ReservationAudit } = require("../models");
 const { User } = require("../models").User;
-
-
-
-
 
 const {
     updateRoom
@@ -36,6 +33,12 @@ exports.createReservation = asyncHandler(async (req, res) => {
         is_paid,
         total,
     });
+
+    const payment = await Payment.findByPk(paymentId);
+    if (payment) {
+        payment.total_accumulated += total;
+        await payment.save();
+    }
 
     if (services && services.length > 0) {
         await Promise.all(services.map(async (service) => {
@@ -72,13 +75,16 @@ exports.getReservations = asyncHandler(async (req, res) => {
     const pageSize = 5;
     const page = Number(req.query.pageNumber) || 1;
     const keyword = req.query.keyword ? req.query.keyword : null;
+
+    console.log("Backend received keyword:", keyword, "and pageNumber:", page);
+
     let options = {
         include: [
             { model: Client, as: "client" },
             { model: Room, as: "room" },
             {
                 model: Service,
-                as: "services",
+                as: "service",
                 through: {
                     model: ReservationService,
                     attributes: ["maxLimit"],
@@ -107,6 +113,9 @@ exports.getReservations = asyncHandler(async (req, res) => {
     const count = await Reservation.count({ ...options });
     const reservations = await Reservation.findAll({ ...options });
 
+    console.log("Reservations found:", reservations);
+    console.log("Total reservations count:", count);
+
     res.json({ reservations, page, pages: Math.ceil(count / pageSize) });
 });
 
@@ -117,13 +126,26 @@ exports.getReservation = asyncHandler(async (req, res) => {
           model: Client,
           as: 'client'
         },
-        { model: Service, as: "service", through: ReservationService, include: [
+        { 
+          model: Service, 
+          as: 'service', 
+          through: ReservationService, 
+          include: [
             {
               model: Agreement,
-              as: "agreement",
+              as: 'agreement',
               through: AgreementService,
             },
-          ],},
+          ],
+        },
+        {
+          model: Room,
+          as: 'room',
+          through: {
+            model: RoomReservation,
+            where: { reservationId: req.params.id }  // Condición para incluir solo registros relevantes
+          }
+        }
       ]
     });
   
@@ -133,48 +155,8 @@ exports.getReservation = asyncHandler(async (req, res) => {
       res.status(404);
       throw new Error("reservation not found");
     }
-  });
+});
 
-//@desc     Get order by ID
-//@route    GET /api/order/:id
-//@access   Private/user
-/*exports.getReservation = asyncHandler(async (req, res) => {
-    const reservation = await Reservation.findByPk(req.params.id, {
-      include: [
-        {
-          model: Client, 
-          as: 'client', 
-        },
-        {
-          model: Service, 
-          as: 'services', 
-          through: {
-            model: ReservationService, 
-          },
-          include: [
-            {
-              model: Agreement, 
-              as: 'agreements', 
-            },
-          ],
-        },
-      ],
-    });
-    if (reservation) {
-      res.json(reservation);
-    } else {
-      res.status(404);
-      throw new Error("reservation not found");
-    }
-  });*/
-
-//@desc     Update order to paid
-//@route    POST /api/orders/:id/pay
-//@access   Private/user
-
-//@desc     Update order
-//@route    PUT /api/orders/:id
-//@access   Private/user
 
 exports.updateReservation = asyncHandler(async (req, res) => {
     const reservation = await Reservation.findByPk(req.params.id, {
@@ -226,15 +208,31 @@ exports.updateReservation = asyncHandler(async (req, res) => {
 
 exports.deleteReservation = asyncHandler(async (req, res) => {
     const reservation = await Reservation.findByPk(req.params.id);
-
+  
     if (reservation) {
-        await reservation.destroy();
-        res.json({ message: "Reservation removed" });
+      // Guardar los datos de la reservación en la tabla de auditoría
+      await ReservationAudit.create({
+        reservationId: reservation.id,
+        concept: req.body.reason,
+        deletedAt: new Date(),
+        deletedBy: req.user.id,
+      });
+
+        if (reservation.rooms && reservation.rooms.length > 0) {
+            for (let room of reservation.rooms) {
+              room.active_status = false;
+              await room.save();
+            }
+          }
+  
+      // Eliminar la reservación
+      await reservation.destroy();
+      res.json({ message: 'Reservation removed' });
     } else {
-        res.status(404);
-        throw new Error("Reservation not found");
+      res.status(404);
+      throw new Error('Reservation not found');
     }
-});
+  });
 
 //@desc     Get statistics
 //@route    POST /api/orders/statistics
@@ -264,23 +262,39 @@ exports.getStatisticsReservation = asyncHandler(async (req, res) => {
 })
 
 exports.updateReservationEnd = asyncHandler(async (req, res) => {
-    const reservation = await Reservation.findByPk(req.params.id, {
-        include: [Room],
-    });
+    console.log("req.params.id: ", req.params.id);
 
-    if (reservation) {
-        await Promise.all(reservation.rooms.map(async (room) => {
-            room.active_status = false;
-            await room.save();
-        }));
+    try {
+        const reservation = await Reservation.findByPk(req.params.id, {
+            include: {
+                model: Room,
+                as: 'room',
+                through: {
+                  model: RoomReservation,
+                  where: { reservationId: req.params.id }  // Condición para incluir solo registros relevantes
+                }
+              }
+        });
 
-        reservation.is_paid = true;
-        
-        const updatedReservation = await reservation.save();
-        res.json(updatedReservation);
-    } else {
-        res.status(404);
-        throw new Error('Reservation not found');
+        console.log("RESERVATION END: ", reservation);
+
+        if (reservation) {
+            await Promise.all(reservation.room.map(async (room) => {
+                room.active_status = false;
+                await room.save();
+            }));
+
+            reservation.is_paid = true;
+
+            const updatedReservation = await reservation.save();
+            res.json(updatedReservation);
+        } else {
+            res.status(404);
+            throw new Error('Reservation not found');
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
     }
 });
 
@@ -313,4 +327,23 @@ exports.getRoomsByReservation = asyncHandler(async (req, res) => {
         console.error(error);
         res.status(500).json({ message: 'Server Error' });
     }
+});
+
+exports.getAllReservations = asyncHandler(async (req, res) => {
+    const keyword = req.query.keyword ? {
+        client: {
+            $regex: req.query.keyword,
+            $options: 'i',
+        },
+    } : {};
+
+    const pageSize = 10;
+    const page = Number(req.query.pageNumber) || 1;
+
+    const count = await Reservation.countDocuments({ ...keyword });
+    const reservations = await Reservation.find({ ...keyword })
+        .limit(pageSize)
+        .skip(pageSize * (page - 1));
+
+    res.json({ reservations, page, pages: Math.ceil(count / pageSize) });
 });

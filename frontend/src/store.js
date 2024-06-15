@@ -9,6 +9,7 @@ import {
     userRegisterReducer,
     userDetailsReducer,
     userUpdateReducer,
+    userDeleteReducer,
 } from "./reducers/userReducers";
 
 import {
@@ -16,6 +17,7 @@ import {
     categoryCreateReducer,
     categoryDetailsReducer,
     categoryUpdateReducer,
+    categoryDeleteReducer,
 } from "./reducers/categoryReducers";
 
 import {
@@ -23,6 +25,7 @@ import {
     agreementCreateReducer,
     agreementDetailsReducer,
     agreementUpdateReducer,
+    agreementDeleteReducer,
 } from "./reducers/agreementReducers";
 
 import {
@@ -31,6 +34,7 @@ import {
     tableCreateReducer,
     tableDetailsReducer,
     tableUpdateReducer,
+    tableDeleteReducer
 } from "./reducers/tableReducers";
 
 import {
@@ -39,13 +43,16 @@ import {
     serviceCreateReducer,
     serviceDetailsReducer,
     serviceUpdateReducer,
+    serviceDeleteReducer,
 } from "./reducers/serviceReducers";
 
 import {
+    roomAllReducer,
     roomListReducer,
     roomCreateReducer,
     roomDetailsReducer,
     roomUpdateReducer,
+    roomDeleteReducer
 } from "./reducers/roomReducers";
 
 import {
@@ -53,6 +60,7 @@ import {
     clientCreateReducer,
     clientDetailsReducer,
     clientUpdateReducer,
+    clientDeleteReducer,
 } from "./reducers/clientReducers";
 
 import {
@@ -60,6 +68,7 @@ import {
     ingredientCreateReducer,
     ingredientDetailsReducer,
     ingredientUpdateReducer,
+    ingredientDeleteReducer,
 } from "./reducers/ingredientReducers";
 
 import {
@@ -68,6 +77,7 @@ import {
     productDetailsReducer,
     productUpdateReducer,
     productIngredientsReducer,
+    productDeleteReducer,
 } from "./reducers/productReducers";
 
 import {
@@ -77,6 +87,7 @@ import {
     orderUpdateReducer,
     statisticsReducer,
     clientOrdersReducer,
+    orderDeleteReducer,
 } from "./reducers/orderReducers";
 
 import {
@@ -89,20 +100,22 @@ import {
 
 import { roleListReducer } from './reducers/roleReducers';
 
-
-  
+import { paymentListReducer } from './reducers/paymentReducers';
 
 import{
     reservationListReducer,
     reservationCreateReducer,
     reservationDetailsReducer,
     reservationUpdateReducer,
-    clientReservationsReducer
+    clientReservationsReducer,
+    reservationDeleteReducer,
+    reservationAllListReducer
 } from "./reducers/reservationReducers";
 
 const reducer = combineReducers({
 
     roleList: roleListReducer,
+    paymentList: paymentListReducer,
 
     ingredientMovementList: ingredientMovementListReducer,
     ingredientMovementDetails: ingredientMovementDetailsReducer,
@@ -115,64 +128,78 @@ const reducer = combineReducers({
     userRegister: userRegisterReducer,
     userDetails: userDetailsReducer,
     userUpdate: userUpdateReducer,
+    userDelete: userDeleteReducer,
 
     categoryList: categoryListReducer,
     categoryCreate: categoryCreateReducer,
     categoryDetails: categoryDetailsReducer,
     categoryUpdate: categoryUpdateReducer,
+    categoryDelete: categoryDeleteReducer,
 
     agreementList: agreementListReducer,
     agreementCreate: agreementCreateReducer,
     agreementDetails: agreementDetailsReducer,
     agreementUpdate: agreementUpdateReducer,
+    agreementDelete: agreementDeleteReducer,
 
     ingredientList: ingredientListReducer,
     ingredientCreate: ingredientCreateReducer,
     ingredientDetails: ingredientDetailsReducer,
     ingredientUpdate: ingredientUpdateReducer,
+    ingredientDelete: ingredientDeleteReducer,
 
     productList: productListReducer,
     productCreate: productCreateReducer,
     productDetails: productDetailsReducer,
     productUpdate: productUpdateReducer,
     productIngredients: productIngredientsReducer,
+    productDelete: productDeleteReducer,
 
     tableAll: tableAllReducer,
     tableList: tableListReducer,
     tableCreate: tableCreateReducer,
     tableDetails: tableDetailsReducer,
     tableUpdate: tableUpdateReducer,
+    tableDelete: tableDeleteReducer,
 
     serviceAll: serviceAllReducer,
     serviceList: serviceListReducer,
     serviceCreate: serviceCreateReducer,
     serviceDetails: serviceDetailsReducer,
     serviceUpdate: serviceUpdateReducer,
+    serviceDelete: serviceDeleteReducer,
 
     roomList: roomListReducer,
     roomCreate: roomCreateReducer,
     roomDetails: roomDetailsReducer,
     roomUpdate: roomUpdateReducer,
+    roomAll: roomAllReducer,
+    roomDelete: roomDeleteReducer,
 
     clientList: clientListReducer,
     clientCreate: clientCreateReducer,
     clientDetails: clientDetailsReducer,
     clientUpdate: clientUpdateReducer,
+    clientDelete: clientDeleteReducer,
 
     orderStatistics: statisticsReducer,
     orderList: orderListReducer,
     orderCreate: orderCreateReducer,
     orderDetails: orderDetailsReducer,
     orderUpdate: orderUpdateReducer,
+    orderDelete: orderDeleteReducer,
 
+    reservationAllList: reservationAllListReducer,
     reservationList: reservationListReducer,
     reservationCreate: reservationCreateReducer,
     reservationDetails: reservationDetailsReducer,
     reservationUpdate: reservationUpdateReducer,
     clientReservations: clientReservationsReducer,
     clientOrders: clientOrdersReducer,
+    reservationDelete: reservationDeleteReducer,
 
-    section: sectionReducer
+    section: sectionReducer,
+
 });
 
 const userInfoFromStorage = localStorage.getItem("userInfo")

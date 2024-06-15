@@ -27,5 +27,5 @@ router
     .get(protect, getTable)
     .put(protect, updateTable)
     .delete(protect, deleteTable);
-
+    
 module.exports = router;

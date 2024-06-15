@@ -136,77 +136,99 @@ const IngredientEditScreen = ({ history, match }) => {
     };
   
     const renderForm = () => (
-        
         <form onSubmit={handleSubmit}>
             {console.log('showPrice:', showPrice)}
-            <Input
-                name={"nombre"}
-                type={"text"}
-                data={name}
-                setData={setName}
-                errors={errors}
-            />
-            <div className="form-group">
-                <label>Tipo de Ingrediente:</label>
-                <input type="text" className="form-control" value={ingredientType} readOnly />
+            <div className="form-row" style={{marginTop: '20px'}}>
+                <div className="form-group col-md-4">
+                    <Input
+                        name={"nombre"}
+                        type={"text"}
+                        data={name}
+                        setData={setName}
+                        errors={errors}
+                    />
+                </div>
+                <div className="form-group col-md-3">
+                    <label style={{fontWeight: 'normal'}}>Tipo de Ingrediente:</label>
+                    <input type="text" className="form-control" value={ingredientType} readOnly />
+                </div>
+                <div className="form-group col-md-4">
+                    <label style={{fontWeight: 'normal'}}>Cantidad en el Inventario:</label>
+                    <input type="text" className="form-control" value={stock} readOnly />
+                    {stock < 0 && 
+                        <Message 
+                            message={`Este ingrediente tiene existencia negativa, se recomienda realizar inventario y registrar la entrada de mercancía actual.<br /> 
+                            <br /> 
+                            <strong>NOTA:</strong> El ajuste de cantidad ${stock} se realiza de forma automática.`} 
+                            color={"danger"} 
+                        />
+                    }
+                </div>
             </div>
-            <div className="form-group">
-                <label>Cantidad en el Inventario:</label>
-                <input type="text" className="form-control" value={stock} readOnly />
-                {stock < 0 && 
-                <Message 
-                    message={`Este ingrediente tiene existencia negativa, se recomienda realizar inventario y registrar la entrada de mercancía actual.<br /> 
-                    <br /> 
-                    <strong>NOTA:</strong> El ajuste de cantidad ${stock} se realiza de forma automática.`} 
-                    color={"danger"} 
+            <div className="form-row" style={{marginTop: '20px'}}>
+                
+                <div className="form-group col-md-3">
+                <label style={{fontWeight: 'normal', marginBottom: '10px', textAlign: 'center'}}>Tipo de Movimiento:</label>
+                <div style={{marginTop: '5px'}}>
+                    <label style={{marginRight: '20px', fontWeight: 'normal'}}>
+                        <input
+                            type="radio"
+                            name="operation"
+                            value="entrada"
+                            checked={operation === 'entrada'}
+                            onChange={() => handleOperationChange('entrada')}
+                            style={{marginRight: '5px', fontWeight: 'normal'}}
+                        /> Entrada
+                        </label>
+                        <label style={{fontWeight: 'normal'}}>
+            <input
+                type="radio"
+                name="operation"
+                value="salida"
+                checked={operation === 'salida'}
+                onChange={() => handleOperationChange('salida')}
+                style={{marginRight: '5px'}}
+            /> Salida
+        </label>
+    </div>
+</div>
+
+                <div className="form-group col-md-2" style={{marginLeft: '-15px'}}>
+                    <Input
+                        name={"Cantidad"}
+                        type={"number"}
+                        data={quantity}
+                        setData={setQuantity}
+                        errors={errors}
+                    />
+                </div>
+                <div className="form-group col-md-6">
+                    <Input
+                        name={"Concepto"}
+                        type={"text"}
+                        data={concept}
+                        setData={setConcept}
+                        errors={errors}
+                    />
+                </div>
+            </div>
+            <div className="form-row">
+                <Input
+                    name={"Precio de compra"}
+                    type={"number"}
+                    data={totalPrice}
+                    setData={setTotalPrice}
+                    errors={errors}
+                    hidden={showPrice}
                 />
-            }            </div>
-            <label>Tipo de Movimiento:</label>
-            <div>
-                <input
-                    type="radio"
-                    name="operation"
-                    value="entrada"
-                    checked={operation === 'entrada'}
-                    onChange={() => handleOperationChange('entrada')}
-                /> Entrada
-                <input
-                    type="radio"
-                    name="operation"
-                    value="salida"
-                    checked={operation === 'salida'}
-                    onChange={() => handleOperationChange('salida')}
-                /> Salida
             </div>
-            <Input
-                name={"Cantidad"}
-                type={"number"}
-                data={quantity}
-                setData={setQuantity}
-                errors={errors}
-            />
-            <Input
-                name={"Precio de compra"}
-                type={"number"}
-                data={totalPrice}
-                setData={setTotalPrice}
-                errors={errors}
-                hidden={showPrice}
-            />
-            <Input
-                name={"Concepto"}
-                type={"text"}
-                data={concept}
-                setData={setConcept}
-                errors={errors}
-            />
             <hr />
             <button type="submit" className="btn btn-success">
                 Confirmar
             </button>
         </form>
     );
-
+    
     return (
         <>
             {/* Content Header (Page header) */}
@@ -217,13 +239,16 @@ const IngredientEditScreen = ({ history, match }) => {
                 <div className="container-fluid">
                     <ButtonGoBack history={history} />
                     <div className="row justify-content-center">
-                        <div className="col-12 col-md-6">
+                        <div className="col-12 col-md-11">
                             <div className="card">
                                 <div className="card-header">
                                     <h3 className="card-title">Editar Ingrediente</h3>
                                 </div>
                                 {/* /.card-header */}
                                 <div className="card-body">
+                                <div style={{ backgroundColor: "#FFF9BA", borderColor: "black", padding: "15px", borderRadius: "10px", maxWidth: "900px", margin: "0 auto"}}>
+                                    Para actualizar el inventario, selecciona el tipo de movimiento que deseas realizar: 'ENTRADA' sumará unidades al inventario - 'SALIDA' retirará unidades del inventario. En concepto, puedes identificar la razón del movimiento.
+                                </div>
                                     <LoaderHandler
                                         loading={loadingUpdate}
                                         error={errorUpdate}

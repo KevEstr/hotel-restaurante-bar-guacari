@@ -2,6 +2,8 @@ import React, { useState, useEffect  } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { listProducts, listProductDetails } from "../../actions/productActions";
 import { listAllIngredients } from "../../actions/ingredientActions";
+import {ProductsTable} from "./ProductsTable";
+import {OrderCart} from "./OrderCart";
 
 const TableCart = () => {
     const [ingredientStocks, setIngredientStocks] = useState({});

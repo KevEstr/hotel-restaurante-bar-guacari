@@ -17,11 +17,12 @@ import Select from "../../components/Select";
 import { RESERVATION_CREATE_RESET } from "../../constants/reservationConstants";
 
 /* Actions */
-import { allRooms } from "../../actions/roomActions";
+import { allRooms, updateRoom } from "../../actions/roomActions";
 import { listClients } from "../../actions/clientActions";
 import { createReservation, updateClientHasReservation } from "../../actions/reservationActions";
 import { listServices } from '../../actions/serviceActions';
 import { listAgreements } from '../../actions/agreementActions';
+import { listPayments } from '../../actions/paymentActions';
 
 
 const ReservationCreateScreen = ({ history, match }) => {
@@ -32,6 +33,8 @@ const ReservationCreateScreen = ({ history, match }) => {
     const [room, setRoom] = useState(
         roomFromUrl ? parseInt(match.params.id) : null
     );
+
+    const [paymentId, setPaymentId] = useState(null);
 
     const [selectedRooms, setSelectedRooms] = useState([]);
     const [reservationId, setReservationId] = useState(null);
@@ -44,6 +47,8 @@ const ReservationCreateScreen = ({ history, match }) => {
     const [quantity, setQuantity] = useState(null);
     const [selectedServices, setSelectedServices] = useState([]);
     const [clientAgreement, setClientAgreement] = useState(null);
+    const [roomSelects, setRoomSelects] = useState([{ selectId: Date.now(), roomId: '' }]);
+
 
 
     const [total, setTotal] = useState(0);
@@ -52,14 +57,17 @@ const ReservationCreateScreen = ({ history, match }) => {
 
     const dispatch = useDispatch();
 
+    const paymentList = useSelector((state) => state.paymentList);
+    const { payments, error: errorPayments } = paymentList;
+
     const userLogin = useSelector((state) => state.userLogin);
     const { userInfo } = userLogin;
 
     const clientList = useSelector((state) => state.clientList);
     const { clients } = clientList;
 
-    const roomList = useSelector((state) => state.roomList);
-    const { rooms } = roomList;
+    const roomAll = useSelector((state) => state.roomAll);
+    const { rooms } = roomAll;
 
     const serviceList = useSelector((state) => state.serviceList);
     const { services } = serviceList;
@@ -71,24 +79,6 @@ const ReservationCreateScreen = ({ history, match }) => {
     const agreementList = useSelector((state) => state.agreementList);
     const { agreements, loading: loadingAgreements, error: errorAgreements } = agreementList;
 
-
-    /*useEffect(() => {
-        dispatch(allRooms());
-    }, [dispatch, history, userInfo]);*/
-
-    useEffect(() => {
-        dispatch(allRooms());
-        dispatch(listClients())
-  }, [dispatch]);
-
-  useEffect(() => {
-    dispatch(listAgreements());
-}, [dispatch]);
-
-    useEffect(() => {
-        dispatch(listServices());
-    }, [dispatch]);
-    
       useEffect(() => {
         //dispatch(allRooms());
         if (success) {
@@ -96,6 +86,13 @@ const ReservationCreateScreen = ({ history, match }) => {
             dispatch({ type: RESERVATION_CREATE_RESET });
             history.push("/activeReservation");
         }
+
+        dispatch(allRooms());
+        dispatch(listServices());
+        dispatch(listAgreements());
+        dispatch(listClients())
+        dispatch(listPayments());
+
     }, [dispatch, history, success, error, reservation]);
 
     const handleServiceChange = (e, serviceId) => {
@@ -136,6 +133,8 @@ const ReservationCreateScreen = ({ history, match }) => {
         }
     };
 
+    
+
     const handleSubmit = (e) => {
         e.preventDefault();
 
@@ -147,9 +146,7 @@ const ReservationCreateScreen = ({ history, match }) => {
         if (!client) {
             errorsCheck.client = "Cliente es requerido";
         }
-        if(selectedServices.length<1){
-            errorsCheck.selectedServices = "Debe seleccionar al menos 1 servicio";
-        }
+        
 
         /* Check errors */
         if (Object.keys(errorsCheck).length > 0) {
@@ -166,12 +163,12 @@ const ReservationCreateScreen = ({ history, match }) => {
             /* Create reservation */
             const reservation = {
                 clientId: client,
-                rooms: selectedRooms,
+                rooms: roomSelects.map(select => select.roomId),
                 price: price,
                 start_date: start_date,
                 end_date: end_date,
                 quantity: quantity,
-                paymentId: 0,
+                paymentId: paymentId,
                 note: note,
                 is_paid: 0,
                 services: selectedServices,
@@ -182,6 +179,11 @@ const ReservationCreateScreen = ({ history, match }) => {
 
             dispatch(updateClientHasReservation(reservation.clientId, true));
             dispatch(createReservation(reservation));
+
+            selectedRooms.forEach((roomId) => {
+                dispatch(updateRoom(roomId, true));
+              });
+
             console.log("Datos de la reserva:", reservation);
             setReservationId(reservation.id);
         }
@@ -196,6 +198,10 @@ const ReservationCreateScreen = ({ history, match }) => {
         dispatch(allRooms(e.target.value));
     };
 
+    const addRoomSelect = () => {
+        setRoomSelects([...roomSelects, { selectId: Date.now(), roomId: '' }]);
+    };
+
     const calculateTotal = (startDate, endDate, pricePerDay) => {
         const start = new Date(startDate);
         const end = new Date(endDate);
@@ -205,23 +211,42 @@ const ReservationCreateScreen = ({ history, match }) => {
     };
 
     const renderRoomsSelect = () => (
-        <>
-            <h5>Selecciona las habitaciones:</h5>
-            {filterFreeRooms().map((room) => (
-                <div key={room.id}>
-                    <label>
-                        <input
-                            type="checkbox"
-                            checked={selectedRooms.includes(room.id)}
-                            onChange={() => handleRoomSelection(room.id)}
-                        />
-                        Habitación {room.id}
-                    </label>
+        <div>
+            <div className="d-flex align-items-center gap-2 flex-wrap">
+                <div className="d-flex align-items-center">
+                    {roomSelects.map((select) => (
+                        <div key={select.selectId} className="mr-2 mb-2" style={{ flexShrink: 0 }}>
+                            <select
+                                value={select.roomId}
+                                onChange={(e) => handleRoomSelection(select.selectId, e.target.value)}
+                                className="form-control"
+                            >
+                                <option value="">Seleccione una habitación</option>
+                                {filterFreeRooms().map((room) => (
+                                    <option key={room.id} value={room.id}>
+                                        Habitación {room.id}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    ))}
                 </div>
-            ))}
+                
+            </div>
             {errors.rooms && <Message message={errors.rooms} color={"warning"} />}
-        </>
+        </div>
     );
+    
+
+    const removeLastRoomSelect = () => {
+        setRoomSelects(prevSelects => {
+            const updatedSelects = [...prevSelects];
+            updatedSelects.pop(); // Eliminar el último elemento
+            return updatedSelects;
+        });
+    };
+    
+    
 
     const handleClientSelect = (selectedClient) => {
         setClient(selectedClient);
@@ -236,17 +261,20 @@ const ReservationCreateScreen = ({ history, match }) => {
         dispatch(listClients(e.target.value));
     };
 
-    const renderClientsSelect = () => (
-        <>
+    const renderClientsSelect = () => {
+        const filteredClients = clients.filter(client => client.has_reservation === false);
+        return (
+            <>
             <Select
                 data={client}
                 setData={handleClientSelect}
-                items={clients}
+                items={filteredClients}
                 search={searchClients}
             />
             {errors.client && <Message message={errors.client} color={"warning"} />}
-        </>
+            </>
     );
+}
 
     const renderNoteTextarea = () => (
         <Textarea
@@ -266,143 +294,197 @@ const ReservationCreateScreen = ({ history, match }) => {
         </button>
     );
 
-    const handleRoomSelection = (roomId) => {
-        setSelectedRooms((prevSelectedRooms) => {
-            if (prevSelectedRooms.includes(roomId)) {
-                return prevSelectedRooms.filter((id) => id !== roomId);
-            } else {
-                return [...prevSelectedRooms, roomId];
-            }
-        });
+    const handleRoomSelection = (selectId, roomId) => {
+        setRoomSelects(prevSelects =>
+            prevSelects.map(select =>
+                select.selectId === selectId ? { ...select, roomId } : select
+            )
+        );
     };
 
     return (
         <>
-            {/* Content Header (Page header) */}
-            <HeaderContent room={"Habitaciones"} />
+    {/* Content Header (Page header) */}
+    <HeaderContent room={"Habitaciones"} />
 
-            {/* Main content */}
-            <section className="content">
-                <div className="container-fluid">
-                    <ButtonGoBack history={history} />
-                    <div className="row">
-                        <div className="col-12">
-                            <div className="card">
-                                <div className="card-header">
-                                    <h3 className="card-title">Crear Habitación</h3>
-                                    <Loader variable={loading} />
-                                    <Message message={error} color={"danger"} />
+    {/* Main content */}
+    <section className="content">
+        <div className="container-fluid">
+            <ButtonGoBack history={history} />
+            <div className="row">
+                <div className="col-12">
+                    <div className="card">
+                        <div className="card-header">
+                            <h3 className="card-title">Crear Habitación</h3>
+                            <Loader variable={loading} />
+                            <Message message={error} color={"danger"} />
+                        </div>
+                        {/* /.card-header */}
+                        <div className="card-body">
+                            <div className="row">
+                                <div className="col-md-6">
+                                    <div className="form-group">
+                                    <label className="mr-4" style={{fontWeight: 'normal'}}>Selecciona las habitaciones:</label>
+                                    <button onClick={addRoomSelect} className="btn btn-sm btn-primary mb-1 mr-1">
+                                        <i className="fas fa-plus"></i>
+                                    </button>
+                                    <button onClick={removeLastRoomSelect} className="btn btn-sm btn-danger mb-1">
+                                        <i className="fas fa-minus"></i>
+                                    </button>
+                                        <div className="d-flex align-items-center">
+                                            {renderRoomsSelect()}
+                                        </div>
+                                        {errors.rooms && <Message message={errors.rooms} color={"warning"} />}
+                                    </div>
                                 </div>
-                                {/* /.card-header */}
-                                <div className="card-body" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                    <div className="col-12 col-lg-12" style={{ maxWidth: '800px', width: '100%' }}>
-                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
-                                            <div style={{ flex: '1 1 45%', minWidth: '200px' }}>
-                                                <h3 className="card-title"> </h3>
-                                                Selecciona la habitación:
-                                                {renderRoomsSelect()}
-                                            </div>
-                                            <div style={{ flex: '1 1 45%', minWidth: '200px' }}>
-                                                <h3 className="card-title"> </h3>
-                                                Selecciona el cliente:
-                                                {renderClientsSelect()}
-                                            </div>
-                                            <div style={{ flex: '1 1 45%', minWidth: '200px' }}>
-                                                <h3 className="card-title">Precio:</h3>
-                                                <input
-                                                    type="number"
-                                                    value={price}
-                                                    onChange={(e) => setPrice(e.target.value)}
-                                                    style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc' }}
-                                                />
-                                            </div>
-                                            <div style={{ flex: '1 1 45%', minWidth: '200px' }}>
-                                                <h3 className="card-title">Cantidad de personas:</h3>
-                                                <input
-                                                    type="number"
-                                                    value={quantity}
-                                                    onChange={(e) => setQuantity(e.target.value)}
-                                                    style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc' }}
-                                                />
-                                            </div>
-                                            <div style={{ flex: '1 1 45%', minWidth: '200px' }}>
-                                                <h3 className="card-title">Fecha de inicio:</h3>
-                                                <input
-                                                    type="date"
-                                                    value={start_date}
-                                                    onChange={(e) => setStartDate(e.target.value)}
-                                                    style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc' }}
-                                                />
-                                            </div>
-                                                <div style={{ flex: '1 1 45%', minWidth: '200px' }}>
-                                                    <h3 className="card-title">Fecha de finalización:</h3>
-                                                    <input
-                                                        type="date"
-                                                        value={end_date}
-                                                        onChange={(e) => setEndDate(e.target.value)}
-                                                        style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc' }}
-                                                    />
-                                                </div>
-                                            
-                                        </div>
+                            </div>
+                            <div className="row">
+                            <div className="col-md-3">
+                                    <div className="form-group">
+                                        <label style={{fontWeight: 'normal'}}>Selecciona el cliente:</label>
+                                        {renderClientsSelect()}
+                                        {errors.client && <Message message={errors.client} color={"warning"} />}
+                                    </div>
+                                </div>
+                                <div className="col-md-2">
+                                    <div className="form-group">
+                                        <label style={{fontWeight: 'normal'}}>Precio:</label>
+                                        <input
+                                            type="number"
+                                            value={price}
+                                            onChange={(e) => setPrice(e.target.value)}
+                                            className="form-control"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="col-md-3">
+                                    <div className="form-group">
+                                        <label style={{fontWeight: 'normal'}}>Cantidad de personas:</label>
+                                        <input
+                                            type="number"
+                                            value={quantity}
+                                            onChange={(e) => setQuantity(e.target.value)}
+                                            className="form-control"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
 
-                                        <div style={{ flex: '1 1 45%', minWidth: '200px' }}>
-                                            <h3 className="card-title">Convenio: </h3>
-                                            {console.log("clientAgreement: ", clientAgreement )}
-                                            <label htmlFor="clientAgreementName">{clientAgreement && clientAgreement.name }</label>
+                            <div className = "row">
+                                <div className="col-md-3">
+                                    <div className="form-group" style={{marginTop: '8px'}}>
+                                        <label style={{fontWeight: 'normal'}}>Fecha de inicio:</label>
+                                        <input
+                                            type="date"
+                                            value={start_date}
+                                            onChange={(e) => setStartDate(e.target.value)}
+                                            className="form-control"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="col-md-3" style={{marginTop: '8px'}}>
+                                    <div className="form-group">
+                                        <label style={{fontWeight: 'normal'}}>Fecha de finalización:</label>
+                                        <input
+                                            type="date"
+                                            value={end_date}
+                                            onChange={(e) => setEndDate(e.target.value)}
+                                            className="form-control"
+                                        />
+                                </div>
+                            </div>
 
-                                        </div>
+                            <div className="col-md-3" style={{marginTop: '8px'}}>
+                                    <div className="form-group">
+                                        <label style={{fontWeight: 'normal'}}>Tipo de pago:</label>
+                                        <select
+                                            value={paymentId}
+                                            onChange={(e) => setPaymentId(e.target.value)}
+                                            className="form-control"
+                                        >
+                                            <option value="">Seleccione un valor</option>
+                                            {payments && payments.map((payment) => (
+                                                <option key={payment.id} value={payment.id}>
+                                                    {payment.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
 
-                                        <div>
-                                            <label htmlFor="servicios">Servicios</label>
-                                            <div>{console.log("Services: ",services)}
-                                                {clientAgreement && clientAgreement.service && clientAgreement.service.map((service) => (
-                                                    <div key={service.id}>
-                                                        <label>
-                                                            <input
-                                                                type="checkbox"
-                                                                value={service.id}
-                                                                onChange={() => handleAddService(service)}
-                                                            />
-                                                            {service.name}
-                                                        </label>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                            {errors.selectedServices && <Message message={errors.selectedServices} color={"warning"} />}
-                                        </div>{console.log("Servicios seleccionados: ",selectedServices)}
-                                        {selectedServices.map((service) => (
-                                            <div key={service.id}>
-                                                <label htmlFor={`maxLimit-${service.id}`}>
-                                                    Tope Máximo para {service.name}
-                                                </label>
+                        </div>
+                        <div className="row">
+                            <div className="col-md-3 pr-0" style={{marginTop: '8px'}}>
+                                <div className="form-group d-flex">
+                                    <label style={{fontWeight: 'normal'}} className="mr-2 mb-0">Convenio:</label>
+                                    <div>{clientAgreement && clientAgreement.name}</div>
+                                </div>
+                            </div>
+                            <div className="col-md-6" style={{marginTop: '8px'}}>
+                                <div className="form-group d-flex" >
+                                    <label style={{fontWeight: 'normal'}} className="mr-3 mb-0">Servicios:</label>
+                                    <div className="d-flex flex-wrap">
+                                        {clientAgreement && clientAgreement.service && clientAgreement.service.map((service) => (
+                                            <div key={service.id} className="form-check form-check-inline mr-3">
                                                 <input
-                                                    type="number"
-                                                    id={`maxLimit-${service.id}`}
-                                                    name="maxLimit"
-                                                    value={service.maxLimit}
-                                                    onChange={(e) => handleServiceChange(e, service.id)}
+                                                    type="checkbox"
+                                                    className="form-check-input"
+                                                    value={service.id}
+                                                    onChange={() => handleAddService(service)}
                                                 />
+                                                <label className="form-check-label">{service.name}</label>
                                             </div>
                                         ))}
-                                        <div className="mt-4" style={{ marginTop: '20px' }}>
-                                            {renderNoteTextarea()}
-                                        </div>
-                                        <div style={{ textAlign: 'center', marginTop: '20px' }}>
-                                            {renderSubmitButton()}
+                                    </div>
+                                    {errors.selectedServices && <Message message={errors.selectedServices} color={"warning"} />}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="row col-12">
+                            {selectedServices.map((service) => (
+                                <div key={service.id} className="row" style={{marginLeft:'12px', marginBottom:'-8px'}}>
+                                    <div className="col-md-12" style={{ marginBottom: '15px' }}>
+                                        <div className="form-group">
+                                            <label style={{fontWeight: 'normal'}} htmlFor={`maxLimit-${service.id}`}>Tope Máximo para {service.name}</label>
+                                            <input
+                                                type="number"
+                                                id={`maxLimit-${service.id}`}
+                                                name="maxLimit"
+                                                value={service.maxLimit}
+                                                onChange={(e) => handleServiceChange(e, service.id)}
+                                                className="form-control"
+                                            />
                                         </div>
                                     </div>
                                 </div>
-                                {/* /.card-body */}
-                            </div>
+                            ))}
                         </div>
-                        {/* /.col */}
+                            </div>
+                            <div className="row">
+                                
+                            </div>
+                            <div className="row">
+                                <div className="col-md-12">
+                                    <div className="form-group" style={{marginTop: '6px'}}>
+                                        {renderNoteTextarea()}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="row">
+                                <div className="col-md-12 text-center">
+                                    {renderSubmitButton()}
+                                </div>
+                            </div>
+                        {/* /.card-body */}
                     </div>
-                    {/* /.row */}
                 </div>
-                {/* /.container-fluid */}
-            </section>
-        </>
+                {/* /.col */}
+            </div>
+            {/* /.row */}
+        </div>
+        {/* /.container-fluid */}
+    </section>
+</>
     );
 };
 

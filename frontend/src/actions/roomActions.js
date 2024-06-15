@@ -18,6 +18,8 @@ import {
     ROOM_ALL_REQUEST,
     ROOM_ALL_SUCCESS,
     ROOM_ALL_FAIL,
+    UPDATE_ROOM_STATUS_SUCCESS,
+    UPDATE_ROOM_STATUS_FAIL
 } from "../constants/roomConstants";
 
 //get all tables
@@ -246,3 +248,12 @@ export const deleteRoom = (id) => async (dispatch, getState) => {
         });
     }
 };
+
+export const updateRoomStatus = (roomId, status) => async (dispatch) => {
+    try {
+      const response = await axios.put(`/api/statusroom/${roomId}`, { active_status: status });
+      dispatch({ type: UPDATE_ROOM_STATUS_SUCCESS, payload: response.data });
+    } catch (error) {
+      dispatch({ type: UPDATE_ROOM_STATUS_FAIL, payload: error.message });
+    }
+  };

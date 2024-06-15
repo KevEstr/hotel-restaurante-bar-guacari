@@ -15,6 +15,10 @@ import {
     CLIENT_DELETE_REQUEST,
     CLIENT_DELETE_SUCCESS,
     CLIENT_DELETE_FAIL,
+    CLIENT_UPDATE_RESERVATION_STATUS_REQUEST,
+    CLIENT_UPDATE_RESERVATION_STATUS_SUCCESS,
+    CLIENT_UPDATE_RESERVATION_STATUS_FAIL
+
 } from "../constants/clientConstants";
 
 //get all clients with pagination
@@ -207,3 +211,32 @@ export const deleteClient = (id) => async (dispatch, getState) => {
         });
     }
 };
+
+export const updateClientReservationStatus = (clientId, hasReservation) => async (dispatch, getState) => {
+    try {
+        dispatch({ type: CLIENT_UPDATE_RESERVATION_STATUS_REQUEST });
+
+        const { userLogin: { userInfo } } = getState();
+
+        const config = {
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${userInfo.token}`,
+            },
+        };
+
+        const { data } = await axios.put(`/api/clients/${clientId}/updateReservationStatus`, { has_reservation: hasReservation }, config);
+
+        dispatch({ type: CLIENT_UPDATE_RESERVATION_STATUS_SUCCESS, payload: data });
+    } catch (error) {
+        dispatch({
+            type: CLIENT_UPDATE_RESERVATION_STATUS_FAIL,
+            payload: error.response && error.response.data.message
+                ? error.response.data.message
+                : error.message,
+        });
+    }
+};
+
+
+

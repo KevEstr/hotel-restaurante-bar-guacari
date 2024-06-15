@@ -17,10 +17,17 @@ import {
     RESERVATION_DELETE_FAIL,
     CLIENT_RESERVATIONS_REQUEST,
     CLIENT_RESERVATIONS_SUCCESS,
-    CLIENT_RESERVATIONS_FAIL
+    CLIENT_RESERVATIONS_FAIL,
+    RESERVATION_UPDATE_RESET
 } from "../constants/reservationConstants";
 
+import { USER_UPDATE_REQUEST, USER_UPDATE_SUCCESS, USER_UPDATE_FAIL } from '../constants/userConstants';
+import { ROOM_UPDATE_REQUEST, ROOM_UPDATE_SUCCESS, ROOM_UPDATE_FAIL } from '../constants/roomConstants';
+
 import { CLIENT_UPDATE_REQUEST, CLIENT_UPDATE_SUCCESS, CLIENT_UPDATE_FAIL } from "../constants/clientConstants";
+
+import { updateRoom } from './roomActions';
+import { updateClient } from './clientActions';
 
 //get all categories with pagination
 export const listReservations =
@@ -30,6 +37,8 @@ export const listReservations =
             dispatch({
                 type: RESERVATION_LIST_REQUEST,
             });
+
+            console.log("Fetching reservations with keyword:", keyword, "and pageNumber:", pageNumber);
 
             //get user from state
             const {
@@ -49,6 +58,8 @@ export const listReservations =
                 config
             );
 
+            console.log("Data received:", data);
+
             dispatch({
                 type: RESERVATION_LIST_SUCCESS,
                 payload: data,
@@ -67,7 +78,7 @@ export const listReservations =
 
 //create a category
 export const createReservation = (reservation) => async (dispatch, getState) => {
-    const { price, start_date, end_date, note, quantity, clientId, roomId, paymentId, is_paid, services, total} = reservation;
+    const { price, start_date, end_date, note, quantity, clientId, rooms, paymentId, is_paid, services, total} = reservation;
 
     try {
         dispatch({
@@ -88,7 +99,7 @@ export const createReservation = (reservation) => async (dispatch, getState) => 
         };
 
         //create category
-        const { data } = await axios.post("/api/reservations", { price, start_date, end_date, note, quantity, clientId, roomId, paymentId, is_paid, services, total }, config);
+        const { data } = await axios.post("/api/reservations", { price, start_date, end_date, note, quantity, clientId, rooms, paymentId, is_paid, services, total }, config);
         dispatch({
             type: RESERVATION_CREATE_SUCCESS,
             payload: data,
@@ -182,39 +193,75 @@ export const updateReservation = (reservation) => async (dispatch, getState) => 
 };
 
 //delete category
-export const deleteReservation = (id) => async (dispatch, getState) => {
+export const deleteReservation = (reservationId, reason) => async (dispatch, getState) => {
     try {
-        dispatch({
-            type: RESERVATION_DELETE_REQUEST,
-        });
+      dispatch({
+        type: RESERVATION_DELETE_REQUEST,
+      });
 
-        //get user from state
-        const {
-            userLogin: { userInfo },
-        } = getState();
-        //headers
+      console.log('Enviando solicitud DELETE al backend');
+
+      const { userLogin: { userInfo } } = getState();
+
         const config = {
             headers: {
                 Authorization: `Bearer ${userInfo.token}`,
+                "Content-Type": "application/json",
             },
         };
 
-        //api call to delete category
-        await axios.delete(`/api/reservations/${id}`, config);
-        dispatch({
-            type: RESERVATION_DELETE_SUCCESS,
-        });
-    } catch (error) {
-        dispatch({
-            type: RESERVATION_DELETE_FAIL,
-            payload:
-                error.response && error.response.data.message
-                    ? error.response.data.message
-                    : error.message,
-        });
-    }
+  
+      // Enviar la solicitud para eliminar la reserva
+      const { data } = await axios.delete(`/api/reservations/${reservationId}`,  {
+        data: { reason }, ...config
+      });
+  
+      dispatch({
+        type: RESERVATION_DELETE_SUCCESS,
+        payload: data,
+      });
 
-};
+      const { reservationDetails: { reservation } } = getState();
+
+      const clientUpdate = {
+        id: reservation.clientId,
+        has_reservation: false
+      };
+
+      dispatch({
+        type: USER_UPDATE_REQUEST,
+      });
+
+      try {
+        await axios.put(`/api/clients/${clientUpdate.id}`, clientUpdate, config);
+        dispatch({
+          type: USER_UPDATE_SUCCESS,
+          payload: clientUpdate,
+        });
+      } catch (error) {
+        dispatch({
+          type: USER_UPDATE_FAIL,
+          payload:
+            error.response && error.response.data.message
+              ? error.response.data.message
+              : error.message,
+        });
+      }
+  
+  // Actualizar el estado de las habitaciones a active_status: false
+      const rooms = reservation.rooms;
+    await Promise.all(rooms.map(async (room) => {
+      const updatedRoom = { ...room, active_status: false };
+      await axios.put(`/api/rooms/${room.id}`, updatedRoom, config);
+    }));
+
+  } catch (error) {
+    dispatch({
+      type: RESERVATION_DELETE_FAIL,
+      payload: error.response && error.response.data.message ? error.response.data.message : error.message,
+    });
+  }
+  };
 
 export const updateReservationToPaid = (reservation) => async (dispatch, getState) => {
     try {
@@ -341,7 +388,6 @@ export const listReservationsByClient = (clientId) => async (dispatch, getState)
 
         const { data } = await axios.get(`/api/reservations/client/${clientId}`, config);
 
-        // Para cada reserva del cliente, obtén las habitaciones asociadas
         const reservationsWithRooms = await Promise.all(data.map(async (reservation) => {
             const response = await axios.get(`/api/reservations/${reservation.id}/rooms`, config);
             return { ...reservation, rooms: response.data };
@@ -357,6 +403,32 @@ export const listReservationsByClient = (clientId) => async (dispatch, getState)
             payload: error.response && error.response.data.message
                 ? error.response.data.message
                 : error.message,
+        });
+    }
+};
+
+export const listAllReservations = ({ keyword = '', pageNumber = '' }) => async (dispatch, getState) => {
+    try {
+        dispatch({ type: RESERVATION_LIST_REQUEST });
+
+        const { userLogin: { userInfo } } = getState();
+
+        const config = {
+            headers: {
+                Authorization: `Bearer ${userInfo.token}`,
+            },
+        };
+
+        const { data } = await axios.get(`/api/reservations?keyword=${keyword}&pageNumber=${pageNumber}`, config);
+
+        dispatch({
+            type: RESERVATION_LIST_SUCCESS,
+            payload: data,
+        });
+    } catch (error) {
+        dispatch({
+            type: RESERVATION_LIST_FAIL,
+            payload: error.response && error.response.data.message ? error.response.data.message : error.message,
         });
     }
 };

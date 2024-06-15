@@ -13,14 +13,17 @@ import { FormattedDate, FormattedTime } from "../../utils/formattedDate"; // Ase
 
 /* constants */
 import { RESERVATION_UPDATE_RESET } from "../../constants/reservationConstants";
+import { RESERVATION_DELETE_RESET } from "../../constants/reservationConstants";
+
 
 /* actions */
 import {
     listReservationsDetails,
-    updateReservationToEnd,
     updateReservationToPaid,
     listReservationsByClient
 } from "../../actions/reservationActions";
+
+import { deleteReservation } from '../../actions/reservationActions';
 
 import { listOrdersByClient, listOrders } from "../../actions/orderActions";
 
@@ -36,6 +39,7 @@ import { updateRoom } from "../../actions/roomActions";
 
 import generateInvoice from "../../utils/generateInvoice";
 
+
 const ReservationViewScreen = ({ history, match }) => {
     const reservationId = parseInt(match.params.id);
 
@@ -46,13 +50,23 @@ const ReservationViewScreen = ({ history, match }) => {
     const { loading, error, reservation } = reservationDetails;
     const [modal, setModal] = useState(false);
 
+    const reservationDelete = useSelector((state) => state.reservationDelete);
+    const { loading: loadingDelete, success: successDelete, error: errorDelete } = reservationDelete;
+      
     const [clientAgreement, setClientAgreement] = useState(null);
 
     const agreementList = useSelector((state) => state.agreementList);
     const { agreements, loading: loadingAgreements, error: errorAgreements } = agreementList;
 
+    const [reason, setReason] = useState('');
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-    
+    const handleDeleteReservation = () => {
+        console.log('Intentando eliminar la reservación');
+        dispatch(deleteReservation(reservationId, reason));
+        setShowDeleteModal(false);
+      };
+      
     const clientReservations = useSelector(state => state.clientReservations);
     const { loading: loadingReservations, error: errorReservations, reservations: clientReservationsList } = clientReservations;
 
@@ -69,12 +83,9 @@ const ReservationViewScreen = ({ history, match }) => {
     } = reservationUpdate;
 
     useEffect(() => {
-        dispatch(listAgreements());
-    }, [dispatch]);
-
-    useEffect(() => {
-        if (successUpdate) {
+        if (successUpdate | successDelete) {
             dispatch({ type: RESERVATION_UPDATE_RESET });
+            dispatch({ type: RESERVATION_DELETE_RESET });
                 history.push("/activeReservation");
         }
         if (reservation) {
@@ -85,105 +96,36 @@ const ReservationViewScreen = ({ history, match }) => {
                 // Si la reserva está correctamente cargada, cargar las órdenes del cliente
                 dispatch(listOrdersClient(reservation.clientId));
                 dispatch(listReservationsByClient(reservation.clientId));
+                
             }
             
         }
 
-    }, [dispatch, history, reservation, reservationId, successUpdate]);
+        dispatch(listAgreements());
 
-    const AgreementName = (selectedClient) => {
-        const selectedClientAgreement = agreements.find(agreement => agreement.id === selectedClient.agreementId);
-        setClientAgreement(selectedClientAgreement ? selectedClientAgreement.name : null);
+    }, [dispatch, history, reservation, reservationId, successUpdate, successDelete]);
 
-    };
+    const getAgreementName = (agreementId) => {
+        if (agreements && agreements.length > 0) {
+          const agreement = agreements.find((agreement) => agreement.id === agreementId);
+          return agreement ? agreement.name : '';
+        }
+        return '';
+      };
+    
     const handleEdit = (e) => {
         e.preventDefault();
         history.push(`/reservation/${reservationId}/edit`);
     };
 
-        reservation && (
-            <>
-                <div className="row">
-                    <div className="col-12 col-md-6">
-                        <ViewBox
-                            title={reservationId}
-                            paragraph={"RESERVA ID"}
-                            icon={"far fa-clipboard"}
-                            color={"bg-info"}
-                        />
-                    </div>
-
-                    {reservation.is_paid ? (
-                        <div className="col-12 col-md-6">
-                            <ViewBox
-                                title={"Pagada"}
-                                paragraph={"Órden ya fue pagada."}
-                                icon={"fas fa-check"}
-                                color={"bg-success"}
-                            />
-                        </div>
-                    ) : (
-                        <div className="col-12 col-md-6">
-                            <ViewBox
-                                title={"No pagada"}
-                                paragraph={"Reserva no ha sido pagada."}
-                                icon={"far fa-times-circle"}
-                                color={"bg-danger"}
-                            />
-                        </div>
-                    )}
-
-                    <div className="col-12 col-md-6">
-                        {reservation.client && (
-                            <ViewBox
-                                paragraph={`ID: ${reservation.client.id}`}
-                                icon={"fas fa-user"}
-                                color={"bg-info"}
-                            />
-                        )
-                        }
-                    </div>
-
-                    {reservation.room ? (
-                        <div className="col-12 col-md-6">
-                            <ViewBox
-                                title={reservation.room.name}
-                                icon={"fas fa-utensils"}
-                                color={"bg-info"}
-                            />
-                        </div>
-                    ) : (
-                        <div className="col-12 col-md-6">
-                            {reservation.client && (
-                                <ViewBox
-                                    title={"Domicilio"}
-                                    paragraph={reservation.client.address}
-                                    icon={"fas fa-truck"}
-                                    color={"bg-primary"}
-                                />
-                            )}
-                        </div>
-                    )}
-                </div>
-
-                <div className="col-12">
-                    <ViewBox
-                        title={"Nota:"}
-                        paragraph={reservation.note}
-                        icon={"far fa-sticky-note"}
-                        color={"bg-silver"}
-                    />
-                </div>
-            </>
-        );
-
+        
     const renderReservationEdit = () => (
         <div className="card">
-            <div className="card-header bg-warning">Editar órden</div>
+            <div className="card-header bg-warning">Editar Reservación</div>
             <div className="card-body">
                 <button className="btn btn-block" onClick={handleEdit}>
                     <ViewBox
-                        title={`Editar órden`}
+                        title={`EDITAR`}
                         paragraph={`Click para editar`}
                         icon={"fas fa-edit"}
                         color={"bg-warning"}
@@ -219,6 +161,51 @@ const ReservationViewScreen = ({ history, match }) => {
         </div>
     );
 
+    const renderDeleteReservationButton = () => (
+        <div className="card">
+          <div className="card-header bg-danger">Eliminar Reservación</div>
+          <div className="card-body">
+            <button className="btn btn-block" onClick={() => setShowDeleteModal(true)}>
+              <ViewBox
+                title={`ELIMINAR`}
+                paragraph={`Click para eliminar`}
+                icon={"fas fa-trash"}
+                color={"bg-danger"}
+              />
+            </button>
+          </div>
+        </div>
+      );
+
+      const renderDeleteReservationModal = () => (
+        <Modal
+          style={modalStyles}
+          isOpen={showDeleteModal}
+          onRequestClose={() => setShowDeleteModal(false)}
+        >
+          <h2 className="text-center">Eliminar Reservación</h2>
+          <p className="text-center">Ingrese la razón por la que desea eliminar la reservación:</p>
+          <form onSubmit={handleDeleteReservation}>
+            <div className="form-group">
+              <textarea
+                className="form-control"
+                rows="3"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+              ></textarea>
+            </div>
+            <button type="submit" className="btn btn-danger">
+              Eliminar
+            </button>
+            <ModalButton
+              modal={showDeleteModal}
+              setModal={setShowDeleteModal}
+              classes={"btn-secondary float-right"}
+            />
+          </form>
+        </Modal>
+      );
+
     const renderModalReservation = () => (
         <Modal
             style={modalStyles}
@@ -241,6 +228,205 @@ const ReservationViewScreen = ({ history, match }) => {
         </Modal>
     );
 
+    const renderReservationInfo = () =>
+        reservation && reservation.client ? (
+            <div className="small-box bg-info">
+                <div className="inner">
+                    <h3>{reservation.client.name}</h3>
+                    <h4>
+                        {getAgreementName(reservation.client.agreementId)}
+                    </h4>
+                </div>
+                <div className="icon">
+                    <i className="fas fa-solid fa-hotel" />
+                </div>
+            </div>
+        ) : null;
+
+    const renderTotalInfo = () =>
+        reservation &&
+            <div className="small-box bg-success">
+                <div className="inner">
+                <h3>{reservation.total} COP</h3>
+                    <h4>
+                        Total Precio de Reservación
+                    </h4>
+                </div>
+                <div className="icon">
+                    <i className="fas fa-solid fa-dollar-sign" />
+                </div>
+            </div>
+
+const renderRoomsInfo = () => (
+    reservation && (
+        <ViewBox
+            title="Habitaciones"
+            paragraph={
+                <div>
+                    {clientReservationsList && clientReservationsList.length > 0 ? (
+                        clientReservationsList.reduce((roomNames, reservation) => {
+                            if (reservation.rooms && reservation.rooms.length > 0) {
+                                const roomNamesForReservation = reservation.rooms.map(room => room.name).join(', ');
+                                return roomNames.length > 0 ? `${roomNames}, ${roomNamesForReservation}` : roomNamesForReservation;
+                            }
+                            return roomNames;
+                        }, '')
+                    ) : (
+                        'No hay habitaciones asociadas a esta reserva.'
+                    )}
+                </div>
+            }
+            icon={'fas fa-bed'}
+            color={'bg-warning'}
+        />
+    )
+);
+
+const renderOrderInfo = () =>
+    reservation && (
+        <>
+            <div className="row">
+
+            <div className="col-12 col-md-6">
+                    {reservation.start_date && (
+                        <ViewBox
+                            title={reservation.start_date}
+                            paragraph={"Fecha de Inicio"}
+                            icon={"fas fa-calendar-alt"}
+                            color={"bg-info"}
+                        />
+                    )}
+                </div>
+
+                
+                <div className="col-12 col-md-6">
+                    {reservation.end_date && (
+                        <ViewBox
+                            title={reservation.end_date}
+                            paragraph={"Fecha de Fin"}
+                            icon={"fas fa-calendar-check"}
+                            color={"bg-info"}
+                        />
+                    )}
+                </div>
+
+                <div className="col-12 col-md-6">
+                    {reservation.quantity && (
+                        <ViewBox
+                            title={reservation.quantity}
+                            paragraph={"Número de personas"}
+                            icon={"fas fa-user"}
+                            color={"bg-info"}
+                        />
+                    )}
+                </div>
+
+                <div className="col-12 col-md-6">
+                    {reservation.service && reservation.service.length > 0 ? (
+                        reservation.service.map((service, index) => {
+                            if (service.name === 'Alimentación') {
+                                return (
+                                    <ViewBox
+                                        key={index}
+                                        title={service.ReservationService.maxLimit}
+                                        paragraph={service.name}
+                                        icon={'fas fa-utensils'}
+                                        color={'bg-danger'}
+                                    />
+                                );
+                            }
+                            return null;
+                        })
+                    ) : (
+                        <ViewBox
+                            title={'0'}
+                            paragraph={'Alimentación'}
+                            icon={'fas fa-utensils'}
+                            color={'bg-danger'}
+                        />
+                    )}
+                </div>
+            
+                <div className="col-12 col-md-6">
+                    {reservation.service && reservation.service.length > 0 ? (
+                        reservation.service.map((service, index) => {
+                            if (service.name === 'Lavanderia') {
+                                return (
+                                    <ViewBox
+                                        key={index}
+                                        title={service.ReservationService.maxLimit}
+                                        paragraph={service.name}
+                                        icon={'fas fa-soap'}
+                                        color={'bg-danger'}
+                                    />
+                                );
+                            }
+                            return null;
+                        })
+                    ) : (
+                        <ViewBox
+                            title={'0'}
+                            paragraph={'Lavandería'}
+                            icon={'fas fa-soap'}
+                            color={'bg-danger'}
+                        />
+                    )}
+                </div>
+            
+            
+                <div className="col-12 col-md-6">
+                    {reservation.service && reservation.service.length > 0 ? (
+                        reservation.service.map((service, index) => {
+                            if (service.name === 'Hidratación') {
+                                return (
+                                    <ViewBox
+                                        key={index}
+                                        title={service.ReservationService.maxLimit}
+                                        paragraph={service.name}
+                                        icon={'fas fa-tint'}
+                                        color={'bg-danger'}
+                                    />
+                                );
+                            }
+                            return null;
+                        })
+                    ) : (
+                        <ViewBox
+                            title={'0'}
+                            paragraph={'Hidratación'}
+                            icon={'fas fa-tint'}
+                            color={'bg-danger'}
+                        />
+                    )}
+                </div>
+            </div>
+                
+
+            <div className="col-12">
+                <ViewBox
+                    title={"Nota:"}
+                    paragraph={reservation.note}
+                    icon={"far fa-sticky-note"}
+                    color={"bg-silver"}
+                />
+            </div>
+        </>
+    );
+
+
+    const renderInfo = () => (
+        <>
+            <div className="col-12 col-md-6">
+                {renderReservationInfo()}
+                {renderTotalInfo()}
+                {renderRoomsInfo()}
+            </div>
+            <div className="col-12 col-md-6">{renderOrderInfo()}</div>
+            {renderOrders()}
+
+        </>
+    );
+
     const handleReservation = async (e) => {
         e.preventDefault();
         const updatedReservation = {
@@ -248,6 +434,7 @@ const ReservationViewScreen = ({ history, match }) => {
             is_paid: true,
         };
         setModal(false);
+        
         dispatch(updateReservationToPaid(updatedReservation));
 
         const rooms = reservation.room;
@@ -305,112 +492,108 @@ const ReservationViewScreen = ({ history, match }) => {
         if (errorOrders) return <div>Error: {errorOrders}</div>;
         return (
             <div>
-                <h3>Órdenes del Cliente:</h3>
-                {clientOrders && clientOrders.length > 0 ? (
-                    clientOrders.map((order) => (
+                <h3>Ordenes del Cliente:</h3>
+                {clientOrdersList && clientOrdersList.length > 0 ? (
+                    clientOrdersList.map((order) => (
                         <div key={order.id} className="card mb-3">
                             <div className="card-header">
-                                Orden #{order.id}
+                                <span>Orden #{order.id}</span>
+                                <span className="ml-5">Fecha: <FormattedDate dateString={order.createdAt} /></span>
+                                <span className="ml-5">Hora: <FormattedTime dateString={order.createdAt} /></span>
                             </div>
                             <div className="card-body">
-                                <h5 className="card-title">Productos:</h5>
-                                {order.products && order.products.length > 0 ? (
-                                    <ul>
+                                <table
+                                    id="orderTable"
+                                    className="table table-bordered table-hover table-striped text-center table-overflow"
+                                >
+                                    <thead>
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th>Cantidad</th>
+                                            <th>Precio</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
                                         {order.products.map((product) => (
-                                            <li key={product.id}>
-                                                {product.name} - Cantidad: {product.orderProducts.quantity}
-                                            </li>
+                                            <tr key={product.id}>
+                                                <td>{product.name}</td>
+                                                <td className="text-center h4">
+                                                    <span className="badge bg-primary">
+                                                        {product.OrderProduct.quantity}
+                                                    </span>
+                                                </td>
+                                                <td className="text-center h4">
+                                                    <span className="badge bg-info">
+                                                        ${product.price}
+                                                    </span>
+                                                </td>
+                                                <td className="text-center h4">
+                                                    <span className={"badge bg-success"}>
+                                                        ${product.price * product.OrderProduct.quantity}
+                                                    </span>
+                                                </td>
+                                            </tr>
                                         ))}
-                                    </ul>
-                                ) : (
-                                    <p>No hay productos en esta orden.</p>
-                                )}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     ))
                 ) : (
-                    <p>No hay órdenes para este cliente.</p>
+                    <p>No hay ordenes para este cliente.</p>
                 )}
             </div>
         );
     };
+
     return (
         <>
             {/* Content Header (Page header) */}
-            <HeaderContent name={"Órdenes"} />
+            <HeaderContent name={"Reservación"} />
             <LoaderHandler loading={loadingUpdate} error={errorUpdate} />
             {/* Main content */}
             <section className="content">
                 {renderModalReservation()}
                 <ButtonGoBack history={history} />
                 <div className="card">
-                    <div className="card-header">
-                        <h3 className="card-title">Detalles de la Reserva</h3>
-                    </div>
-                    <div className="card-body">
-                    {reservation ? (
+                <div className="card-body">
                         <div className="row">
-                            <div className="col-md-6">
-                                <h5>Precio:</h5>
-                                <p>{reservation.price}</p>
-                                <h5>Fecha de inicio:</h5>
-                                <p>{reservation.start_date}</p>
-                                <h5>Fecha de fin:</h5>
-                                <p>{reservation.end_date}</p>
-                                <h5>Nota:</h5>
-                                <p>{reservation.note}</p>
-                                <h5>Convenio:</h5>
-                                <p>{clientAgreement}</p>
-                                <h5>Servicios:</h5>
-                                {reservation.service && reservation.service.length > 0 ? (
-                                    reservation.service.map((service, index) => (
-                                    <div key={index}>
-                                        <p>{service.name}: {service.ReservationService.maxLimit}</p>
-                                    </div>
-                                    ))
-                                ) : (
-                                    <p>No hay servicios asociados a esta reservación.</p>
-                                )}
-                            </div>
-                            <div className="col-md-6">
-                                <h5>Cantidad:</h5>
-                                <p>{reservation.quantity}</p>
-                                <h5>ID de usuario:</h5>
-                                <p>{reservation.userId}</p>
-                                <h5>ID de cliente:</h5>
-                                <p>{reservation.clientId}</p>
-                                <h5>ID de habitación:</h5>
-                                <p>{reservation.roomId}</p>
-                                <h5>ID de pago:</h5>
-                                <p>{reservation.paymentId}</p>
-                            </div>
-                            
+                            <LoaderHandler
+                                            loading={loading}
+                                            error={error}
+                                            render={renderInfo}
+                                            loader={<BigSpin />}
+                                        />  
                         </div>
-                    ) : (
-                        <p>No se encontró la reserva.</p>
-                    )}
-                </div>
+                    </div>
                 </div>
                 {/* Render Orders */}
                 <div className="card">
-                    <div className="card-body">
-                        {renderOrders()}
-                    </div>
+                    
                 </div>
-                <div className="card-footer">
+                <div className="row d-flex justify-content-between">
                     <LoaderHandler
                         loading={loading}
                         error={error}
                         render={renderReservationButton}
                         loader={<BigSpin />}
                     />
-
                     <LoaderHandler
                         loading={loading}
                         error={error}
                         render={renderDoneReservation}
                         loader={<BigSpin />}
                     />
+
+                    <LoaderHandler
+                        loading={loadingDelete}
+                        error={errorDelete}
+                        render={renderDeleteReservationButton}
+                        loader={<BigSpin />}
+                    />
+                    {renderDeleteReservationModal()}
+
                 </div>
             </section>
         </>

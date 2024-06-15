@@ -17,6 +17,7 @@ import {
 } from "../../constants/productConstants";
 
 import "../../../src/utils/menu.css"
+
 import LinesEllipsis from "react-lines-ellipsis";
 
 
@@ -26,6 +27,7 @@ const ProductsTable = ({
     setProductsInOrder,
     productsAlreadyOrdered,
     selectedCategory,
+    setSelectedCategory,
     ingredientStocks, 
     setIngredientStocks,
     productStocks,
@@ -75,27 +77,6 @@ const ProductsTable = ({
     const addProduct = async (e, product) => {
         e.preventDefault();
         console.log("TABLE productDetails: ",productDetails)
-        /*if (product.isComposite) {
-            let isStockAvailable = await checkCompositeStock(product);
-            if (!isStockAvailable) {
-                alert("No hay suficiente stock de ingredientes.");
-                return;
-            }
-            setProductToAdd(product);
-            dispatch(listProductDetails(product.id));
-            
-        }
-        else {
-            if (productStocks[product.id] < 1) {
-                alert("No hay suficiente stock de este producto.");
-                return;
-            }
-            const updatedStocks = { ...productStocks };
-            updatedStocks[product.id] -= 1;
-            setProductStocks(updatedStocks);
-            setProductToAdd(product);
-            dispatch(listProductDetails(product.id));
-        }*/
         setProductToAdd(product);
         dispatch(listProductDetails(product.id));
     };
@@ -227,14 +208,17 @@ const ProductsTable = ({
     const getCategoryBackgroundClass = (category) => {
         switch (category) {
             case 'CERVEZAS':
-                return 'category1-background'; // Clase CSS para la primera categoría
+                return 'category-cervezas-background';
             case 'HAMBURGUESAS':
-                return 'category2-background'; // Clase CSS para la segunda categoría
+                return 'category-hamburguesas-background'; 
             case 'GASEOSAS':
-                return 'category3-background'; // Clase CSS para la tercera categoría
-            // Agrega más casos según sea necesario para otras categorías
+                return 'category-gaseosas-background'; 
+            case 'PIZZAS':
+                return 'category-pizza-background';
+            case 'EMPANADAS':
+                return 'category-empanadas-background';
             default:
-                return ''; // Si no hay una categoría definida, no se aplica ningún color de fondo
+                return '';
         }
     };
 
@@ -242,24 +226,36 @@ const ProductsTable = ({
         const uniqueCategories = [...new Set(products.map(product => product.category.name))];
     
         return (
-            <div className="row" style={{ overflowY: 'auto', maxHeight: '600px'}}>
+            <div className="row" style={{ overflowY: 'auto', maxHeight: '600px' }}>
                 {uniqueCategories.map(category => (
-                    <div key={category} className="col-md-12">
-                        <h2>{category}</h2>
+                    <div key={category} className="col-md-12 mb-4">
+                        <h2 style={{ marginBottom: '20px', marginTop: '20px'}}>{category}</h2>
                         <div className="row">
                             {filteredProducts.map(product => {
                                 if (product.category.name === category) {
-                                    const columnSize = Math.max(Math.floor(12 / Math.min(products.length, 7)), 2);
                                     const isInOrder = inOrder(product, productsInOrder);
                                     return (
-                                        <div key={product.id} className={`col-md-${columnSize}`}>
+                                        <div key={product.id} className="col-md-3 d-flex justify-content-center mb-3">
                                             <button
-                                                className={`product-name-${getCategoryBackgroundClass(product.category.name)}`}
+                                                className={`btn ${getCategoryBackgroundClass(product.category.name)}`}
                                                 onClick={(e) => addProduct(e, product)}
                                                 disabled={isInOrder}
+                                                style={{
+                                                    width: '300px', // Ajusta este valor al tamaño deseado
+                                                    height: '200px', // Ajusta este valor al tamaño deseado
+                                                    margin: '1px', // Espaciado entre los cuadros
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    justifyContent: 'center',
+                                                    alignItems: 'center',
+                                                    textAlign: 'center',
+                                                    border: '1px solid #ddd',
+                                                    borderRadius: '5px',
+                                                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+                                                }}
                                             >
                                                 <div className="button-content">
-                                                    <h4>
+                                                    <h4 style={{ fontSize: '24px', lineHeight: '1.2', margin: '0', fontWeight: 'normal' }}>
                                                         <LinesEllipsis
                                                             text={product.name}
                                                             maxLine={3}
@@ -269,7 +265,7 @@ const ProductsTable = ({
                                                         />
                                                     </h4>
                                                     {isInOrder && (
-                                                        <p>En la orden</p>
+                                                        <p style={{ fontSize: '12px', margin: '0' }}>En la orden</p>
                                                     )}
                                                 </div>
                                             </button>
@@ -284,14 +280,6 @@ const ProductsTable = ({
             </div>
         );
     };
-
-
-
-
-
-
-
-    
 
     return (
         <>
