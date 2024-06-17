@@ -18,10 +18,6 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
-      deletedAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-      },
       deletedBy: {
         type: DataTypes.INTEGER,
         allowNull: true,

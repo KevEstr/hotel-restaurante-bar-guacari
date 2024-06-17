@@ -11,7 +11,8 @@ const {
     updateReservationEnd,
     getClientReservations,
     getRoomsByReservation,
-    getAllReservations
+    getAllReservations,
+    getStatistics,
 } = require("../controllers/reservation");
 
 // VALIDATORS
@@ -19,6 +20,10 @@ const { runValidation } = require("../validators");
 const { reservationCreateValidator } = require("../validators/reservation");
 
 //ROUTES
+
+
+router.get("/statistics", protect, getStatistics);
+
 router
     .route("/")
     .post(protect, reservationCreateValidator, runValidation, createReservation)

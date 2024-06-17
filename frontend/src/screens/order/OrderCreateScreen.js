@@ -28,7 +28,6 @@ import { ORDER_CREATE_RESET } from "../../constants/orderConstants";
 import { listTables } from "../../actions/tableActions";
 import { listClients } from "../../actions/clientActions";
 import { createOrder, listProductDetails } from "../../actions/orderActions";
-import { listPayments } from '../../actions/paymentActions';
 
 import { allTables } from "../../actions/tableActions"
 
@@ -65,13 +64,9 @@ const OrderCreateScreen = ({ match }) => {
     const [ingredientStocks, setIngredientStocks] = useState({});
     const [productStocks, setProductStocks] = useState({});
     const [user, setUser] = useState(null);
-    const [paymentId, setPaymentId] = useState(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const dispatch = useDispatch();
-
-    const paymentList = useSelector((state) => state.paymentList);
-    const { payments, error: errorPayments } = paymentList;
 
     const userLogin = useSelector((state) => state.userLogin);
     const { userInfo } = userLogin;
@@ -104,7 +99,6 @@ const OrderCreateScreen = ({ match }) => {
     useEffect(() => {
         dispatch(listUsers());
         dispatch(listClients("", "", true)); // Load clients with reservation on mount
-        dispatch(listPayments());
     }, [dispatch]);
 
     useEffect(() => {
@@ -159,7 +153,6 @@ const OrderCreateScreen = ({ match }) => {
                 delivery: delivery,
                 note: note,
                 userId: user,
-                paymentId: paymentId,
             };
             /* Make request */
             console.log("ORDEN A CREAR: ",order)
@@ -323,19 +316,6 @@ const OrderCreateScreen = ({ match }) => {
             Confirmar
         </button>
     );
-
-    const renderPaymentSelect = () => (
-        <>
-            <Select
-                data={paymentId}
-                setData={setPaymentId}
-                items={payments.map(payment => ({ id: payment.id, name: payment.name }))}
-            />
-            {errors.paymentId && (
-                <Message message={errors.paymentId} color={"warning"} />
-            )}
-        </>
-    );
     
     const productLoader = () => {
         let tableSkeleton = [];
@@ -394,37 +374,43 @@ const OrderCreateScreen = ({ match }) => {
                                     {renderCart()}
                                     <hr />
 
-    <div style={{marginTop: '40px'}}>
-    <div className="row">
-    <div className="col-12 col-md-5">
-        Selecciona tu nombre:
-        <div className="form-group">
-            {renderUserSelect()}
-        </div>
-    </div>
-    <div className="col-12 col-md-5">
-        Selecciona la mesa:
-        <div className="form-group">
-            {renderTablesSelect()}
-        </div>
-    </div>
-</div>
+            <div style={{marginTop: '40px'}}>
+                <div className="row">
+                    <div className="col-12 col-md-3">
+                        Selecciona tu nombre:
+                        <div className="form-group">
+                            {renderUserSelect()}
+                        </div>
+                    </div>
+                <div className="col-12 col-md-3">
+                Selecciona la mesa:
+                    <div className="form-group">
+                        {renderTablesSelect()}
+                    </div>
+                </div>
+                <div className="col-12 col-md-3">
+                    Selecciona el cliente:
+                    <div className="form-group">
+                        {renderClientsSelect()}
+                    </div>
+                </div>
 
-<div className="row">
-    <div className="col-12 col-md-5">
-        Selecciona el cliente:
-        <div className="form-group">
-            {renderClientsSelect()}
+                <div className="col-12 col-md-3">
+                    <div className="form-group" style={{marginTop:'30px', marginLeft:'10px'}}>
+                        {renderDeliveryCheckbox()}
+                    </div>
+                </div>
+                
+            </div>
+
+        <div className="row">
+            <div className="col-12 col-md-12">
+                    <div className="form-group">
+                        {renderNoteTextarea()}
+                    </div>
+            </div>
         </div>
     </div>
-    <div className="col-12 col-md-5">
-        Selecciona el tipo de pago:
-        <div className="form-group">
-            {renderPaymentSelect()}
-        </div>
-    </div>
-</div>
-</div>
 </div>
 {renderSubmitButton()}
 

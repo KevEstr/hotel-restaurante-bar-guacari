@@ -9,7 +9,9 @@ import LoaderHandler from "../../components/loader/LoaderHandler";
 import { BigSpin } from "../../components/loader/SvgLoaders";
 import Modal from "react-modal";
 import ModalButton from "../../components/ModalButton";
-import { FormattedDate, FormattedTime } from "../../utils/formattedDate"; // Asegúrate de ajustar la ruta según tu estructura de archivos
+import { FormattedDate, FormattedTime } from "../../utils/formattedDate";
+import { updateClientReservationStatus } from '../../actions/clientActions';
+
 
 /* constants */
 import { RESERVATION_UPDATE_RESET } from "../../constants/reservationConstants";
@@ -24,10 +26,6 @@ import {
 } from "../../actions/reservationActions";
 
 import { deleteReservation } from '../../actions/reservationActions';
-
-import { listOrdersByClient, listOrders } from "../../actions/orderActions";
-
-import { CLIENT_ORDER_LIST_REQUEST, CLIENT_ORDER_LIST_SUCCESS, CLIENT_ORDER_LIST_FAIL } from '../../constants/orderConstants';
 
 import { listAgreements } from '../../actions/agreementActions';
 
@@ -53,10 +51,8 @@ const ReservationViewScreen = ({ history, match }) => {
     const reservationDelete = useSelector((state) => state.reservationDelete);
     const { loading: loadingDelete, success: successDelete, error: errorDelete } = reservationDelete;
       
-    const [clientAgreement, setClientAgreement] = useState(null);
-
     const agreementList = useSelector((state) => state.agreementList);
-    const { agreements, loading: loadingAgreements, error: errorAgreements } = agreementList;
+    const { agreements } = agreementList;
 
     const [reason, setReason] = useState('');
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -68,7 +64,7 @@ const ReservationViewScreen = ({ history, match }) => {
       };
       
     const clientReservations = useSelector(state => state.clientReservations);
-    const { loading: loadingReservations, error: errorReservations, reservations: clientReservationsList } = clientReservations;
+    const { reservations: clientReservationsList } = clientReservations;
 
     // Estado de las órdenes asociadas al cliente específico
     const clientOrders = useSelector(state => state.clientOrders);
@@ -243,13 +239,27 @@ const ReservationViewScreen = ({ history, match }) => {
             </div>
         ) : null;
 
+        
+        const renderIsPaidInfo = () =>
+            reservation && (
+                <div className={`small-box ${reservation.is_paid ? 'bg-success' : 'bg-danger'}`}>
+                    <div className="inner">
+                        <h3>{reservation.is_paid ? 'Pagada' : 'No pagada'}</h3>
+                        <p>{reservation.is_paid ? 'La reserva ya fue pagada.' : 'La reserva no ha sido pagada.'}</p>
+                    </div>
+                    <div className="icon">
+                        <i className={`fas ${reservation.is_paid ? 'fa-check' : 'fa-times-circle'}`} />
+                    </div>
+                </div>
+            );
+
     const renderTotalInfo = () =>
         reservation &&
             <div className="small-box bg-success">
                 <div className="inner">
                 <h3>{reservation.total} COP</h3>
                     <h4>
-                        Total Precio de Reservación
+                        Total Precio de Reserva
                     </h4>
                 </div>
                 <div className="icon">
@@ -420,6 +430,7 @@ const renderOrderInfo = () =>
                 {renderReservationInfo()}
                 {renderTotalInfo()}
                 {renderRoomsInfo()}
+                {renderIsPaidInfo()}
             </div>
             <div className="col-12 col-md-6">{renderOrderInfo()}</div>
             {renderOrders()}
@@ -433,9 +444,9 @@ const renderOrderInfo = () =>
             id: reservationId,
             is_paid: true,
         };
-        setModal(false);
-        
+        setModal(false);    
         dispatch(updateReservationToPaid(updatedReservation));
+        
 
         const rooms = reservation.room;
     await Promise.all(rooms.map(async (room) => {
@@ -444,48 +455,9 @@ const renderOrderInfo = () =>
         // Realizar la actualización en el backend
         await dispatch(updateRoom(updatedRoom)); // Necesitas tener una acción para actualizar la habitación
     }));
+        dispatch(updateClientReservationStatus(reservation.clientId, false));
         generateInvoice(reservation, clientOrdersList, clientReservationsList);
     };
-
-    const renderReservations = () => {
-        if (loadingReservations) return <BigSpin />;
-        if (errorReservations) return <div>Error: {errorReservations}</div>;
-    
-        return (
-            <div>
-                <h3>Reservas del Cliente:</h3>
-                {clientReservationsList && clientReservationsList.length > 0 ? (
-                    clientReservationsList.map((reservation) => (
-                        <div key={reservation.id} className="card mb-3">
-                            <div className="card-header">
-                                Reserva #{reservation.id}
-                            </div>
-                            <div className="card-body">
-                                <h5 className="card-title"> </h5>
-                                {reservation.rooms && reservation.rooms.length > 0 && (
-                                    <div>
-                                        <h5>Habitaciones Asociadas:</h5>
-                                        {reservation.rooms.map((room, index) => (
-                                            <div key={index}>
-                                                <h6>ID de habitación:</h6>
-                                                <p>{room.id}</p>
-                                                <h6>Nombre de la habitación:</h6>
-                                                <p>{room.name}</p>
-                                                {/* Agrega más detalles de la habitación si es necesario */}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    ))
-                ) : (
-                    <p>No hay reservas para este cliente.</p>
-                )}
-            </div>
-        );
-    };
-    
 
     const renderOrders = () => {
         if (loadingOrders) return <BigSpin />;

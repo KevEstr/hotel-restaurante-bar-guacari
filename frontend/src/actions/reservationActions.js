@@ -18,7 +18,10 @@ import {
     CLIENT_RESERVATIONS_REQUEST,
     CLIENT_RESERVATIONS_SUCCESS,
     CLIENT_RESERVATIONS_FAIL,
-    RESERVATION_UPDATE_RESET
+    RESERVATION_UPDATE_RESET,
+    RESERVATION_STATISTICS_REQUEST,
+    RESERVATION_STATISTICS_SUCCESS,
+    RESERVATION_STATISTICS_FAIL
 } from "../constants/reservationConstants";
 
 import { USER_UPDATE_REQUEST, USER_UPDATE_SUCCESS, USER_UPDATE_FAIL } from '../constants/userConstants';
@@ -429,6 +432,42 @@ export const listAllReservations = ({ keyword = '', pageNumber = '' }) => async 
         dispatch({
             type: RESERVATION_LIST_FAIL,
             payload: error.response && error.response.data.message ? error.response.data.message : error.message,
+        });
+    }
+};
+
+export const getStatistics = () => async (dispatch, getState) => {
+    try {
+        dispatch({
+            type: RESERVATION_STATISTICS_REQUEST,
+        });
+
+        //get user from state
+        const {
+            userLogin: { userInfo },
+        } = getState();
+
+        //headers
+        const config = {
+            headers: {
+                Authorization: `Bearer ${userInfo.token}`,
+            },
+        };
+
+        //get all sales
+        const { data } = await axios.get(`/api/reservations/statistics`, config);
+
+        dispatch({
+            type: RESERVATION_STATISTICS_SUCCESS,
+            payload: data,
+        });
+    } catch (error) {
+        dispatch({
+            type: RESERVATION_STATISTICS_FAIL,
+            payload:
+                error.response && error.response.data.message
+                    ? error.response.data.message
+                    : error.message,
         });
     }
 };

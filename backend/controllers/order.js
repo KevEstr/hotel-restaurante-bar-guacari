@@ -6,7 +6,6 @@ const Table = require("../models").Table;
 const Product = require("../models").Product;
 const Ingredient = require("../models").Ingredient;
 const OrderProduct = require("../models").OrderProduct;
-const Payment = require("../models").Payment;
 const OrderAudit = require("../models").OrderAudit;
 
 
@@ -101,16 +100,20 @@ exports.getOrder = asyncHandler(async (req, res) => {
 //@route    POST /api/orders/:id/pay
 //@access   Private/user
 exports.updateOrderPay = asyncHandler(async (req, res) => {
+    const { paymentId } = req.body; // Recibir paymentId desde la solicitud
+
     const order = await Order.findByPk(req.params.id);
 
     if (order) {
         if (order.tableId) {
             const table = await Table.findByPk(order.tableId);
             table.occupied = false;
-            table.save();
+            await table.save();
         }
 
         order.isPaid = !order.isPaid;
+        order.paymentId = paymentId; // Asignar paymentId a la orden
+
         const updatedOrder = await order.save();
         res.json(updatedOrder);
     } else {
@@ -118,6 +121,7 @@ exports.updateOrderPay = asyncHandler(async (req, res) => {
         throw new Error("Order not found");
     }
 });
+
 
 const findDifferences = (oldProducts, newProducts) => {
     const restockProducts = [];

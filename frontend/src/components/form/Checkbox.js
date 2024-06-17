@@ -13,7 +13,7 @@ const Checkbox = ({ name, data, setData }) => {
                     checked={data}
                     onChange={(e) => setData(e.target.checked)}
                 />
-                <label htmlFor={name}>{capitalize(name)}</label>
+                <label style={{fontWeight: 'normal'}} htmlFor={name}>{capitalize(name)}</label>
             </div>
         </div>
     );

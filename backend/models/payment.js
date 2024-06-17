@@ -4,7 +4,12 @@ module.exports = (sequelize, DataTypes) => {
     class Payment extends Model {
         static associate(models) {
             this.hasMany(models.Reservation, { foreignKey: 'paymentId', as: 'reservations' });
+            this.hasMany(models.Order, { foreignKey: 'paymentId', as: 'orders' });
+
         }
+
+
+        
     }
     Payment.init(
         {

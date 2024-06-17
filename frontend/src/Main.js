@@ -47,6 +47,7 @@ import UserEditScreen from "./screens/user/UserEditScreen";
 import ProfileScreen from "./screens/user/ProfileScreen";
 
 import DashboardScreen from "./screens/DashboardScreen";
+import HotelDashboardScreen from "./screens/HotelDashboardScreen";
 import PrivateRoute from "./auth/PrivateRoute";
 import NotFoundScreen from "./screens/NotFoundScreen";
 import AdminRoute from "./auth/AdminRoute";
@@ -168,6 +169,8 @@ const Main = () => {
                         component={ReservationViewScreen}
                         exact
                     />
+
+                    <PrivateRoute path="/hotel" component={HotelDashboardScreen} />
 
                     <PrivateRoute
                         path="/order/create"

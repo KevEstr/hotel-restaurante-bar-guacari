@@ -109,7 +109,8 @@ import{
     reservationUpdateReducer,
     clientReservationsReducer,
     reservationDeleteReducer,
-    reservationAllListReducer
+    reservationAllListReducer,
+    ReservationStatisticsReducer
 } from "./reducers/reservationReducers";
 
 const reducer = combineReducers({
@@ -189,6 +190,7 @@ const reducer = combineReducers({
     orderUpdate: orderUpdateReducer,
     orderDelete: orderDeleteReducer,
 
+    reservationStatistics: ReservationStatisticsReducer,
     reservationAllList: reservationAllListReducer,
     reservationList: reservationListReducer,
     reservationCreate: reservationCreateReducer,

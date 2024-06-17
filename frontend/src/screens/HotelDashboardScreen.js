@@ -1,305 +1,174 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
 /* Components */
 import HeaderContent from "./../components/HeaderContent";
 import SmallBox from "./../components/SmallBox";
-import DeliveryListItem from "../components/DeliveryListItem";
 import DataTableLoader from "../components/loader/DataTableLoader";
 import LoaderHandler from "../components/loader/LoaderHandler";
 
 /* Actions */
-
 import {
-    OccupiedTableLoader,
     SkeletonBoxes,
     SkeletonSales,
 } from "../components/loader/SkeletonLoaders";
-import { getStatistics } from "../actions/orderActions";
+import { listAllReservations } from "../actions/reservationActions";
+import { listAgreements } from "../actions/agreementActions";
+import { listPayments } from "../actions/paymentActions";
+import { FormattedDate } from "../utils/formattedDate";
 
 const HotelDashboardScreen = ({ history }) => {
     const dispatch = useDispatch();
 
-    //user state
+    // user state
     const userLogin = useSelector((state) => state.userLogin);
     const { userInfo } = userLogin;
 
-    const orderStatistics = useSelector((state) => state.orderStatistics);
-    const { loading, error, data } = orderStatistics;
+    const [pageNumber, setPageNumber] = useState(1);
+    const [keyword, setKeyword] = useState("");
 
-    const { orders, sales, statistics } = data;
+    const reservationAllList = useSelector((state) => state.reservationAllList);
+    const { loading, error, reservations, page, pages } = reservationAllList;
+
+    const agreementList = useSelector((state) => state.agreementList);
+    const { agreements } = agreementList;
+
+    const paymentList = useSelector((state) => state.paymentList);
+    const { payments } = paymentList;
 
     useEffect(() => {
         if (!userInfo) {
             history.push("/login");
         }
-        dispatch(getStatistics());
-    }, [dispatch, history, userInfo]);
+        dispatch(listAllReservations({ keyword, pageNumber}));
+        dispatch(listAgreements());
+        dispatch(listPayments());
+    }, [dispatch, history, keyword, pageNumber, userInfo]);
 
-    //get all in place orders
-    const ordersInPlace = (orders) => {
-        const ordersInPlace = orders.filter(function (item) {
-            return item.delivery === false;
-        });
-
-        return ordersInPlace;
-    };
-
-    const getTodaySales = (items) => {
-        let day = new Date();
-        day = day.toISOString().slice(8, 10);
-        const newSales = items.filter(function (item) {
-            const saleDay = item.updatedAt.slice(8, 10);
-            return day === saleDay;
-        });
-        return newSales;
-    };
-
-    //get all delivery orders
-    const ordersForDelivery = (orders) => {
-        const ordersForDelivery = orders.filter(function (item) {
-            return item.delivery === true;
-        });
-
-        return ordersForDelivery;
-    };
-
-    //table row click from in place orders
-    const handleRowClick = (e, id) => {
-        e.preventDefault();
-        history.push(`/order/${id}/view`);
-    };
-
-    const returnSales = () => {
-        var indents = [];
-        for (var i = 0; i < (sales.length > 3 ? 4 : sales.length); i++) {
-            indents.push(
-                <tr key={sales[i].id}>
-                    <td className="font-weight-bold">{sales[i].id}</td>
-                    <td className="h4">
-                        {sales[i].delivery ? (
-                            <span className={"badge bg-primary"}>EN RESTAURANTE</span>
-                        ) : (
-                            <span className={"badge bg-info"}>DOMICILIO</span>
-                        )}
-                    </td>
-                    <td className="h4">
-                        <span className={"badge bg-success"}>
-                            ${sales[i].total}
-                        </span>
-                    </td>
-                    <td className="h4">
-                        <span className={"badge bg-warning"}>
-                            {sales[i].products.length}
-                        </span>
-                    </td>
-                    <td>
-                        <Link
-                            to={`/order/${sales[i].id}/view`}
-                            className="btn btn-info"
-                        >
-                            <i className="fas fa-search"></i>
-                        </Link>
-                    </td>
-                </tr>
-            );
+    const getAgreementName = (agreementId) => {
+        if (agreements && agreements.length > 0) {
+            const agreement = agreements.find((agreement) => agreement.id === agreementId);
+            return agreement ? agreement.name : '';
         }
-        return indents;
+        return '';
+    };
+
+    const getPaymentName = (paymentId) => {
+        if (payments && payments.length > 0) {
+            const payment = payments.find((payment) => payment.id === paymentId);
+            return payment ? payment.name : '';
+        }
+        return '';
     };
 
     const renderSmallBoxes = () => (
         <>
             <SmallBox
-                number={orders.length}
-                paragraph={"Órdenes Activas"}
-                link={"order"}
+                number={reservations.length}
+                paragraph={"Reservas Activas"}
+                link={"reservation"}
                 color={"success"}
-                icon={"fas fa-utensils"}
+                icon={"fas fa-bed"}
             />
-
             <SmallBox
-                number={ordersInPlace(orders).length}
-                paragraph={"Órdenes en restaurante"}
-                link={"active"}
+                number={reservations.filter(res => res.is_paid).length}
+                paragraph={"Reservas Pagadas"}
+                link={"paid"}
                 color={"info"}
-                icon={"fas fa-users"}
+                icon={"fas fa-credit-card"}
             />
             <SmallBox
-                number={ordersForDelivery(orders).length}
-                paragraph={"Órdenes a domicilio"}
-                link={"delivery"}
+                number={reservations.filter(res => !res.is_paid).length}
+                paragraph={"Reservas No Pagadas"}
+                link={"unpaid"}
                 color={"danger"}
-                icon={"fas fa-truck"}
+                icon={"fas fa-money-bill-wave"}
             />
-
             <SmallBox
-                number={orders.length}
-                paragraph={"Total órdenes"}
-                link={"order"}
+                number={reservations.length}
+                paragraph={"Total Reservas"}
+                link={"reservation"}
                 color={"warning"}
                 icon={"ion ion-bag"}
             />
         </>
     );
 
-    const renderSales = () => (
-        <div className="row">
-            <div className="col-12 col-lg-6">
-                <div className="card">
-                    <div className="card-header border-0">
-                        <h3 className="card-title">Últimas ventas</h3>
-                        <div className="card-tools">
-                            <Link to="/order" className="btn btn-tool btn-sm">
-                                <i className="nav-icon far fa-clipboard" />
-                            </Link>
-                        </div>
-                    </div>
-                    <div className="card-body table-responsive p-0">
-                        <table className="table table-striped table-valign-middle text-center">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Tipo</th>
-                                    <th>Total</th>
-                                    <th>Productos</th>
-                                    <th>Más</th>
-                                </tr>
-                            </thead>
-                            <tbody>{returnSales(sales)}</tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            <div className="col-12 col-lg-6">
-                <div className="card">
-                    <div className="card-header border-0">
-                        <h3 className="card-title">Restobar Panorama</h3>
-                    </div>
-                    <div className="card-body">
-                        <div className="d-flex justify-content-between align-items-center border-bottom mb-3">
-                            <p className="text-warning text-xl">
-                                <i className="fas fa-shopping-cart"></i>
-                            </p>
-                            <p className="d-flex flex-column text-right">
-                                <span className="font-weight-bold">
-                                    <i className="ion ion-android-arrow-up text-warning" />{" "}
-                                    {statistics && statistics.orders}
-                                </span>
-                                <span className="text-muted">
-                                    TOTAL ÓRDENES COMPLETADAS
-                                </span>
-                            </p>
-                        </div>
-                        {/* /.d-flex */}
-                        <div className="d-flex justify-content-between align-items-center border-bottom mb-3">
-                            <p className="text-info text-xl">
-                                <i className="fas fa-truck"></i>
-                            </p>
-                            <p className="d-flex flex-column text-right">
-                                <span className="font-weight-bold">
-                                    <i className="ion ion-android-arrow-up text-info" />{" "}
-                                    {statistics && statistics.deliveries}
-                                </span>
-                                <span className="text-muted">
-                                    TOTAL DOMICILIOS COMPLETADOS
-                                </span>
-                            </p>
-                        </div>
-                        <div className="d-flex justify-content-between align-items-center border-bottom mb-3">
-                            <p className="text-success text-xl">
-                                <i className="fas fa-money-bill-wave"></i>
-                            </p>
-                            <p className="d-flex flex-column text-right">
-                                <span className="font-weight-bold">
-                                    <span className="text-success">
-                                        <i className="fas fa-dollar-sign text-success"></i>{" "}
-                                        {statistics && statistics.today}
-                                    </span>
-                                </span>
-                                <span className="text-muted">VENTAS HOY</span>
-                            </p>
-                        </div>
-                        {/* /.d-flex */}
-                        <div className="d-flex justify-content-between align-items-center mb-0">
-                            <p className="text-danger text-xl">
-                                <i className="fas fa-piggy-bank"></i>
-                            </p>
-                            <p className="d-flex flex-column text-right">
-                                <span className="font-weight-bold">
-                                    <span className="text-success">
-                                        <i className="fas fa-dollar-sign"></i>{" "}
-                                        {statistics && statistics.total}
-                                    </span>
-                                </span>
-                                <span className="text-muted">TOTAL VENTAS</span>
-                            </p>
-                        </div>
-                        {/* /.d-flex */}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-
-    const renderOrders = () => (
-        <table className="table m-0 table-hover">
+    const renderReservations = () => (
+        <table className="table table-hover text-nowrap">
             <thead>
                 <tr>
-                    <th>Órden ID</th>
+                    <th>ID</th>
                     <th>Cliente</th>
-                    <th>Mesa</th>
+                    <th>Habitación</th>
+                    <th>Convenio</th>
+                    <th>Pagada</th>
+                    <th>Método Pago</th>
                     <th>Total</th>
+                    <th>Fecha Pago</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
-                {ordersInPlace(orders)
-                    .splice(0, 5)
-                    .map((order) => (
-                        <tr
-                            key={order.id}
-                            onClick={(e) => handleRowClick(e, order.id)}
-                            style={{
-                                cursor: "pointer",
-                            }}
-                        >
-                            <td>
-                                <h4>
-                                    <span className={"badge bg-primary"}>
-                                        {order.id}
+                {reservations.map((reservation) => (
+                    <tr key={reservation.id}>
+                        <td>{reservation.id}</td>
+                        <td>{reservation.client ? reservation.client.name : "Cliente desconocido"}</td>
+                        <td>
+                            {reservation.room && Array.isArray(reservation.room) && reservation.room.length > 0 ? (
+                                reservation.room.map(room => (
+                                    <span key={room.id} className={"badge bg-primary"}>
+                                        {room.name}
                                     </span>
+                                ))
+                            ) : (
+                                <span className={"badge bg-info"}>
+                                    SIN HABITACIÓN
+                                </span>
+                            )}
+                        </td>
+                        <td>{getAgreementName(reservation.client.agreementId)}</td>
+                        <td>
+                            {reservation.is_paid ? (
+                                <h4 className="text-success">
+                                    <i className="fas fa-check"></i>
                                 </h4>
-                            </td>
-                            <td>{order.client ? order.client.name : ""}</td>
-                            <td>{order.table ? order.table.name : ""}</td>
-                            <td>
-                                <h4>
-                                    <span className={"badge bg-success"}>
-                                        ${order.total}
-                                    </span>
+                            ) : (
+                                <h4 className="text-danger">
+                                    <i className="far fa-times-circle"></i>
                                 </h4>
-                            </td>
-                        </tr>
-                    ))}
+                            )}
+                        </td>
+                        <td>
+                            {reservation.is_paid ? getPaymentName(reservation.paymentId) : (
+                                <h4 className="text-danger">
+                                    <i className="far fa-times-circle"></i>
+                                </h4>
+                            )}
+                        </td>
+                        <td className="h4">
+                            <span className={"badge bg-success"}>
+                                ${reservation.total}
+                            </span>
+                        </td>
+                        <td>
+                            <FormattedDate dateString={reservation.createdAt} />
+                        </td>
+                        <td>
+                            <Link to={`/reservation/${reservation.id}/view`} className="btn btn-info">
+                                <i className="fas fa-search"></i>
+                            </Link>
+                        </td>
+                    </tr>
+                ))}
             </tbody>
         </table>
     );
 
-    const renderDeliveries = () =>
-        ordersForDelivery(orders)
-            .splice(0, 5)
-            .map((order) => (
-                <DeliveryListItem
-                    id={order.id}
-                    name={order.client ? order.client.name : ""}
-                    address={order.client ? order.client.address : ""}
-                    key={order.id}
-                />
-            ));
-
     return (
         <>
-            <HeaderContent name={"Reservas"} />
+            <HeaderContent name={"Panel General del Hotel"} />
 
             <section className="content">
                 <div className="container-fluid">
@@ -317,17 +186,15 @@ const HotelDashboardScreen = ({ history }) => {
                             loading={loading}
                             error={error}
                             loader={<SkeletonSales />}
-                            render={renderSales}
+                            render={renderReservations}
                         />
                     )}
 
                     <div className="row">
-                        <div className="col-12 col-md-9">
+                        <div className="col-12">
                             <div className="card">
                                 <div className="card-header border-transparent">
-                                    <h3 className="card-title">
-                                        Últimas órdenes realizadas
-                                    </h3>
+                                    <h3 className="card-title">Últimas reservas realizadas</h3>
                                     <div className="card-tools">
                                         <button
                                             type="button"
@@ -344,58 +211,22 @@ const HotelDashboardScreen = ({ history }) => {
                                             loading={loading}
                                             error={error}
                                             loader={<DataTableLoader />}
-                                            render={renderOrders}
+                                            render={renderReservations}
                                         />
                                     </div>
                                 </div>
                                 <div className="card-footer clearfix">
                                     <Link
-                                        to={"/order/create"}
+                                        to={"/activeReservation"}
                                         className="btn btn-sm btn-info float-left"
                                     >
-                                        Generar nueva órden
+                                        Generar nueva reserva
                                     </Link>
                                     <Link
-                                        to={"/order"}
+                                        to={"/reservation"}
                                         className="btn btn-sm btn-secondary float-right"
                                     >
                                         Ver todas las reservas
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="col-12 col-md-3">
-                            <div className="card">
-                                <div className="card-header">
-                                    <h3 className="card-title">
-                                        Últimos domicilios generados
-                                    </h3>
-                                    <div className="card-tools">
-                                        <button
-                                            type="button"
-                                            className="btn btn-tool"
-                                            data-card-widget="collapse"
-                                        >
-                                            <i className="fas fa-minus" />
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="card-body p-0">
-                                    <ul className="products-list product-list-in-card pl-2 pr-2">
-                                        <LoaderHandler
-                                            loading={loading}
-                                            loader={<DataTableLoader />}
-                                            error={error}
-                                            render={renderDeliveries}
-                                        />
-                                    </ul>
-                                </div>
-                                <div className="card-footer text-center">
-                                    <Link
-                                        to={"/delivery"}
-                                        className="uppercase"
-                                    >
-                                        Ver todos los domicilios
                                     </Link>
                                 </div>
                             </div>

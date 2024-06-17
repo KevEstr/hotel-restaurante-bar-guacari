@@ -9,6 +9,7 @@ import ViewBox from "../../components/ViewBox";
 import LoaderHandler from "../../components/loader/LoaderHandler";
 import ModalButton from "../../components/ModalButton";
 import { BigSpin } from "../../components/loader/SvgLoaders";
+import Select from "../../components/Select";
 
 /* constants */
 import { ORDER_UPDATE_RESET, ORDER_DELETE_RESET } from "../../constants/orderConstants";
@@ -19,6 +20,8 @@ import {
     updateOrderToPaid,
     deleteOrder,
 } from "../../actions/orderActions";
+
+import { listPayments } from '../../actions/paymentActions';
 
 /* Styles */
 import { modalStyles } from "../../utils/styles";
@@ -37,12 +40,16 @@ const OrderViewScreen = ({ history, match }) => {
     const orderDetails = useSelector((state) => state.orderDetails);
     const { loading, error, order } = orderDetails;
 
-    
+    const [paymentId, setPaymentId] = useState(null);
+
     const [deleteModal, setDeleteModal] = useState(false);
     const [concept, setConcept] = useState("");
 
     const [reason, setReason] = useState('');
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+    const paymentList = useSelector((state) => state.paymentList);
+    const { payments, error: errorPayments } = paymentList;
 
     //order edit state
     const orderUpdate = useSelector((state) => state.orderUpdate);
@@ -60,6 +67,8 @@ const OrderViewScreen = ({ history, match }) => {
     } = orderDelete;
 
     useEffect(() => {
+        dispatch(listPayments());
+
         if (successUpdate || successDelete) {
             dispatch({ type: ORDER_UPDATE_RESET });
             dispatch({ type: ORDER_DELETE_RESET });
@@ -85,15 +94,38 @@ const OrderViewScreen = ({ history, match }) => {
             <h2 className="text-center">Pago de órden</h2>
             <p className="text-center">¿La órden ya fue pagada?</p>
             <form onSubmit={handlePay}>
-                <button type="submit" className="btn btn-primary">
-                    Sí, finalizar.
-                </button>
-
-                <ModalButton
-                    modal={modal}
-                    setModal={setModal}
-                    classes={"btn-danger float-right"}
-                />
+                <label style={{ fontWeight: "normal", marginTop: '3px' }}>Ingrese el método de pago:</label>
+                <div className="d-flex justify-content-between">
+                    {payments.map(payment => (
+                        <div key={payment.id} className="form-check">
+                            <input
+                                className="form-check-input"
+                                type="radio"
+                                name="paymentMethod"
+                                id={`paymentMethod${payment.id}`}
+                                value={payment.id}
+                                checked={paymentId === payment.id}
+                                onChange={() => setPaymentId(payment.id)}
+                            />
+                            <label
+                                className="form-check-label"
+                                htmlFor={`paymentMethod${payment.id}`}
+                            >
+                                {payment.name}
+                            </label>
+                        </div>
+                    ))}
+                </div>
+                <div style={{ marginTop: "25px" }}>
+                    <button type="submit" className="btn btn-primary">
+                        Finalizar.
+                    </button>
+                    <ModalButton
+                        modal={modal}
+                        setModal={setModal}
+                        classes={"btn-danger float-right"}
+                    />
+                </div>
             </form>
         </Modal>
     );
@@ -102,6 +134,7 @@ const OrderViewScreen = ({ history, match }) => {
         e.preventDefault();
         const updatedOrder = {
             id: orderId,
+            paymentId: paymentId // Añadir el paymentId al actualizar la orden
         };
         setModal(false);
         dispatch(updateOrderToPaid(updatedOrder));
@@ -313,7 +346,7 @@ const OrderViewScreen = ({ history, match }) => {
 
     const renderOrderEdit = () => (
         <div className="card">
-            <div className="card-header bg-warning">Editar órden</div>
+            <div className="card-header bg-warning">Editar Órden</div>
             <div className="card-body">
                 <button className="btn btn-block" onClick={handleEdit}>
                     <ViewBox
@@ -327,32 +360,16 @@ const OrderViewScreen = ({ history, match }) => {
         </div>
     );
 
-    const renderOrderDelete = () => (
-        <div className="card">
-            <div className="card-header bg-warning">Eliminar órden</div>
-            <div className="card-body">
-                <button className="btn btn-block" onClick={() => setDeleteModal(true)}>
-                    <ViewBox
-                        title={`Eliminar órden`}
-                        paragraph={`Click para eliminar`}
-                        icon={"fas fa-edit"}
-                        color={"bg-warning"}
-                    />
-                </button>
-            </div>
-        </div>
-    );
-
     const renderOrderPay = () => (
         <div className="card">
-            <div className="card-header bg-success">Actualizar a pagada</div>
+            <div className="card-header bg-success">Pagar Órden</div>
             <div className="card-body">
                 <button
                     className="btn btn-block"
                     onClick={() => setModal(true)}
                 >
                     <ViewBox
-                        title={`PAGO $${order.total}`}
+                        title={`$${order.total}`}
                         paragraph={`Click para pagar`}
                         icon={"fas fa-hand-holding-usd"}
                         color={"bg-success"}

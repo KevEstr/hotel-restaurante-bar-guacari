@@ -313,7 +313,7 @@ const OrderEditScreen = ({ history, match }) => {
     return (
         <>
             {/* Content Header (Page header) */}
-            <HeaderContent name={"Orders"} />
+            <HeaderContent name={"Órdenes"} />
 
             {/* Main content */}
             <section className="content">
@@ -323,44 +323,62 @@ const OrderEditScreen = ({ history, match }) => {
                         <div className="col-12">
                             <div className="card">
                                 <div className="card-header">
-                                    <h3 className="card-title">Create Order</h3>
-                                    <Loader variable={loadingUpdate} />
-                                    <Message
-                                        message={errorUpdate}
-                                        color={"danger"}
-                                    />
+                                    <h3 className="card-title"> </h3>
                                     <Loader variable={loading} />
                                     <Message message={error} color={"danger"} />
                                 </div>
                                 {/* /.card-header */}
-                                <div >
-                                    <div>
+                                <div className="card-body">
+                                    <div className="row">
                                         <div className="col-12 col-lg-12">
                                             {renderProductsTable()}
-                                        </div>
-                                        <div className="col-12 col-lg-12">
-                                            {renderCart()}
-                                            <div>
-                                            <h3 className="card-title">Selecciona tu nombre:</h3>
-                                            <div className="col-12 col-md-6">
-                                                    {renderUserSelect()}
-                                                </div>
-                                                <h3 className="card-title">Selecciona la mesa:</h3>
-                                                <div className="col-12 col-md-6">
-                                                    {renderTablesSelect()}
-                                                </div>
-                                                <h3 className="card-title">Selecciona el cliente:</h3>
-                                                <div className="col-12 col-md-6">
-                                                    {renderClientsSelect()}
-                                                </div>
-                                            </div>
-                                            <div className="mt-4">
-                                                {renderDeliveryCheckbox()}
-                                            </div>
-                                            {renderNoteTextarea()}
+                                            {console.log("Productos seleccionados: ",productsInOrder)}
                                         </div>
                                     </div>
-                                    {renderSubmitButton()}
+                                    <div className="col-12 col-lg-12">
+                                    {renderCart()}
+                                    <hr />
+
+            <div style={{marginTop: '40px'}}>
+                <div className="row">
+                    <div className="col-12 col-md-3">
+                        Selecciona tu nombre:
+                        <div className="form-group">
+                            {renderUserSelect()}
+                        </div>
+                    </div>
+                <div className="col-12 col-md-3">
+                Selecciona la mesa:
+                    <div className="form-group">
+                        {renderTablesSelect()}
+                    </div>
+                </div>
+                <div className="col-12 col-md-3">
+                    Selecciona el cliente:
+                    <div className="form-group">
+                        {renderClientsSelect()}
+                    </div>
+                </div>
+
+                <div className="col-12 col-md-3">
+                    <div className="form-group" style={{marginTop:'30px', marginLeft:'10px'}}>
+                        {renderDeliveryCheckbox()}
+                    </div>
+                </div>
+                
+            </div>
+
+        <div className="row">
+            <div className="col-12 col-md-12">
+                    <div className="form-group">
+                        {renderNoteTextarea()}
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+{renderSubmitButton()}
+
                                 </div>
                                 {/* /.card-body */}
                             </div>

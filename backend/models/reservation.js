@@ -52,15 +52,6 @@ module.exports = (sequelize, DataTypes) => {
         {
             sequelize,
             modelName: "Reservation",
-            hooks: {
-                afterCreate: async (reservation, options) => {
-                    const payment = await sequelize.models.Payment.findByPk(reservation.paymentId);
-                    if (payment) {
-                        payment.total_accumulated += reservation.total;
-                        await payment.save();
-                    }
-                },
-            },
         }
     );
 
@@ -68,7 +59,6 @@ module.exports = (sequelize, DataTypes) => {
         await sequelize.models.ReservationAudit.create({
             reservationId: reservation.id,
             concept: options.concept,
-            deletedAt: new Date(),
             deletedBy: options.userId, 
         });
     });

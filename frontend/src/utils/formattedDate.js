@@ -5,14 +5,11 @@ import React from 'react';
 export const FormattedDate = ({ dateString }) => {
   const date = new Date(dateString);
 
-  const dateOptions = {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    timeZone: 'America/Bogota'
-  };
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Los meses empiezan en 0
+  const year = date.getFullYear();
 
-  const formattedDate = new Intl.DateTimeFormat('es-CO', dateOptions).format(date);
+  const formattedDate = `${day}/${month}/${year}`;
 
   return <span>{formattedDate}</span>;
 };

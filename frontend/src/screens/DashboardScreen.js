@@ -299,7 +299,7 @@ const DashboardScreen = ({ history }) => {
 
     return (
         <>
-            <HeaderContent name={"Panel General"} />
+            <HeaderContent name={"Panel General Del Restaurante"} />
 
             <section className="content">
                 <div className="container-fluid">

@@ -9,6 +9,11 @@ import Search from "../../components/Search";
 import LoaderHandler from "../../components/loader/LoaderHandler";
 import Pagination from "../../components/Pagination";
 
+import {listAgreements} from "../../actions/agreementActions";
+import {listPayments} from "../../actions/paymentActions";
+
+import {FormattedDate} from "../../utils/formattedDate";
+
 /* Actions */
 import { listOrders } from "../../actions/orderActions";
 
@@ -24,9 +29,48 @@ const OrderScreen = ({ history }) => {
     const orderList = useSelector((state) => state.orderList);
     const { loading, error, orders, page, pages } = orderList;
 
+    const [totalCredit, setTotalCredit] = useState(0);
+    const [totalTransfer, setTotalTransfer] = useState(0);
+    const [totalCash, setTotalCash] = useState(0);
+    const [totalAccumulated, setTotalAccumulated] = useState(0);
+
+    const agreementList = useSelector((state) => state.agreementList);
+    const { agreements } = agreementList;
+
+    const paymentList = useSelector((state) => state.paymentList);
+    const { payments } = paymentList;
+
     useEffect(() => {
         dispatch(listOrders({ keyword, pageNumber, delivery: false }));
+        dispatch(listAgreements());
+        dispatch(listPayments());
+
     }, [dispatch, history, userInfo, pageNumber, keyword]);
+
+    useEffect(() => {
+        let credit = 0;
+        let transfer = 0;
+        let cash = 0;
+        let accumulated = 0;
+    
+        orders.forEach((order) => {
+          if (order.isPaid) {
+            accumulated += order.total;
+            if (order.paymentId === 1) {
+              credit += order.total;
+            } else if (order.paymentId === 2) {
+              transfer += order.total;
+            } else if (order.paymentId === 3) {
+              credit += order.total;
+            }
+          }
+        });
+    
+        setTotalCredit(credit);
+        setTotalTransfer(transfer);
+        setTotalCash(cash);
+        setTotalAccumulated(accumulated);
+      }, [orders]);
 
     const renderCreateButton = () => (
         <Link to="/order/create">
@@ -36,6 +80,64 @@ const OrderScreen = ({ history }) => {
         </Link>
     );
 
+    const getAgreementName = (agreementId) => {
+        if (agreements && agreements.length > 0) {
+          const agreement = agreements.find((agreement) => agreement.id === agreementId);
+          return agreement ? agreement.name : '';
+        }
+        return '';
+      };
+
+    const getPaymentName = (paymentId) => {
+        if (payments && payments.length > 0) {
+          const payment = payments.find((payment) => payment.id === paymentId);
+          return payment ? payment.name : '';
+        }
+        return '';
+      };
+
+    const renderTotals = () => (
+        <div className="row mb-3">
+            <div className="col-12 col-md-3">
+                <div className="info-box bg-light">
+                    <span className="info-box-icon"><i className="fas fa-dollar-sign"></i></span>
+                    <div className="info-box-content">
+                        <span className="info-box-text">Total Efectivo</span>
+                        <span className="info-box-number">${totalCash}</span>
+                    </div>
+                </div>
+            </div>
+            <div className="col-12 col-md-3">
+                <div className="info-box bg-light">
+                    <span className="info-box-icon"><i className="fas fa-credit-card"></i></span>
+                    <div className="info-box-content">
+                        <span className="info-box-text">Total Crédito</span>
+                        <span className="info-box-number">${totalCredit}</span>
+                    </div>
+                </div>
+            </div>
+            <div className="col-12 col-md-3">
+                <div className="info-box bg-light">
+                    <span className="info-box-icon"><i className="fas fa-university"></i></span>
+                    <div className="info-box-content">
+                        <span className="info-box-text">Total Transferencia</span>
+                        <span className="info-box-number">${totalTransfer}</span>
+                    </div>
+                </div>
+            </div>
+            <div className="col-12 col-md-3">
+                <div className="info-box bg-light">
+                    <span className="info-box-icon"><i className="fas fa-money-check-alt"></i></span>
+                    <div className="info-box-content">
+                        <span className="info-box-text">Total Acumulado</span>
+                        <span className="info-box-number">${totalAccumulated}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
+
     const renderTable = () => (
         <table className="table table-hover text-nowrap">
             <thead>
@@ -43,8 +145,11 @@ const OrderScreen = ({ history }) => {
                     <th>ID</th>
                     <th>Cliente</th>
                     <th className="d-none d-sm-table-cell">Mesa</th>
+                    <th className="d-none d-sm-table-cell">Convenio</th>
                     <th>Pagada</th>
+                    <th>Método Pago</th>
                     <th>Total</th>
+                    <th>Fecha Pago</th>
                     <th></th>
                 </tr>
             </thead>
@@ -64,6 +169,11 @@ const OrderScreen = ({ history }) => {
                                 </span>
                             )}
                         </td>
+
+                        <td className="d-none d-sm-table-cell">
+                        {getAgreementName(order.client.agreementId)}
+                        </td>
+
                         <td>
                             {order.isPaid ? (
                                 <h4 className="text-success">
@@ -75,11 +185,29 @@ const OrderScreen = ({ history }) => {
                                 </h4>
                             )}
                         </td>
+
+                        <td>
+                            {order.isPaid ? (
+                                <>
+                                {getPaymentName(order.paymentId)}
+                                </>
+                            ) : (
+                                <h4 className="text-danger">
+                                    <i className="far fa-times-circle"></i>
+                                </h4>
+                            )}
+                        </td>
+
                         <td className="d-none d-sm-table-cell h4">
                             <span className={"badge bg-success"}>
                                 ${order.total}
                             </span>
                         </td>
+
+                        <td className="d-none d-sm-table-cell">
+                            <FormattedDate dateString={order.createdAt} />
+                        </td>
+
                         <td>
                             <Link
                                 to={`/order/${order.id}/view`}
@@ -125,10 +253,11 @@ const OrderScreen = ({ history }) => {
 
     return (
         <>
-            <HeaderContent name={"Órdenes"} />
+            <HeaderContent name={"Historial de Órdenes"} />
 
             <section className="content">
                 <div className="container-fluid">
+                {renderTotals()}
                     <div className="row">
                         <div className="col-12">
                             {renderCreateButton()}

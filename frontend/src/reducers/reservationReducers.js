@@ -53,7 +53,7 @@ export const reservationListReducer = (
     }
 };
 
-export const statisticsReducer = (
+export const ReservationStatisticsReducer = (
     state = {
         loading: true,
         data: {

@@ -72,7 +72,7 @@ exports.createReservation = asyncHandler(async (req, res) => {
 //@access   Private/user
 
 exports.getReservations = asyncHandler(async (req, res) => {
-    const pageSize = 5;
+    const pageSize = 8;
     const page = Number(req.query.pageNumber) || 1;
     const keyword = req.query.keyword ? req.query.keyword : null;
 
@@ -237,29 +237,60 @@ exports.deleteReservation = asyncHandler(async (req, res) => {
 //@desc     Get statistics
 //@route    POST /api/orders/statistics
 //@access   Private/user
-exports.getStatisticsReservation = asyncHandler(async (req, res) => {
+exports.getStatistics = asyncHandler(async (req, res) => {
     const TODAY_START = new Date().setHours(0, 0, 0, 0);
     const NOW = new Date();
 
     const sales = await Reservation.findAll({
         where: {
-            active_status: true,
+            is_paid: true,
         },
         limit: 5,
         include: { all: true, nested: true },
     });
 
-    const reservations = await Reservation.findAll({
+    const totalSales = await Reservation.sum("total", {
         where: {
-            [Op.or]: [{ active_status: false }],
-        },
-        include: { all: true, nested: true },
-        attributes: {
-            exclude: ["userId", "clientId"],
+            is_paid: true,
         },
     });
 
-})
+    const totalReservationsPaid = await Reservation.count({
+        where: {
+            is_paid: true,
+        },
+    });
+
+    const todaySales = await Reservation.sum("total", {
+        where: {
+            updatedAt: {
+                [Op.gt]: TODAY_START,
+                [Op.lt]: NOW,
+            },
+            is_paid: true,
+        },
+    });
+
+    const reservations = await Reservation.findAll({
+        where: {
+            [Op.or]: [{ is_paid: false }],
+        },
+        include: { all: true, nested: true },
+        attributes: {
+            exclude: ["userId", "clientId", "roomId"],
+        },
+    });
+
+    res.json({
+        statistics: {
+            total: totalSales,
+            today: todaySales,
+            reservations: totalReservationsPaid,
+        },
+        sales,
+        reservations,
+    });
+});
 
 exports.updateReservationEnd = asyncHandler(async (req, res) => {
     console.log("req.params.id: ", req.params.id);

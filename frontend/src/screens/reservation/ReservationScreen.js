@@ -11,11 +11,18 @@ import Pagination from "../../components/Pagination";
 
 /* Actions */
 import { listAllReservations } from "../../actions/reservationActions";
+import {listAgreements} from "../../actions/agreementActions";
+import {listPayments} from "../../actions/paymentActions";
 
+import {FormattedDate} from "../../utils/formattedDate";
 
 const ReservationScreen = ({ history }) => {
     const [pageNumber, setPageNumber] = useState(1);
     const [keyword, setKeyword] = useState("");
+    const [totalCredit, setTotalCredit] = useState(0);
+    const [totalTransfer, setTotalTransfer] = useState(0);
+    const [totalCash, setTotalCash] = useState(0);
+    const [totalAccumulated, setTotalAccumulated] = useState(0);
 
     const dispatch = useDispatch();
 
@@ -24,11 +31,44 @@ const ReservationScreen = ({ history }) => {
 
     const reservationAllList = useSelector((state) => state.reservationAllList);
     const { loading, error, reservations, page, pages } = reservationAllList;
+
+    const agreementList = useSelector((state) => state.agreementList);
+    const { agreements } = agreementList;
+
+    const paymentList = useSelector((state) => state.paymentList);
+    const { payments } = paymentList;
     
     useEffect(() => {
         console.log("Dispatching listReservations with keyword:", keyword, "and pageNumber:", pageNumber);
         dispatch(listAllReservations({ keyword, pageNumber}));
+        dispatch(listAgreements());
+        dispatch(listPayments());
     }, [dispatch, history, userInfo, pageNumber, keyword]);
+
+    useEffect(() => {
+        let credit = 0;
+        let transfer = 0;
+        let cash = 0;
+        let accumulated = 0;
+    
+        reservations.forEach((reservation) => {
+          if (reservation.is_paid) {
+            accumulated += reservation.total;
+            if (reservation.paymentId === 1) {
+              credit += reservation.total;
+            } else if (reservation.paymentId === 2) {
+              transfer += reservation.total;
+            } else if (reservation.paymentId === 3) {
+              credit += reservation.total;
+            }
+          }
+        });
+    
+        setTotalCredit(credit);
+        setTotalTransfer(transfer);
+        setTotalCash(cash);
+        setTotalAccumulated(accumulated);
+      }, [reservations]);
 
     const renderCreateButton = () => (
         <Link to="/activeReservation">
@@ -38,6 +78,64 @@ const ReservationScreen = ({ history }) => {
         </Link>
     );
 
+    const getAgreementName = (agreementId) => {
+        if (agreements && agreements.length > 0) {
+          const agreement = agreements.find((agreement) => agreement.id === agreementId);
+          return agreement ? agreement.name : '';
+        }
+        return '';
+      };
+
+    const getPaymentName = (paymentId) => {
+        if (payments && payments.length > 0) {
+          const payment = payments.find((payment) => payment.id === paymentId);
+          return payment ? payment.name : '';
+        }
+        return '';
+      };
+
+      const renderTotals = () => (
+        <div className="row mb-3">
+            <div className="col-12 col-md-3">
+                <div className="info-box bg-light">
+                    <span className="info-box-icon"><i className="fas fa-dollar-sign"></i></span>
+                    <div className="info-box-content">
+                        <span className="info-box-text">Total Efectivo</span>
+                        <span className="info-box-number">${totalCash}</span>
+                    </div>
+                </div>
+            </div>
+            <div className="col-12 col-md-3">
+                <div className="info-box bg-light">
+                    <span className="info-box-icon"><i className="fas fa-credit-card"></i></span>
+                    <div className="info-box-content">
+                        <span className="info-box-text">Total Crédito</span>
+                        <span className="info-box-number">${totalCredit}</span>
+                    </div>
+                </div>
+            </div>
+            <div className="col-12 col-md-3">
+                <div className="info-box bg-light">
+                    <span className="info-box-icon"><i className="fas fa-university"></i></span>
+                    <div className="info-box-content">
+                        <span className="info-box-text">Total Transferencia</span>
+                        <span className="info-box-number">${totalTransfer}</span>
+                    </div>
+                </div>
+            </div>
+            <div className="col-12 col-md-3">
+                <div className="info-box bg-light">
+                    <span className="info-box-icon"><i className="fas fa-money-check-alt"></i></span>
+                    <div className="info-box-content">
+                        <span className="info-box-text">Total Acumulado</span>
+                        <span className="info-box-number">${totalAccumulated}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+    
+
     const renderTable = () => (
         <table className="table table-hover text-nowrap">
             <thead>
@@ -45,8 +143,11 @@ const ReservationScreen = ({ history }) => {
                     <th>ID</th>
                     <th>Cliente</th>
                     <th className="d-none d-sm-table-cell">Habitación</th>
+                    <th className="d-none d-sm-table-cell">Convenio</th>
                     <th>Pagada</th>
-                    <th>Total</th>
+                    <th>Método Pago</th>
+                    <th>Total</th>                    
+                    <th>Fecha Pago</th>
                     <th></th>
                 </tr>
             </thead>
@@ -54,18 +155,24 @@ const ReservationScreen = ({ history }) => {
                 {reservations.map((reservation) => (
                     <tr key={reservation.id}>
                         <td>{reservation.id}</td>
-                        <td>{reservation.client.name}</td>
+                        <td>{reservation.client && reservation.client.name ? reservation.client.name : "Cliente desconocido"}</td>
                         <td className="d-none d-sm-table-cell h4">
-                            {reservation.room ? (
-                                <span className={"badge bg-primary"}>
-                                    {reservation.room.name}
-                                </span>
+                            {reservation.room && Array.isArray(reservation.room) && reservation.room.length > 0 ? (
+                                reservation.room.map(room => (
+                                    <span key={room.id} className={"badge bg-primary"}>
+                                        {room.name}
+                                    </span>
+                                ))
                             ) : (
                                 <span className={"badge bg-info"}>
                                     DOMICILIO
                                 </span>
                             )}
                         </td>
+                        <td className="d-none d-sm-table-cell">
+                        {getAgreementName(reservation.client.agreementId)}
+                        </td>
+                        
                         <td>
                             {reservation.is_paid ? (
                                 <h4 className="text-success">
@@ -77,11 +184,29 @@ const ReservationScreen = ({ history }) => {
                                 </h4>
                             )}
                         </td>
+
+                        <td>
+                            {reservation.is_paid ? (
+                                <>
+                                {getPaymentName(reservation.paymentId)}
+                                </>
+                            ) : (
+                                <h4 className="text-danger">
+                                    <i className="far fa-times-circle"></i>
+                                </h4>
+                            )}
+                        </td>
+
                         <td className="d-none d-sm-table-cell h4">
                             <span className={"badge bg-success"}>
                                 ${reservation.total}
                             </span>
                         </td>
+
+                        <td className="d-none d-sm-table-cell">
+                            <FormattedDate dateString={reservation.createdAt} />
+                        </td>
+
                         <td>
                             <Link
                                 to={`/reservation/${reservation.id}/view`}
@@ -95,7 +220,7 @@ const ReservationScreen = ({ history }) => {
             </tbody>
         </table>
     );
-
+    
     const renderReservations = () => (
         <>
             <div className="card ">
@@ -127,10 +252,11 @@ const ReservationScreen = ({ history }) => {
 
     return (
         <>
-            <HeaderContent name={"Órdenes"} />
+            <HeaderContent name={"Historial de Reservas"} />
 
             <section className="content">
                 <div className="container-fluid">
+                    {renderTotals()}
                     <div className="row">
                         <div className="col-12">
                             {renderCreateButton()}
