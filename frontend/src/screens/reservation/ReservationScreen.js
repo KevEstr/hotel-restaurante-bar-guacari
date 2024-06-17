@@ -23,6 +23,9 @@ const ReservationScreen = ({ history }) => {
     const [totalTransfer, setTotalTransfer] = useState(0);
     const [totalCash, setTotalCash] = useState(0);
     const [totalAccumulated, setTotalAccumulated] = useState(0);
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
+
 
     const dispatch = useDispatch();
 
@@ -59,7 +62,7 @@ const ReservationScreen = ({ history }) => {
             } else if (reservation.paymentId === 2) {
               transfer += reservation.total;
             } else if (reservation.paymentId === 3) {
-              credit += reservation.total;
+              cash += reservation.total;
             }
           }
         });
@@ -215,6 +218,16 @@ const ReservationScreen = ({ history }) => {
                                 Ver
                             </Link>
                         </td>
+
+                        <td>
+                            <Link
+                                to={`/reservation/${reservation.id}/view`}
+                                className="btn btn-warning btn-lg"
+                            >
+                                Factura
+                            </Link>
+                        </td>
+
                     </tr>
                 ))}
             </tbody>
