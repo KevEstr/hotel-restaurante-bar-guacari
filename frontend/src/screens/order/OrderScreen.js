@@ -55,19 +55,8 @@ const OrderScreen = ({ history }) => {
         let transfer = 0;
         let cash = 0;
         let accumulated = 0;
-    
-        const filteredOrders = orders.filter((order) => {
-            const orderDate = new Date(order.createdAt);
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-          
-            return (
-              (!startDate || orderDate >= start) &&
-              (!endDate || orderDate <= end || orderDate.getDate() === end.getDate())
-            );
-          });
-    
-        filteredOrders.forEach((order) => {
+
+        orders.forEach((order) => {
             if (order.isPaid) {
                 accumulated += order.total;
                 if (order.paymentId === 1) {
@@ -75,16 +64,16 @@ const OrderScreen = ({ history }) => {
                 } else if (order.paymentId === 2) {
                     transfer += order.total;
                 } else if (order.paymentId === 3) {
-                    credit += order.total;
+                    cash += order.total;
                 }
             }
         });
-    
+
         setTotalCredit(credit);
         setTotalTransfer(transfer);
         setTotalCash(cash);
         setTotalAccumulated(accumulated);
-    }, [orders, startDate, endDate]);
+    }, [orders]);
 
     const renderCreateButton = () => (
         <Link to="/order/create">
@@ -296,7 +285,6 @@ const OrderScreen = ({ history }) => {
 
             <section className="content">
                 <div className="container-fluid">
-                <DateFilter setStartDate={setStartDate} setEndDate={setEndDate} />
                 {renderTotals()}
                     <div className="row">
                         <div className="col-12">

@@ -21,8 +21,7 @@ const { reservationCreateValidator } = require("../validators/reservation");
 
 //ROUTES
 
-
-router.get("/statistics", protect, getStatistics);
+router.route("/statistics").get(getStatistics);
 
 router
     .route("/")

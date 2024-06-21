@@ -1,18 +1,24 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
-/* components */
-import LoaderHandler from "../../components/loader/LoaderHandler";
+/* Components */
 import HeaderContent from "../../components/HeaderContent";
+import Modal from "react-modal";
+import LoaderHandler from "../../components/loader/LoaderHandler";
 import Table from "../../components/TableReservation";
 import {
     OccupiedTableLoader,
     FreeTableLoader,
 } from "../../components/loader/SkeletonLoaders";
 
-/* actions */
+/* Actions */
 import { allRooms } from "../../actions/roomActions";
+
+/* Styles */
+import { modalStyles } from "../../utils/styles";
+
+Modal.setAppElement("#root");
 
 const ActiveReservationsScreen = ({ history }) => {
     const dispatch = useDispatch();
@@ -22,6 +28,9 @@ const ActiveReservationsScreen = ({ history }) => {
 
     const roomAll = useSelector((state) => state.roomAll);
     const { loading, error, rooms } = roomAll;
+
+    const [modalIsOpen, setModalIsOpen] = useState(false);
+    const [selectedRoom, setSelectedRoom] = useState(null);
 
     useEffect(() => {
         dispatch(allRooms());
@@ -54,21 +63,18 @@ const ActiveReservationsScreen = ({ history }) => {
     };
 
     const filterRoomsByState = (active_status) => {
-        const mappedTables = rooms.filter((room) => {
-            return room.active_status === active_status;
-        });
-        return mappedTables;
+        return rooms.filter((room) => room.active_status === active_status);
     };
 
     const renderOccupiedTables = () =>
-        filterRoomsByState(true).map((room) => (
+        filterRoomsByState(1).map((room) => (
             <div key={room.id} className="col-12 col-md-6 col-lg-4 col-xl-3">
                 <Table room={room} />
             </div>
         ));
 
     const renderFreeRooms = () =>
-        filterRoomsByState(false).map((room) => (
+        filterRoomsByState(0).map((room) => (
             <Link
                 to={`/reservation/create/${room.id}/room`}
                 key={room.id}
@@ -81,20 +87,36 @@ const ActiveReservationsScreen = ({ history }) => {
             </Link>
         ));
 
+    const handleMaintenanceRoomClick = (room) => {
+        setSelectedRoom(room);
+        setModalIsOpen(true);
+    };
+
+    const renderMaintenanceRooms = () =>
+        filterRoomsByState(2).map((room) => (
+            <button
+                key={room.id}
+                onClick={() => handleMaintenanceRoomClick(room)}
+                className="btn btn-block btn-warning btn-lg"
+            >
+                <p className="text-center my-0">
+                    <i className="fas fa-solid fa-bed float-left my-1"></i>
+                    {room.name}
+                </p>
+            </button>
+        ));
+
     return (
         <>
             <HeaderContent name={"Reservaciones"} />
             {/* Main content */}
-
             <section className="content">
                 <div className="container-fluid">
                     <div className="row">
                         <div className="col-12 col-md-9 col-lg-9">
                             <div className="card">
                                 <div className="card-header">
-                                    <h3 className="card-title">
-                                        Habitaciones Ocupadas
-                                    </h3>
+                                    <h3 className="card-title">Habitaciones Ocupadas</h3>
                                 </div>
                                 {/* /.card-header */}
                                 <div className="card-body">
@@ -112,7 +134,7 @@ const ActiveReservationsScreen = ({ history }) => {
                         </div>
                         {/* /.col */}
                         <div className="col-12 col-md-3 col-lg-3">
-                            <div className="card">
+                            <div className="card mb-3">
                                 <div className="card-header">Habitaciones Disponibles</div>
                                 <div className="card-body">
                                     <LoaderHandler
@@ -123,12 +145,50 @@ const ActiveReservationsScreen = ({ history }) => {
                                     />
                                 </div>
                             </div>
+                            <div className="card">
+                                <div className="card-header">En Mantenimiento</div>
+                                <div className="card-body">
+                                    <LoaderHandler
+                                        loading={loading}
+                                        error={error}
+                                        loader={freeTableLoader()}
+                                        render={renderMaintenanceRooms}
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
                     {/* /.row */}
                 </div>
                 {/* /.container-fluid */}
             </section>
+            {selectedRoom && (
+                <Modal
+                    style={modalStyles}
+                    isOpen={modalIsOpen}
+                    onRequestClose={() => setModalIsOpen(false)}
+                >
+                    <h2 className="text-center w-100">
+                        Habitación en Mantenimiento
+                    </h2>
+                    <hr />
+                    <p className="text-center w-100">Motivo: {selectedRoom.concept}</p>
+                    <div className="d-flex justify-content-center mt-4">
+                    <button
+                            onClick={() => window.location.href = '/room'}
+                            className="btn btn-info mx-2"
+                        >
+                            Ir a Habitaciones
+                        </button>
+                        <button
+                            onClick={() => setModalIsOpen(false)}
+                            className="btn btn-danger mx-2"
+                        >
+                            Cerrar
+                        </button>
+                    </div>
+                </Modal>
+            )}
         </>
     );
 };

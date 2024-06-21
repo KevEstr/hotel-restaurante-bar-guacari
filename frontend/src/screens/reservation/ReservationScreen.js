@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-
-/* Components */
 import HeaderContent from "../../components/HeaderContent";
 import DataTableLoader from "../../components/loader/DataTableLoader";
 import Search from "../../components/Search";
 import LoaderHandler from "../../components/loader/LoaderHandler";
 import Pagination from "../../components/Pagination";
-
-/* Actions */
 import { listAllReservations } from "../../actions/reservationActions";
-import {listAgreements} from "../../actions/agreementActions";
-import {listPayments} from "../../actions/paymentActions";
+import { listAgreements } from "../../actions/agreementActions";
+import { listPayments } from "../../actions/paymentActions";
+import { FormattedDate } from "../../utils/formattedDate";
 
-import {FormattedDate} from "../../utils/formattedDate";
+import * as XLSX from "xlsx";
+
+import generateInvoiceHistorial from '../../utils/generateInvoiceHistorial';
+import { getInvoiceDetails } from '../../actions/invoiceActions';
+
 
 const ReservationScreen = ({ history }) => {
     const [pageNumber, setPageNumber] = useState(1);
@@ -23,9 +24,6 @@ const ReservationScreen = ({ history }) => {
     const [totalTransfer, setTotalTransfer] = useState(0);
     const [totalCash, setTotalCash] = useState(0);
     const [totalAccumulated, setTotalAccumulated] = useState(0);
-    const [startDate, setStartDate] = useState("");
-    const [endDate, setEndDate] = useState("");
-
 
     const dispatch = useDispatch();
 
@@ -40,38 +38,106 @@ const ReservationScreen = ({ history }) => {
 
     const paymentList = useSelector((state) => state.paymentList);
     const { payments } = paymentList;
-    
+
+    const invoiceDetails = useSelector((state) => state.invoiceDetails);
+    const { invoice } = invoiceDetails;
+
+    const handleInvoiceClick = (reservationId) => {
+        dispatch(getInvoiceDetails(reservationId));
+    };
+
     useEffect(() => {
-        console.log("Dispatching listReservations with keyword:", keyword, "and pageNumber:", pageNumber);
-        dispatch(listAllReservations({ keyword, pageNumber}));
+  if (invoice && invoice.reservationId) {
+    let clientOrdersList = [];
+    let clientReservationsList = [];
+
+    try {
+      clientOrdersList = JSON.parse(invoice.orders);
+      clientReservationsList = JSON.parse(invoice.reservations);
+    } catch (error) {
+      console.error('Error parsing JSON:', error);
+    }
+
+    console.log("Datos de la factura:", invoice, clientOrdersList, clientReservationsList);
+        generateInvoiceHistorial(invoice, clientOrdersList, clientReservationsList);
+  }
+}, [invoice]);
+
+
+    useEffect(() => {
+        dispatch(listAllReservations({ keyword, pageNumber }));
         dispatch(listAgreements());
         dispatch(listPayments());
     }, [dispatch, history, userInfo, pageNumber, keyword]);
 
     useEffect(() => {
+    if (reservations && reservations.length > 0) {
         let credit = 0;
         let transfer = 0;
         let cash = 0;
         let accumulated = 0;
-    
+
         reservations.forEach((reservation) => {
-          if (reservation.is_paid) {
-            accumulated += reservation.total;
-            if (reservation.paymentId === 1) {
-              credit += reservation.total;
-            } else if (reservation.paymentId === 2) {
-              transfer += reservation.total;
-            } else if (reservation.paymentId === 3) {
-              cash += reservation.total;
+            if (reservation.is_paid) {
+                accumulated += reservation.total;
+                if (reservation.paymentId === 1) {
+                    credit += reservation.total;
+                } else if (reservation.paymentId === 2) {
+                    transfer += reservation.total;
+                } else if (reservation.paymentId === 3) {
+                    cash += reservation.total;
+                }
             }
-          }
         });
-    
+
         setTotalCredit(credit);
         setTotalTransfer(transfer);
         setTotalCash(cash);
         setTotalAccumulated(accumulated);
-      }, [reservations]);
+    }
+    }, [reservations]);
+
+    const exportToExcel = () => {
+        // Definir las columnas
+        const headers = ["ID", "Cliente", "Habitación", "Convenio", "Pagada", "Método Pago", "Total", "Fecha Pago"];
+        
+        // Mapear los datos de las reservas
+        const data = reservations.map((reservation) => ({
+            ID: reservation.id,
+            Cliente: reservation.client && reservation.client.name ? reservation.client.name : "Cliente desconocido",
+            Habitación: reservation.room && Array.isArray(reservation.room) && reservation.room.length > 0
+                ? reservation.room.map(room => room.name).join(", ")
+                : "DOMICILIO",
+            Convenio: getAgreementName(reservation.client.agreementId),
+            Pagada: reservation.is_paid ? "Sí" : "No",
+            "Método Pago": reservation.is_paid ? getPaymentName(reservation.paymentId) : "No",
+            Total: reservation.total,
+            "Fecha Pago": reservation.createdAt,
+        }));
+    
+        // Crear una hoja de cálculo
+        const ws = XLSX.utils.json_to_sheet(data, { header: headers });
+    
+        // Ajustar los anchos de columna
+        const colWidths = headers.map(header => ({ wch: header.length + 5 }));
+        ws['!cols'] = colWidths;
+    
+        // Crear el libro y añadir la hoja
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Reservas");
+    
+        // Descargar el archivo
+        XLSX.writeFile(wb, "reservas.xlsx");
+    };
+
+    useEffect(() => {
+        if (invoice && invoice.reservationId) {
+            const clientOrdersList = invoice.orders || [];
+            const clientReservationsList = invoice.reservations || [];
+            generateInvoiceHistorial(invoice, clientOrdersList, clientReservationsList);
+        }
+    }, [invoice]);
+
 
     const renderCreateButton = () => (
         <Link to="/activeReservation">
@@ -83,21 +149,21 @@ const ReservationScreen = ({ history }) => {
 
     const getAgreementName = (agreementId) => {
         if (agreements && agreements.length > 0) {
-          const agreement = agreements.find((agreement) => agreement.id === agreementId);
-          return agreement ? agreement.name : '';
+            const agreement = agreements.find((agreement) => agreement.id === agreementId);
+            return agreement ? agreement.name : '';
         }
         return '';
-      };
+    };
 
     const getPaymentName = (paymentId) => {
         if (payments && payments.length > 0) {
-          const payment = payments.find((payment) => payment.id === paymentId);
-          return payment ? payment.name : '';
+            const payment = payments.find((payment) => payment.id === paymentId);
+            return payment ? payment.name : '';
         }
         return '';
-      };
+    };
 
-      const renderTotals = () => (
+    const renderTotals = () => (
         <div className="row mb-3">
             <div className="col-12 col-md-3">
                 <div className="info-box bg-light">
@@ -137,7 +203,6 @@ const ReservationScreen = ({ history }) => {
             </div>
         </div>
     );
-    
 
     const renderTable = () => (
         <table className="table table-hover text-nowrap">
@@ -149,13 +214,13 @@ const ReservationScreen = ({ history }) => {
                     <th className="d-none d-sm-table-cell">Convenio</th>
                     <th>Pagada</th>
                     <th>Método Pago</th>
-                    <th>Total</th>                    
+                    <th>Total</th>
                     <th>Fecha Pago</th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
-                {reservations.map((reservation) => (
+                {reservations.slice().reverse().map((reservation) => (
                     <tr key={reservation.id}>
                         <td>{reservation.id}</td>
                         <td>{reservation.client && reservation.client.name ? reservation.client.name : "Cliente desconocido"}</td>
@@ -173,9 +238,9 @@ const ReservationScreen = ({ history }) => {
                             )}
                         </td>
                         <td className="d-none d-sm-table-cell">
-                        {getAgreementName(reservation.client.agreementId)}
+                            {getAgreementName(reservation.client.agreementId)}
                         </td>
-                        
+
                         <td>
                             {reservation.is_paid ? (
                                 <h4 className="text-success">
@@ -191,7 +256,7 @@ const ReservationScreen = ({ history }) => {
                         <td>
                             {reservation.is_paid ? (
                                 <>
-                                {getPaymentName(reservation.paymentId)}
+                                    {getPaymentName(reservation.paymentId)}
                                 </>
                             ) : (
                                 <h4 className="text-danger">
@@ -220,12 +285,12 @@ const ReservationScreen = ({ history }) => {
                         </td>
 
                         <td>
-                            <Link
-                                to={`/reservation/${reservation.id}/view`}
+                        <button
+                                onClick={() => handleInvoiceClick(reservation.id)}
                                 className="btn btn-warning btn-lg"
                             >
                                 Factura
-                            </Link>
+                            </button>
                         </td>
 
                     </tr>
@@ -233,7 +298,7 @@ const ReservationScreen = ({ history }) => {
             </tbody>
         </table>
     );
-    
+
     const renderReservations = () => (
         <>
             <div className="card ">
@@ -247,7 +312,6 @@ const ReservationScreen = ({ history }) => {
                         />
                     </div>
                 </div>
-                {/* /.card-header */}
                 <div className="card-body table-responsive p-0">
                     <LoaderHandler
                         loading={loading}
@@ -256,7 +320,6 @@ const ReservationScreen = ({ history }) => {
                         render={renderTable}
                     />
                 </div>
-                {/* /.card-body */}
             </div>
 
             <Pagination page={page} pages={pages} setPage={setPageNumber} />
@@ -273,14 +336,16 @@ const ReservationScreen = ({ history }) => {
                     <div className="row">
                         <div className="col-12">
                             {renderCreateButton()}
+
+                            <button onClick={exportToExcel} className="btn btn-primary">
+                                Generar Informe
+                            </button>
+
                             <hr />
                             {renderReservations()}
                         </div>
-                        {/* /.col */}
                     </div>
-                    {/* /.row */}
                 </div>
-                {/* /.container-fluid */}
             </section>
         </>
     );

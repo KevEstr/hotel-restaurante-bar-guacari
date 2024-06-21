@@ -113,6 +113,10 @@ import{
     ReservationStatisticsReducer
 } from "./reducers/reservationReducers";
 
+import{
+    invoiceDetailsReducer
+} from "./reducers/invoiceReducers";
+
 const reducer = combineReducers({
 
     roleList: roleListReducer,
@@ -201,6 +205,9 @@ const reducer = combineReducers({
     reservationDelete: reservationDeleteReducer,
 
     section: sectionReducer,
+
+    invoiceDetails: invoiceDetailsReducer,
+
 
 });
 

@@ -22,8 +22,6 @@ import { listClients } from "../../actions/clientActions";
 import { createReservation, updateClientHasReservation } from "../../actions/reservationActions";
 import { listServices } from '../../actions/serviceActions';
 import { listAgreements } from '../../actions/agreementActions';
-import { listPayments } from '../../actions/paymentActions';
-
 
 const ReservationCreateScreen = ({ history, match }) => {
     /* Get table from url */
@@ -34,31 +32,24 @@ const ReservationCreateScreen = ({ history, match }) => {
         roomFromUrl ? parseInt(match.params.id) : null
     );
 
-    const [paymentId, setPaymentId] = useState(null);
-
     const [selectedRooms, setSelectedRooms] = useState([]);
     const [reservationId, setReservationId] = useState(null);
     const [client, setClient] = useState(null);
     const [note, setNote] = useState("");
     const [errors, setErrors] = useState({});
-    const [price, setPrice] = useState(0);
+    const [price, setPrice] = useState("");
     const [start_date, setStartDate] = useState("");
     const [end_date, setEndDate] = useState("");
-    const [quantity, setQuantity] = useState(null);
+    const [quantity, setQuantity] = useState("");
     const [selectedServices, setSelectedServices] = useState([]);
     const [clientAgreement, setClientAgreement] = useState(null);
     const [roomSelects, setRoomSelects] = useState([{ selectId: Date.now(), roomId: '' }]);
-
-
 
     const [total, setTotal] = useState(0);
 
     const [clientAgreementId, setClientAgreementId] = useState(null);
 
     const dispatch = useDispatch();
-
-    const paymentList = useSelector((state) => state.paymentList);
-    const { payments, error: errorPayments } = paymentList;
 
     const userLogin = useSelector((state) => state.userLogin);
     const { userInfo } = userLogin;
@@ -91,7 +82,6 @@ const ReservationCreateScreen = ({ history, match }) => {
         dispatch(listServices());
         dispatch(listAgreements());
         dispatch(listClients())
-        dispatch(listPayments());
 
     }, [dispatch, history, success, error, reservation]);
 
@@ -168,7 +158,6 @@ const ReservationCreateScreen = ({ history, match }) => {
                 start_date: start_date,
                 end_date: end_date,
                 quantity: quantity,
-                paymentId: paymentId,
                 note: note,
                 is_paid: 0,
                 services: selectedServices,
@@ -181,7 +170,7 @@ const ReservationCreateScreen = ({ history, match }) => {
             dispatch(createReservation(reservation));
 
             selectedRooms.forEach((roomId) => {
-                dispatch(updateRoom(roomId, true));
+                dispatch(updateRoom(roomId, 1));
               });
 
             console.log("Datos de la reserva:", reservation);
@@ -191,7 +180,7 @@ const ReservationCreateScreen = ({ history, match }) => {
 
     /* Filter rooms */
     const filterFreeRooms = () => {
-        return rooms.filter((room) => room.active_status === false);
+        return rooms.filter((room) => room.active_status === 0);
     };
 
     const searchRooms = (e) => {
@@ -213,29 +202,27 @@ const ReservationCreateScreen = ({ history, match }) => {
     const renderRoomsSelect = () => (
         <div>
             <div className="d-flex align-items-center gap-2 flex-wrap">
-                <div className="d-flex align-items-center">
-                    {roomSelects.map((select) => (
-                        <div key={select.selectId} className="mr-2 mb-2" style={{ flexShrink: 0 }}>
-                            <select
-                                value={select.roomId}
-                                onChange={(e) => handleRoomSelection(select.selectId, e.target.value)}
-                                className="form-control"
-                            >
-                                <option value="">Seleccione una habitación</option>
-                                {filterFreeRooms().map((room) => (
-                                    <option key={room.id} value={room.id}>
-                                        Habitación {room.id}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    ))}
-                </div>
-                
+                {roomSelects.map((select) => (
+                    <div key={select.selectId} className="mr-2 mb-2" style={{ flexShrink: 0 }}>
+                        <select
+                            value={select.roomId}
+                            onChange={(e) => handleRoomSelection(select.selectId, e.target.value)}
+                            className="form-control"
+                        >
+                            <option value="">Seleccione una habitación</option>
+                            {filterFreeRooms().map((room) => (
+                                <option key={room.id} value={room.id}>
+                                    Habitación {room.id}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                ))}
             </div>
             {errors.rooms && <Message message={errors.rooms} color={"warning"} />}
         </div>
     );
+    
     
 
     const removeLastRoomSelect = () => {
@@ -393,25 +380,6 @@ const ReservationCreateScreen = ({ history, match }) => {
                                         />
                                 </div>
                             </div>
-
-                            <div className="col-md-3" style={{marginTop: '8px'}}>
-                                    <div className="form-group">
-                                        <label style={{fontWeight: 'normal'}}>Tipo de pago:</label>
-                                        <select
-                                            value={paymentId}
-                                            onChange={(e) => setPaymentId(e.target.value)}
-                                            className="form-control"
-                                        >
-                                            <option value="">Seleccione un valor</option>
-                                            {payments && payments.map((payment) => (
-                                                <option key={payment.id} value={payment.id}>
-                                                    {payment.name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-
                         </div>
                         <div className="row">
                             <div className="col-md-3 pr-0" style={{marginTop: '8px'}}>

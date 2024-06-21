@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from "react-redux";
 /* Components */
 import Input from "../../components/form/Input";
 import HeaderContent from "../../components/HeaderContent";
-import Checkbox from "../../components/form/Checkbox";
 import ButtonGoBack from "../../components/ButtonGoBack";
 import LoaderHandler from "../../components/loader/LoaderHandler";
 
@@ -19,20 +18,16 @@ import {
 import { listRoomDetails, updateRoom } from "../../actions/roomActions";
 
 const RoomEditScreen = ({ history, match }) => {
-
     const roomId = parseInt(match.params.id);
     const [name, setName] = useState("");
     const [active_status, setActiveStatus] = useState("");
+    const [concept, setConcept] = useState("");
     const [errors, setErrors] = useState({});
     const dispatch = useDispatch();
-    const userLogin = useSelector((state) => state.userLogin);
-    const { userInfo } = userLogin;
 
-    //table details state
     const roomDetails = useSelector((state) => state.roomDetails);
     const { loading, error, room } = roomDetails;
 
-    //table update state
     const roomUpdate = useSelector((state) => state.roomUpdate);
     const {
         loading: loadingUpdate,
@@ -41,7 +36,6 @@ const RoomEditScreen = ({ history, match }) => {
     } = roomUpdate;
 
     useEffect(() => {
-        //after update redirect to users
         if (successUpdate) {
             dispatch({ type: ROOM_UPDATE_RESET });
             dispatch({ type: ROOM_DETAILS_RESET });
@@ -50,14 +44,13 @@ const RoomEditScreen = ({ history, match }) => {
             history.push("/room");
         }
 
-        //load table data
         if (room) {
             if (!room.name || room.id !== roomId) {
                 dispatch(listRoomDetails(roomId));
             } else {
-                //set states
                 setName(room.name);
                 setActiveStatus(room.active_status);
+                setConcept(room.concept || "");
             }
         }
     }, [dispatch, history, roomId, room, successUpdate]);
@@ -71,6 +64,10 @@ const RoomEditScreen = ({ history, match }) => {
             errorsCheck.name = "Nombre es requerido";
         }
 
+        if (active_status === 2 && !concept) {
+            errorsCheck.maintenanceReason = "El concepto de mantenimiento es requerido";
+        }
+
         if (Object.keys(errorsCheck).length > 0) {
             setErrors(errorsCheck);
         } else {
@@ -82,6 +79,7 @@ const RoomEditScreen = ({ history, match }) => {
                 id: roomId,
                 name: name,
                 active_status: active_status,
+                concept: active_status === 2 ? concept : null,
             };
             dispatch(updateRoom(roomUpdated));
         }
@@ -96,7 +94,26 @@ const RoomEditScreen = ({ history, match }) => {
                 setData={setName}
                 errors={errors}
             />
-
+            <div className="form-group">
+                <label style={{fontWeight: 'normal'}}>Estatus</label>
+                <select
+                    className="form-control"
+                    value={active_status}
+                    onChange={(e) => setActiveStatus(parseInt(e.target.value))}
+                >
+                    <option value={0}>Activo</option>
+                    <option value={2}>En mantenimiento</option>
+                </select>
+            </div>
+            {active_status === 2 && (
+                <Input
+                    name={"Concepto de Mantenimiento"}
+                    type={"text"}
+                    data={concept}
+                    setData={setConcept}
+                    errors={errors}
+                />
+            )}
             <hr />
             <button type="submit" className="btn btn-success">
                 Confirmar
@@ -106,10 +123,7 @@ const RoomEditScreen = ({ history, match }) => {
 
     return (
         <>
-            {/* Content Header (Page header) */}
             <HeaderContent name={"Habitaciones"} />
-
-            {/* Main content */}
 
             <section className="content">
                 <div className="container-fluid">
@@ -120,7 +134,6 @@ const RoomEditScreen = ({ history, match }) => {
                                 <div className="card-header">
                                     <h3 className="card-title">Editar Habitaciones</h3>
                                 </div>
-                                {/* /.card-header */}
                                 <div className="card-body">
                                     <LoaderHandler
                                         loading={loadingUpdate}
@@ -132,14 +145,10 @@ const RoomEditScreen = ({ history, match }) => {
                                         render={renderForm}
                                     />
                                 </div>
-                                {/* /.card-body */}
                             </div>
                         </div>
-                        {/* /.col */}
                     </div>
-                    {/* /.row */}
                 </div>
-                {/* /.container-fluid */}
             </section>
         </>
     );

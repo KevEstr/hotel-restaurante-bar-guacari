@@ -55,11 +55,11 @@ exports.createReservation = asyncHandler(async (req, res) => {
             await RoomReservation.create({
                 reservationId: createdReservation.id,
                 roomId,
-                active_status: true,
+                active_status: 1,
             });
 
             const room = await Room.findByPk(roomId);
-            room.active_status = true;
+            room.active_status = 1;
             await room.save();
         }));
     }
@@ -72,7 +72,7 @@ exports.createReservation = asyncHandler(async (req, res) => {
 //@access   Private/user
 
 exports.getReservations = asyncHandler(async (req, res) => {
-    const pageSize = 8;
+    const pageSize = 20;
     const page = Number(req.query.pageNumber) || 1;
     const keyword = req.query.keyword ? req.query.keyword : null;
 
@@ -220,7 +220,7 @@ exports.deleteReservation = asyncHandler(async (req, res) => {
 
         if (reservation.rooms && reservation.rooms.length > 0) {
             for (let room of reservation.rooms) {
-              room.active_status = false;
+              room.active_status = 0;
               await room.save();
             }
           }
@@ -238,61 +238,73 @@ exports.deleteReservation = asyncHandler(async (req, res) => {
 //@route    POST /api/orders/statistics
 //@access   Private/user
 exports.getStatistics = asyncHandler(async (req, res) => {
-    const TODAY_START = new Date().setHours(0, 0, 0, 0);
-    const NOW = new Date();
+    try {
+        const TODAY_START = new Date().setHours(0, 0, 0, 0);
+        const NOW = new Date();
 
-    const sales = await Reservation.findAll({
-        where: {
-            is_paid: true,
-        },
-        limit: 5,
-        include: { all: true, nested: true },
-    });
-
-    const totalSales = await Reservation.sum("total", {
-        where: {
-            is_paid: true,
-        },
-    });
-
-    const totalReservationsPaid = await Reservation.count({
-        where: {
-            is_paid: true,
-        },
-    });
-
-    const todaySales = await Reservation.sum("total", {
-        where: {
-            updatedAt: {
-                [Op.gt]: TODAY_START,
-                [Op.lt]: NOW,
+        const sales = await Reservation.findAll({
+            where: {
+                is_paid: true,
             },
-            is_paid: true,
-        },
-    });
+            limit: 5,
+            include: [
+                { model: Client, as: 'client', attributes: ['id', 'name'] }, // Usar el alias 'client'
+                { model: Room, as: 'room', attributes: ['id', 'name'] } // Usar el alias 'room'
+            ],
+        });
 
-    const reservations = await Reservation.findAll({
-        where: {
-            [Op.or]: [{ is_paid: false }],
-        },
-        include: { all: true, nested: true },
-        attributes: {
-            exclude: ["userId", "clientId", "roomId"],
-        },
-    });
+        const totalSales = await Reservation.sum("total", {
+            where: {
+                is_paid: true,
+            },
+        });
 
-    res.json({
-        statistics: {
-            total: totalSales,
-            today: todaySales,
-            reservations: totalReservationsPaid,
-        },
-        sales,
-        reservations,
-    });
+        const totalOrdersPaid = await Reservation.count({
+            where: {
+                is_paid: true,
+            },
+        });
+
+        const todaySales = await Reservation.sum("total", {
+            where: {
+                updatedAt: {
+                    [Op.gt]: TODAY_START,
+                    [Op.lt]: NOW,
+                },
+                is_paid: true,
+            },
+        });
+
+        const reservations = await Reservation.findAll({
+            where: {
+                is_paid: false,
+            },
+            include: [
+                { model: Client, as: 'client', attributes: ['id', 'name'] }, // Usar el alias 'client'
+                { model: Room, as: 'room', attributes: ['id', 'name'] } // Usar el alias 'room'
+            ],
+            attributes: {
+                exclude: ["userId", "clientId", "roomId"],
+            },
+        });
+
+        res.json({
+            statistics: {
+                total: totalSales,
+                today: todaySales,
+                reservations: totalOrdersPaid,
+            },
+            sales,
+            reservations,
+        });
+    } catch (error) {
+        console.error("Error fetching statistics: ", error);
+        res.status(500).json({ message: error.message });
+    }
 });
 
 exports.updateReservationEnd = asyncHandler(async (req, res) => {
+    const { paymentId } = req.body; // Recibir paymentId desde la solicitud
     console.log("req.params.id: ", req.params.id);
 
     try {
@@ -311,11 +323,12 @@ exports.updateReservationEnd = asyncHandler(async (req, res) => {
 
         if (reservation) {
             await Promise.all(reservation.room.map(async (room) => {
-                room.active_status = false;
+                room.active_status = 0;
                 await room.save();
             }));
 
             reservation.is_paid = true;
+            reservation.paymentId = paymentId; // Asignar paymentId
 
             const updatedReservation = await reservation.save();
             res.json(updatedReservation);

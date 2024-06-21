@@ -139,7 +139,13 @@ const RoomScreen = ({ history }) => {
                         <tr key={room.id}>
                             <td>{room.id}</td>
                             <td>{room.name}</td>
-                            <td>{room.active_status === 0 ? 'Inactivo' : 'Activo'}</td>
+                            <td>
+                                {room.active_status === 0
+                                    ? 'Activo'
+                                    : room.active_status === 1
+                                    ? 'Inactivo'
+                                    : 'En Mantenimiento'}
+                            </td>
                             <td className="d-none d-sm-table-cell">
                                 {room.createdAt.slice(0, 10)}
                             </td>
@@ -151,11 +157,11 @@ const RoomScreen = ({ history }) => {
                                     Editar
                                 </Link>
                                 <button
-                                onClick={() => handleDeleteClick(room.id)}
-                                className="btn btn-danger btn-lg"
-                            >
-                                Eliminar
-                            </button>
+                                    onClick={() => handleDeleteClick(room.id)}
+                                    className="btn btn-danger btn-lg"
+                                >
+                                    Eliminar
+                                </button>
                             </td>
                         </tr>
                     ))}

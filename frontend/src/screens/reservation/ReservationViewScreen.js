@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { Link } from "react-router-dom";
 
 /* Components */
 import HeaderContent from "../../components/HeaderContent";
@@ -37,9 +38,16 @@ import { updateRoom } from "../../actions/roomActions";
 
 import generateInvoice from "../../utils/generateInvoice";
 
+import { listPayments } from '../../actions/paymentActions';
+
+
 
 const ReservationViewScreen = ({ history, match }) => {
     const reservationId = parseInt(match.params.id);
+    const [paymentId, setPaymentId] = useState(null);
+    const [totalPayment, setTotalPayment] = useState(0);
+    const [hasActiveOrders, setHasActiveOrders] = useState(false);
+    const [showWarningModal, setShowWarningModal] = useState(false);
 
     const dispatch = useDispatch();
 
@@ -47,12 +55,16 @@ const ReservationViewScreen = ({ history, match }) => {
     const reservationDetails = useSelector((state) => state.reservationDetails);
     const { loading, error, reservation } = reservationDetails;
     const [modal, setModal] = useState(false);
+    
 
     const reservationDelete = useSelector((state) => state.reservationDelete);
     const { loading: loadingDelete, success: successDelete, error: errorDelete } = reservationDelete;
       
     const agreementList = useSelector((state) => state.agreementList);
     const { agreements } = agreementList;
+
+    const paymentList = useSelector((state) => state.paymentList);
+    const { payments, error: errorPayments } = paymentList;
 
     const [reason, setReason] = useState('');
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -78,6 +90,15 @@ const ReservationViewScreen = ({ history, match }) => {
         errorUpdate,
     } = reservationUpdate;
 
+    const checkForActiveOrders = () => {
+        if (clientOrdersList && clientOrdersList.some(order => order.paymentId === null)) {
+            setHasActiveOrders(true);
+            setShowWarningModal(true);
+            return true;
+        }
+        return false;
+    };
+
     useEffect(() => {
         if (successUpdate | successDelete) {
             dispatch({ type: RESERVATION_UPDATE_RESET });
@@ -92,12 +113,14 @@ const ReservationViewScreen = ({ history, match }) => {
                 // Si la reserva está correctamente cargada, cargar las órdenes del cliente
                 dispatch(listOrdersClient(reservation.clientId));
                 dispatch(listReservationsByClient(reservation.clientId));
+                calculateTotalPayment(reservation, clientOrdersList);
                 
             }
             
         }
 
         dispatch(listAgreements());
+        dispatch(listPayments());
 
     }, [dispatch, history, reservation, reservationId, successUpdate, successDelete]);
 
@@ -105,6 +128,25 @@ const ReservationViewScreen = ({ history, match }) => {
         if (agreements && agreements.length > 0) {
           const agreement = agreements.find((agreement) => agreement.id === agreementId);
           return agreement ? agreement.name : '';
+        }
+        return '';
+      };
+
+    const calculateTotalPayment = (reservation, orders) => {
+        if (reservation && orders) {
+            const totalOrders = orders
+                .filter(order => order.paymentId === 1)  // Filtrar órdenes con paymentId igual a 1
+                .reduce((total, order) => total + order.total, 0);
+            const totalPayment = totalOrders + reservation.total;
+            setTotalPayment(totalPayment);
+        }
+    };
+    
+      
+      const getPaymentName = (paymentId) => {
+        if (payments && payments.length > 0) {
+          const payment = payments.find((payment) => payment.id === paymentId);
+          return payment ? payment.name : '';
         }
         return '';
       };
@@ -140,15 +182,15 @@ const ReservationViewScreen = ({ history, match }) => {
 
     const renderDoneReservation = () => (
         <div className="card">
-            <div className="card-header bg-success">Cerrar Reservación</div>
+            <div className="card-header bg-success">Pagar Reservación</div>
             <div className="card-body">
                 <button
                     className="btn btn-block"
                     onClick={() => setModal(true)}
                 >
                     <ViewBox
-                        title={`PAGO $${reservation.id}`}
-                        paragraph={`Click para cerrar`}
+                        title={`PAGO $${totalPayment}`}
+                        paragraph={`Click para pagar`}
                         icon={"fas fa-hand-holding-usd"}
                         color={"bg-success"}
                     />
@@ -202,73 +244,129 @@ const ReservationViewScreen = ({ history, match }) => {
         </Modal>
       );
 
-    const renderModalReservation = () => (
+      const renderModalPay = () => (
         <Modal
             style={modalStyles}
             isOpen={modal}
             onRequestClose={() => setModal(false)}
         >
             <h2 className="text-center">Pago de Reserva</h2>
-            <p className="text-center">¿La Reserva ya fue pagada?</p>
+            <p className="text-center">¿La reserva ya fue pagada?</p>
             <form onSubmit={handleReservation}>
-                <button type="submit" className="btn btn-primary">
-                    Sí, finalizar.
-                </button>
-
-                <ModalButton
-                    modal={modal}
-                    setModal={setModal}
-                    classes={"btn-danger float-right"}
-                />
+                <label style={{ fontWeight: "normal", marginTop: '3px' }}>Ingrese el método de pago:</label>
+                <div className="d-flex justify-content-between">
+                    {payments.map(payment => (
+                        <div key={payment.id} className="form-check">
+                            <input
+                                className="form-check-input"
+                                type="radio"
+                                name="paymentMethod"
+                                id={`paymentMethod${payment.id}`}
+                                value={payment.id}
+                                checked={paymentId === payment.id}
+                                onChange={() => setPaymentId(payment.id)}
+                            />
+                            <label
+                                className="form-check-label"
+                                htmlFor={`paymentMethod${payment.id}`}
+                            >
+                                {payment.name}
+                            </label>
+                        </div>
+                    ))}
+                </div>
+                <div style={{ marginTop: "25px" }}>
+                    <button type="submit" className="btn btn-primary">
+                        Finalizar.
+                    </button>
+                    <ModalButton
+                        modal={modal}
+                        setModal={setModal}
+                        classes={"btn-danger float-right"}
+                    />
+                </div>
             </form>
         </Modal>
     );
 
-    const renderReservationInfo = () =>
-        reservation && reservation.client ? (
-            <div className="small-box bg-info">
-                <div className="inner">
-                    <h3>{reservation.client.name}</h3>
-                    <h4>
-                        {getAgreementName(reservation.client.agreementId)}
-                    </h4>
+        const renderReservationInfo = () => (
+            <div className="row">
+       
+                <div className="col-12 col-md-6">
+                    <>
+                            {reservation.total && (
+                                <ViewBox
+                                    title= {reservation.client.name}
+                                    paragraph={getAgreementName(reservation.client.agreementId)}
+                                    icon={"fas fa-dollar-sign"}
+                                    color={"bg-info"}
+                                />
+                            )}
+                    </>
                 </div>
-                <div className="icon">
-                    <i className="fas fa-solid fa-hotel" />
-                </div>
+
+                {reservation.is_paid ? (
+                        <div className="col-12 col-md-6">
+                            <ViewBox
+                                title={"Pagada"}
+                                paragraph={"Reserva pagada."}
+                                icon={"fas fa-check"}
+                                color={"bg-success"}
+                            />
+                        </div>
+                    ) : (
+                        <div className="col-12 col-md-6">
+                            <ViewBox
+                                title={"No pagada"}
+                                paragraph={"Reserva no pagada."}
+                                icon={"far fa-times-circle"}
+                                color={"bg-danger"}
+                            />
+                        </div>
+                    )}
+
             </div>
-        ) : null;
+        );    
 
         
-        const renderIsPaidInfo = () =>
-            reservation && (
-                <div className={`small-box ${reservation.is_paid ? 'bg-success' : 'bg-danger'}`}>
-                    <div className="inner">
-                        <h3>{reservation.is_paid ? 'Pagada' : 'No pagada'}</h3>
-                        <p>{reservation.is_paid ? 'La reserva ya fue pagada.' : 'La reserva no ha sido pagada.'}</p>
-                    </div>
-                    <div className="icon">
-                        <i className={`fas ${reservation.is_paid ? 'fa-check' : 'fa-times-circle'}`} />
-                    </div>
-                </div>
-            );
 
-    const renderTotalInfo = () =>
-        reservation &&
-            <div className="small-box bg-success">
-                <div className="inner">
-                <h3>{reservation.total} COP</h3>
-                    <h4>
-                        Total Precio de Reserva
-                    </h4>
-                </div>
-                <div className="icon">
-                    <i className="fas fa-solid fa-dollar-sign" />
-                </div>
+    const renderTotalInfo = () => (
+        <div className="row">
+            
+            <div className="col-12 col-md-6">
+                <>
+                        {reservation.total && (
+                            <ViewBox
+                                title= {`$${reservation.total}`}
+                                paragraph={"Pago de la Reserva"}
+                                icon={"fas fa-dollar-sign"}
+                                color={"bg-success"}
+                            />
+                        )}
+                </>
             </div>
 
-const renderRoomsInfo = () => (
+            <div className="col-12 col-md-6">
+                    <>
+                            {reservation.total && (
+                                <ViewBox
+                                    title= {`$${totalPayment}`}
+                                    paragraph={"Pago Total"}
+                                    icon={"fas fa-dollar-sign"}
+                                    color={"bg-success"}
+                                />
+                            )}
+                    </>
+                </div>
+
+        </div>
+    );
+                
+const renderRoomsInfo = () => 
     reservation && (
+        <>
+        <div className="row">
+            <div className="col-12 col-md-6">
         <ViewBox
             title="Habitaciones"
             paragraph={
@@ -285,12 +383,27 @@ const renderRoomsInfo = () => (
                         'No hay habitaciones asociadas a esta reserva.'
                     )}
                 </div>
-            }
-            icon={'fas fa-bed'}
-            color={'bg-warning'}
+             }
+                icon={'fas fa-bed'}
+                color={'bg-warning'}
         />
-    )
-);
+            </div>
+
+        <div className="col-12 col-md-6">
+
+            <ViewBox
+                    title={"Nota:"}
+                    paragraph={reservation.note}
+                    icon={"far fa-sticky-note"}
+                    color={"bg-silver"}
+                />
+
+                </div>
+            </div>
+        </>
+
+            )
+
 
 const renderOrderInfo = () =>
     reservation && (
@@ -341,7 +454,7 @@ const renderOrderInfo = () =>
                                         title={service.ReservationService.maxLimit}
                                         paragraph={service.name}
                                         icon={'fas fa-utensils'}
-                                        color={'bg-danger'}
+                                        color={'bg-warning'}
                                     />
                                 );
                             }
@@ -352,7 +465,7 @@ const renderOrderInfo = () =>
                             title={'0'}
                             paragraph={'Alimentación'}
                             icon={'fas fa-utensils'}
-                            color={'bg-danger'}
+                            color={'bg-warning'}
                         />
                     )}
                 </div>
@@ -367,7 +480,7 @@ const renderOrderInfo = () =>
                                         title={service.ReservationService.maxLimit}
                                         paragraph={service.name}
                                         icon={'fas fa-soap'}
-                                        color={'bg-danger'}
+                                        color={'bg-warning'}
                                     />
                                 );
                             }
@@ -378,7 +491,7 @@ const renderOrderInfo = () =>
                             title={'0'}
                             paragraph={'Lavandería'}
                             icon={'fas fa-soap'}
-                            color={'bg-danger'}
+                            color={'bg-warning'}
                         />
                     )}
                 </div>
@@ -394,7 +507,7 @@ const renderOrderInfo = () =>
                                         title={service.ReservationService.maxLimit}
                                         paragraph={service.name}
                                         icon={'fas fa-tint'}
-                                        color={'bg-danger'}
+                                        color={'bg-warning'}
                                     />
                                 );
                             }
@@ -405,20 +518,10 @@ const renderOrderInfo = () =>
                             title={'0'}
                             paragraph={'Hidratación'}
                             icon={'fas fa-tint'}
-                            color={'bg-danger'}
+                            color={'bg-warning'}
                         />
                     )}
                 </div>
-            </div>
-                
-
-            <div className="col-12">
-                <ViewBox
-                    title={"Nota:"}
-                    paragraph={reservation.note}
-                    icon={"far fa-sticky-note"}
-                    color={"bg-silver"}
-                />
             </div>
         </>
     );
@@ -430,7 +533,6 @@ const renderOrderInfo = () =>
                 {renderReservationInfo()}
                 {renderTotalInfo()}
                 {renderRoomsInfo()}
-                {renderIsPaidInfo()}
             </div>
             <div className="col-12 col-md-6">{renderOrderInfo()}</div>
             {renderOrders()}
@@ -440,84 +542,140 @@ const renderOrderInfo = () =>
 
     const handleReservation = async (e) => {
         e.preventDefault();
+
+        if (checkForActiveOrders()) {
+            return; 
+        }
+
         const updatedReservation = {
             id: reservationId,
             is_paid: true,
+            paymentId: paymentId
         };
         setModal(false);    
         dispatch(updateReservationToPaid(updatedReservation));
-        
-
+    
         const rooms = reservation.room;
-    await Promise.all(rooms.map(async (room) => {
-        // Cambiar el estado de la habitación a false
-        const updatedRoom = { ...room, active_status: false };
-        // Realizar la actualización en el backend
-        await dispatch(updateRoom(updatedRoom)); // Necesitas tener una acción para actualizar la habitación
-    }));
-        dispatch(updateClientReservationStatus(reservation.clientId, false));
-        generateInvoice(reservation, clientOrdersList, clientReservationsList);
-    };
+        await Promise.all(rooms.map(async (room) => {
+            // Cambiar el estado de la habitación a false
+            const updatedRoom = { ...room, active_status: 0 };
+                // Realizar la actualización en el backend
+            await dispatch(updateRoom(updatedRoom));
+        }));
+            dispatch(updateClientReservationStatus(reservation.clientId, false));
+            generateInvoice(reservation, clientOrdersList, clientReservationsList);
 
-    const renderOrders = () => {
-        if (loadingOrders) return <BigSpin />;
-        if (errorOrders) return <div>Error: {errorOrders}</div>;
-        return (
-            <div>
-                <h3>Ordenes del Cliente:</h3>
-                {clientOrdersList && clientOrdersList.length > 0 ? (
-                    clientOrdersList.map((order) => (
-                        <div key={order.id} className="card mb-3">
-                            <div className="card-header">
-                                <span>Orden #{order.id}</span>
-                                <span className="ml-5">Fecha: <FormattedDate dateString={order.createdAt} /></span>
-                                <span className="ml-5">Hora: <FormattedTime dateString={order.createdAt} /></span>
-                            </div>
-                            <div className="card-body">
-                                <table
-                                    id="orderTable"
-                                    className="table table-bordered table-hover table-striped text-center table-overflow"
-                                >
-                                    <thead>
-                                        <tr>
-                                            <th>Producto</th>
-                                            <th>Cantidad</th>
-                                            <th>Precio</th>
-                                            <th>Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {order.products.map((product) => (
-                                            <tr key={product.id}>
-                                                <td>{product.name}</td>
-                                                <td className="text-center h4">
-                                                    <span className="badge bg-primary">
-                                                        {product.OrderProduct.quantity}
-                                                    </span>
-                                                </td>
-                                                <td className="text-center h4">
-                                                    <span className="badge bg-info">
-                                                        ${product.price}
-                                                    </span>
-                                                </td>
-                                                <td className="text-center h4">
-                                                    <span className={"badge bg-success"}>
-                                                        ${product.price * product.OrderProduct.quantity}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    ))
-                ) : (
-                    <p>No hay ordenes para este cliente.</p>
-                )}
+        };
+
+    const renderWarningModal = () => (
+            <Modal
+                style={modalStyles}
+                isOpen={showWarningModal}
+                onRequestClose={() => setShowWarningModal(false)}
+            >
+                <h2 className="text-center">Advertencia</h2>
+                <p className="text-center">Faltan órdenes por pagar que deben ser cerradas para continuar con la reserva.</p>
+
+                <div className="d-flex justify-content-between w-100">
+                <button
+                    className="btn btn-primary btn-lg"
+                    onClick={() => setShowWarningModal(false)}
+                >
+                    Entendido
+                </button>
+
+                <Link to="/active">
+                    <button className="btn btn-success btn-lg">
+                        <i className="fas fa-edit" /> Órdenes
+                    </button>
+        </Link>
             </div>
+
+            </Modal>
         );
-    };
+
+
+        const renderOrders = () => {
+            if (loadingOrders) return <BigSpin />;
+            if (errorOrders) return <div>Error: {errorOrders}</div>;
+        
+            return (
+                <div>
+                    <h3>Órdenes del Cliente:</h3>
+                    {clientOrdersList && clientOrdersList.length > 0 ? (
+                        clientOrdersList.map((order) => (
+                            <div key={order.id} className="card mb-3">
+                                <div className="card-header">
+                                    <span>Orden #{order.id}</span>
+                                    <span className="ml-5">Fecha: <FormattedDate dateString={order.createdAt} /></span>
+                                    <span className="ml-5">Hora: <FormattedTime dateString={order.createdAt} /></span>
+                                    {order.paymentId !== undefined && order.paymentId !== null && (
+                                    <span className="ml-5">Método Pago: {getPaymentName(order.paymentId)}</span>
+                                    )}
+                                </div>
+                                <div className="card-body">
+                                    <table
+                                        id="orderTable"
+                                        className="table table-bordered table-hover table-striped text-center table-overflow"
+                                    >
+                                        <thead>
+                                            <tr>
+                                                <th>Producto</th>
+                                                <th>Cantidad</th>
+                                                <th>Precio</th>
+                                                <th>Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {order.products.map((product) => (
+                                                <tr key={product.id}>
+                                                    <td>{product.name}</td>
+                                                    <td className="text-center h4">
+                                                        <span className="badge bg-primary">
+                                                            {product.OrderProduct.quantity}
+                                                        </span>
+                                                    </td>
+                                                    <td className="text-center h4">
+                                                        <span className="badge bg-info">
+                                                            ${product.price}
+                                                        </span>
+                                                    </td>
+                                                    <td className="text-center h4">
+                                                        <span className={"badge bg-success"}>
+                                                            ${product.price * product.OrderProduct.quantity}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                    <div className="order-status h3 mt-3">
+                                        {order.paymentId === 1 && (
+                                            <span className="badge bg-warning mr-4">PAGO PENDIENTE</span>
+                                        )}
+                                        {order.paymentId !== 1 && !order.isPaid && (
+                                            <span className="badge bg-info mr-4">ORDEN ACTIVA</span>
+                                        )}
+                                        {order.paymentId !== 1 && order.isPaid && (
+                                            <span className="badge bg-success mr-4">PAGADA</span>
+                                        )}
+
+                                        <span className="badge bg-success ml-6">
+                                            Total: ${order.total}
+                                        </span>
+
+                                </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <p>No hay órdenes para este cliente.</p>
+                    )}
+                </div>
+            );
+        };
+        
+        
 
     return (
         <>
@@ -526,7 +684,8 @@ const renderOrderInfo = () =>
             <LoaderHandler loading={loadingUpdate} error={errorUpdate} />
             {/* Main content */}
             <section className="content">
-                {renderModalReservation()}
+                {renderModalPay()}
+                {renderWarningModal()}
                 <ButtonGoBack history={history} />
                 <div className="card">
                 <div className="card-body">
