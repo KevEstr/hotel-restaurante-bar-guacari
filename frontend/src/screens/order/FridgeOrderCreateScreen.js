@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useHistory } from "react-router-dom";  // Actualizado
-import Modal from "react-modal";
-import { modalStyles } from "../../utils/styles";
-
 
 
 /* Components */
@@ -32,8 +29,6 @@ import { listTables } from "../../actions/tableActions";
 import { listClients } from "../../actions/clientActions";
 import { createOrder, listProductDetails } from "../../actions/orderActions";
 
-import {updateClientHasReservation } from "../../actions/reservationActions";
-
 import { allTables } from "../../actions/tableActions"
 
 import Table from "../../components/Table";
@@ -47,8 +42,11 @@ import {
 import { listProducts, createProduct } from "../../actions/productActions";
 import { listCategories } from "../../actions/categoryActions";
 import { listUsers, register } from "../../actions/userActions";
+import { listPayments } from "../../actions/paymentActions";
 
-const OrderCreateScreen = ({ match }) => {
+import { set } from "date-fns";
+
+const FridgeOrderCreateScreen = ({ match }) => {
     const history = useHistory();  // Usando useHistory para la navegación
     /* Get table from url */
     const tableFromUrl = window.location.href.indexOf("table") !== -1;
@@ -59,23 +57,19 @@ const OrderCreateScreen = ({ match }) => {
         tableFromUrl ? parseInt(match.params.id) : null
     );
     const [client, setClient] = useState(null);
+    const [paymentMethod, setPaymentMethod] = useState(null);
+
     const [delivery, setDelivery] = useState(deliveryFromUrl);
     const [note, setNote] = useState("");
     const [errors, setErrors] = useState({});
     const [total, setTotal] = useState(0);
     const [productsInOrder, setProductsInOrder] = useState([]);
-    const [selectedCategory, setSelectedCategory] = useState("Todas");
+    const [selectedCategory, setSelectedCategory] = useState(null);
     const [keyword, setKeyword] = useState("");
     const [ingredientStocks, setIngredientStocks] = useState({});
     const [productStocks, setProductStocks] = useState({});
     const [user, setUser] = useState(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const [categories, setCategories] = useState([]);  // Definimos el estado de categorías
-
-    const [modal, setModal] = useState(false);
-    const [difference, setDifference] = useState(false);
-    const [availableQuota, setAvailableQuota] = useState(false);
-
 
     const dispatch = useDispatch();
 
@@ -85,13 +79,15 @@ const OrderCreateScreen = ({ match }) => {
     const clientList = useSelector((state) => state.clientList);
     const { clients } = clientList;
 
+    const paymentMethodList = useSelector((state) => state.paymentList);
+    const { payments } = paymentMethodList;
+
     const tableList = useSelector((state) => state.tableList);
     const { tables } = tableList;
 
     const productList = useSelector((state) => state.productList);
     const { products } = productList;
-    const categoryList = useSelector((state) => state.categoryList);
-    const { categories: fetchedCategories } = categoryList;
+    const { categories } = useSelector((state) => state.categoryList);
     
     //product details state
     const productDetails = useSelector((state) => state.productDetails);
@@ -104,142 +100,76 @@ const OrderCreateScreen = ({ match }) => {
     const userList = useSelector((state) => state.userList);
     const { loading:usersLoading, error:usersError, users, page, pages } = userList;
 
-    useEffect(() => {
-        dispatch(allTables());
-    }, [dispatch, history, userInfo]);
 
     useEffect(() => {
+        dispatch(listPayments());
         dispatch(listUsers());
         dispatch(listClients("", "", true)); // Load clients with reservation on mount
     }, [dispatch]);
 
     useEffect(() => {
-        dispatch(allTables());
         dispatch(listCategories())
         console.log("clientes: ", clients)
         if (success) {
             dispatch({ type: ORDER_CREATE_RESET });
-            if (delivery) {
-                history.push("/delivery");
-            } else {
-                history.push("/active");
-            }
+            history.push("/activeReservation");
         }
     }, [dispatch, history, success, error, keyword, selectedCategory]);
 
-    useEffect(() => {
-        if (fetchedCategories && fetchedCategories.length > 0) {
-            setCategories([{ id: "all", name: "Todas" }, ...fetchedCategories]);
-        }
-    }, [fetchedCategories]);
-
     const handleSubmit = (e) => {
         e.preventDefault();
-    
+
         /* Set Errors */
         let errorsCheck = {};
-        if (!table && !delivery) {
-            errorsCheck.table = "Mesa es requerida";
-        }
         if (!client) {
             errorsCheck.client = "Cliente es requerido";
         }
+
         if (productsInOrder.length < 1) {
             errorsCheck.products = "Órden no puede estar vacía";
         }
         if (!user) {
             errorsCheck.user = "Usuario es requerido";
         }
-    
+
+        if (!paymentMethod) {
+            errorsCheck.paymentMethod = "Usuario es requerido";
+        }
+
         /* Check errors */
         if (Object.keys(errorsCheck).length > 0) {
             setErrors(errorsCheck);
         } else {
             setErrors({});
         }
-    
-        const clientObj = clients.find((c) => c.id === client);
-        console.log("clientObj: ", clientObj);
-        if (clientObj.has_reservation && clientObj.reservation && clientObj.reservation.service.length > 0) {
-            const foodService = clientObj.reservation.service.find(service => service.id === 1);
-            console.log("foodService: ", foodService);
-            if (foodService && foodService.ReservationService.availableQuota < total) {
-                // Calcular la diferencia
-                const difference = total - foodService.ReservationService.availableQuota;
-                console.log("difference: ", difference);
 
-                // Mostrar el modal de confirmación de pago adicional
-                setModal(true);
-                setDifference(difference);
-                setAvailableQuota(foodService.ReservationService.availableQuota) // Establecer la diferencia en el estado
-                return; // Detener la función hasta que se confirme la acción
-            }
-        }
-    
         if (Object.keys(errorsCheck).length === 0) {
-            proceedWithOrder();
+            console.log("USUARIO: ",user)
+            console.log("Productos en la orden: ",productsInOrder)
+            /* Create order */
+            const order = {
+                total: total,
+                tableId: null,
+                clientId: client,
+                products: productsInOrder,
+                delivery: true,
+                note: note,
+                userId: user,
+                type: true,
+                paymentId: paymentMethod,
+            };
+            /* Make request */
+            console.log("ORDEN A CREAR: ",order)
+            dispatch(createOrder(order));
         }
     };
-    
-    const proceedWithOrder = () => {
-        console.log("USUARIO: ", user);
-        console.log("Productos en la orden: ", productsInOrder);
-    
-        /* Create order */
-        const order = {
-            total: total,
-            tableId: !delivery ? table : 0,
-            clientId: client,
-            products: productsInOrder,
-            delivery: delivery,
-            note: note,
-            userId: user,
-            confirmExceedQuota: true,
-        };
-    
-        /* Make request */
-        console.log("ORDEN A CREAR: ", order);
-        dispatch(createOrder(order));
-        dispatch(updateClientHasReservation(order.clientId, true));
-    };
-
-    const renderModalExceedQuota = () => (
-        <Modal
-            style={modalStyles}
-            isOpen={modal}
-            onRequestClose={() => setModal(false)}
-        >
-            <div className="modal-body">
-            <p className="text-center">
-                La orden excede el cupo disponible ${availableQuota} por ${difference}. ¿El cliente desea proceder y pagar la diferencia?
-            </p>
-            <div className="modal-footer">
-                <button onClick={proceedWithOrder} className="btn btn-primary">
-                    Confirmar
-                </button>
-                <button onClick={() => setModal(false)} className="btn btn-danger">
-                    Cancelar
-                </button>
-            </div>
-        </div>
-        </Modal>
-    );
-
 
     const toggleDropdown = () => {
         setIsDropdownOpen(!isDropdownOpen);
     };
-    
-    /* Filter tables */
-    const filterFreeTables = () => {
-        const mappedTables = tables.filter((table) => {
-            return table.occupied === false;
-        });
-        return mappedTables;
-    };
 
     const handleCategoryFilter = (categoryName) => {
-        setSelectedCategory(categoryName);
+        setSelectedCategory(categoryName === selectedCategory ? null : categoryName);
     };
     
     const renderCategoryDropdown = () => (
@@ -261,7 +191,7 @@ const OrderCreateScreen = ({ match }) => {
                         <button
                             key={category.id}
                             className={`dropdown-item ${
-                                selectedCategory === category.name ? 'active' : ''
+                                selectedCategory === category.id ? 'active' : ''
                             }`}
                             onClick={() => handleCategoryFilter(category.name)}
                         >
@@ -275,10 +205,11 @@ const OrderCreateScreen = ({ match }) => {
     
 
     const renderProductsTable = () => (
+        
         <ProductsTable
             productsInOrder={productsInOrder}
             setProductsInOrder={setProductsInOrder}
-            selectedCategory={selectedCategory === "Todas" ? null : selectedCategory}
+            selectedCategory={selectedCategory} 
             setSelectedCategory={setSelectedCategory}
             keyword={keyword}
             setKeyword={setKeyword}
@@ -286,8 +217,10 @@ const OrderCreateScreen = ({ match }) => {
             setIngredientStocks={setIngredientStocks}
             productStocks={productStocks}
             setProductStocks={setProductStocks}
+            type={true}
         />
     );
+
     const renderCart = () => (
         <>
             {errors.products && (
@@ -309,24 +242,6 @@ const OrderCreateScreen = ({ match }) => {
         </>
     );
 
-    const searchTables = (e) => {
-        dispatch(listTables(e.target.value));
-    };
-
-    const renderTablesSelect = () => (
-        <>
-            <Select
-                data={table}
-                setData={setTable}
-                items={filterFreeTables(tables)}
-                disabled={delivery}
-                search={searchTables}
-            />
-            {errors.table && (
-                <Message message={errors.table} color={"warning"} />
-            )}
-        </>
-    );
 
     const searchClients = (e) => {
         dispatch(listClients(e.target.value, "",true));
@@ -340,9 +255,22 @@ const OrderCreateScreen = ({ match }) => {
                 items={clients.filter(client => client.has_reservation)}
                 search={searchClients}
             />
-            {console.log("CLIENTES: ",clients)}
             {errors.client && (
                 <Message message={errors.client} color={"warning"} />
+            )}
+        </>
+    );
+
+    const renderPaymentMethodsSelect = () => (
+        <>
+        {console.log("paymentMethodList: ",paymentMethodList)}
+            <Select
+                data={paymentMethod}
+                setData={setPaymentMethod}
+                items={payments}
+            />
+            {errors.paymentMethod && (
+                <Message message={errors.paymentMethod} color={"warning"} />
             )}
         </>
     );
@@ -358,10 +286,6 @@ const OrderCreateScreen = ({ match }) => {
                 <Message message={errors.user} color={"warning"} />
             )}
         </>
-    );
-
-    const renderDeliveryCheckbox = () => (
-        <Checkbox name={"domicilio"} data={delivery} setData={setDelivery} />
     );
 
     const renderNoteTextarea = () => (
@@ -393,13 +317,6 @@ const OrderCreateScreen = ({ match }) => {
             );
         }
         return tableSkeleton;
-    };
-
-    const filterTablesByState = (isOccupied) => {
-        const mappedTables = tables.filter((table) => {
-            return table.occupied === isOccupied;
-        });
-        return mappedTables;
     };
 
     const renderProducts = () =>
@@ -448,21 +365,15 @@ const OrderCreateScreen = ({ match }) => {
                         </div>
                     </div>
                 <div className="col-12 col-md-3">
-                Selecciona la mesa:
-                    <div className="form-group">
-                        {renderTablesSelect()}
-                    </div>
-                </div>
-                <div className="col-12 col-md-3">
                     Selecciona el cliente:
                     <div className="form-group">
                         {renderClientsSelect()}
                     </div>
                 </div>
-
                 <div className="col-12 col-md-3">
-                    <div className="form-group" style={{marginTop:'30px', marginLeft:'10px'}}>
-                        {renderDeliveryCheckbox()}
+                    Método de pago:
+                    <div className="form-group">
+                        {renderPaymentMethodsSelect()}
                     </div>
                 </div>
                 
@@ -478,7 +389,6 @@ const OrderCreateScreen = ({ match }) => {
     </div>
 </div>
 {renderSubmitButton()}
-{renderModalExceedQuota()}
 
                                 </div>
                                 {/* /.card-body */}
@@ -494,4 +404,4 @@ const OrderCreateScreen = ({ match }) => {
     );
 };
 
-export default OrderCreateScreen;
+export default FridgeOrderCreateScreen;

@@ -8,7 +8,7 @@ dotenv.config();
 const app = express();
 
 if (process.env.NODE_ENV === "development") {
-    app.use(morgan("tiny"));
+    app.use(morgan("dev"));
 }
 
 app.use(express.json()); // for parsing application/json

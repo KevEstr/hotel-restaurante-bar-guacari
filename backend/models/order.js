@@ -41,6 +41,7 @@ module.exports = (sequelize, DataTypes) => {
             clientId: DataTypes.INTEGER,
             tableId: DataTypes.INTEGER,
             paymentId: DataTypes.INTEGER,
+            type: DataTypes.BOOLEAN,
         },
         {
             sequelize,

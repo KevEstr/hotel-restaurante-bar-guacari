@@ -14,34 +14,82 @@ import {
     Button,
     CircularProgress,
 } from '@material-ui/core';
-import { DatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers';
-import DateFnsUtils from '@date-io/date-fns';
+//import { DatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import HeaderContent from '../../components/HeaderContent';
 import LoaderHandler from '../../components/loader/LoaderHandler';
 import Pagination from '../../components/Pagination';
 import Search from '../../components/Search';
-import addDays from 'date-fns/addDays';
-import addSeconds from 'date-fns/addSeconds';
-import addMinutes from 'date-fns/addMinutes';
-import addHours from 'date-fns/addHours';
+import subDays from 'date-fns/subDays';
+
 
 const IngredientMovementScreen = ({ history }) => {
     const [startDate, setStartDate] = useState(null);
     const [endDate, setEndDate] = useState(null);
+    const [tempStartDate, setTempStartDate] = useState(null);
+    const [tempEndDate, setTempEndDate] = useState(null);
     const [type, setType] = useState('');
     const [keyword, setKeyword] = useState('');
     const [pageNumber, setPageNumber] = useState(1);
     const dispatch = useDispatch();
+    const [isInitialLoad, setIsInitialLoad] = useState(true); // Verifica si es la primera carga
+
 
     const ingredientMovementList = useSelector((state) => state.ingredientMovementList);
     const { loading, error, movements, page, pages } = ingredientMovementList;
 
+    const STORAGE_KEY = 'ingredient_movement_filters';
+
+
     useEffect(() => {
-        dispatch(listIngredientMovements(keyword, pageNumber, startDate, endDate, type));
+        const storedFilters = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (storedFilters.startDate && storedFilters.endDate){
+            console.log("storedFilters: ",storedFilters)
+            // Si hay filtros almacenados, aplicarlos
+            setTempStartDate(storedFilters.startDate);
+            setTempEndDate(storedFilters.endDate);
+            setStartDate(storedFilters.startDate);
+            setEndDate(storedFilters.endDate);
+        } else {
+            // Si no hay filtros almacenados, establecer los últimos 7 días
+            const endDate = new Date(); // Hoy
+            const startDate = subDays(endDate, 6); // Hace 6 días
+            setTempStartDate(startDate);
+            setTempEndDate(endDate);
+            setStartDate(startDate);
+            setEndDate(endDate);
+        }
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ startDate, endDate, type, keyword }));
+
+        if (startDate && endDate) {
+            dispatch(listIngredientMovements(keyword, pageNumber, startDate, endDate, type));
+        }
+
     }, [dispatch, history, pageNumber, keyword, startDate, endDate, type]);
 
     const handleFilter = () => {
+        const startOfDay = new Date(tempStartDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        setStartDate(startOfDay);
+        
+        const endOfDay = new Date(tempEndDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        setEndDate(endOfDay);
         dispatch(listIngredientMovements(keyword, pageNumber, startDate, endDate, type));
+    };
+
+    const handleClearFilters = () => {
+        setStartDate(null);
+        setEndDate(null);
+        setTempStartDate(null);
+        setTempEndDate(null);
+        setType('');
+        setKeyword('');
+        localStorage.removeItem(STORAGE_KEY);
     };
 
     const renderMovementsTable = () => (
@@ -55,19 +103,29 @@ const IngredientMovementScreen = ({ history }) => {
                         <TableCell>Tipo de Movimiento</TableCell>
                         <TableCell>Concepto</TableCell>
                         <TableCell>Fecha</TableCell>
+                        <TableCell>Valor</TableCell>
+                        <TableCell>Usuario</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {movements.map((movement) => (
-                        <TableRow key={movement.id}>
-                            <TableCell>{movement.id}</TableCell>
-                            <TableCell>{movement.ingredient.name}</TableCell>
-                            <TableCell>{movement.quantity}</TableCell>
-                            <TableCell>{movement.type}</TableCell>
-                            <TableCell>{movement.concept}</TableCell>
-                            <TableCell>{new Date(movement.createdAt).toLocaleDateString()}</TableCell>
+                    {movements.length > 0 ? (
+                        movements.map((movement) => (
+                            <TableRow key={movement.id}>
+                                <TableCell>{movement.id}</TableCell>
+                                <TableCell>{movement.ingredient.name}</TableCell>
+                                <TableCell>{movement.quantity}</TableCell>
+                                <TableCell>{movement.type}</TableCell>
+                                <TableCell>{movement.concept}</TableCell>
+                                <TableCell>{new Date(movement.createdAt).toLocaleDateString()}</TableCell>
+                                <TableCell>{"$"+ movement.totalPrice}</TableCell>
+                                <TableCell>{movement.user.name}</TableCell>
+                            </TableRow>
+                        ))
+                    ) : (
+                        <TableRow>
+                            <TableCell colSpan={8}>No hay registros para mostrar.</TableCell>
                         </TableRow>
-                    ))}
+                    )}
                 </TableBody>
             </Table>
         </TableContainer>
@@ -79,20 +137,18 @@ const IngredientMovementScreen = ({ history }) => {
             <section className="content">
                 <div className="container-fluid">
                     <div style={{ padding: 16 }}>
-                        <MuiPickersUtilsProvider utils={DateFnsUtils}>
-                            <DatePicker
-                                label="Fecha de Inicio"
-                                value={startDate}
-                                onChange={setStartDate}
-                                format="yyyy/MM/dd"
-                            />
-                            <DatePicker
-                                label="Fecha de Fin"
-                                value={endDate}
-                                onChange={setEndDate}
-                                format="yyyy/MM/dd"
-                            />
-                        </MuiPickersUtilsProvider>
+                        <DatePicker
+                            selected={tempStartDate}
+                            onChange={(date) => setTempStartDate(date)}
+                            dateFormat="yyyy/MM/dd"
+                            placeholderText="Fecha de Inicio"
+                        />
+                        <DatePicker
+                            selected={tempEndDate}
+                            onChange={(date) => setTempEndDate(date)}
+                            dateFormat="yyyy/MM/dd"
+                            placeholderText="Fecha de Fin"
+                        />
                         <TextField
                             label="Tipo"
                             value={type}
@@ -105,6 +161,9 @@ const IngredientMovementScreen = ({ history }) => {
                         </TextField>
                         <Button onClick={handleFilter} variant="contained" color="primary">
                             Filtrar
+                        </Button>
+                        <Button onClick={handleClearFilters} variant="contained" color="secondary">
+                            Limpiar filtros
                         </Button>
                     </div>
                     <div className="row">

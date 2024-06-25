@@ -35,15 +35,16 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import subDays from 'date-fns/subDays';
 
-const OrderScreen = ({ history }) => {
+const OrderFridgeScreen = ({ history }) => {
     const [pageNumber, setPageNumber] = useState(1);
     const [keyword, setKeyword] = useState("");
-
     const [paymentId, setPaymentId] = useState('');
     const [startDate, setStartDate] = useState(null);
     const [endDate, setEndDate] = useState(null);
     const [tempStartDate, setTempStartDate] = useState(null);
     const [tempEndDate, setTempEndDate] = useState(null);
+
+    const STORAGE_KEY = 'ingredient_movement_filters';
 
     const dispatch = useDispatch();
 
@@ -63,7 +64,8 @@ const OrderScreen = ({ history }) => {
 
     const paymentList = useSelector((state) => state.paymentList);
     const { payments } = paymentList;
-    let type = "false";
+
+    let type = "true";
     let delivery= null;
 
 
@@ -79,13 +81,12 @@ const OrderScreen = ({ history }) => {
     useEffect(() => {
         if (startDate && endDate) {
             dispatch(listOrders(keyword, pageNumber, delivery, null, type, startDate, endDate, paymentId));
-            console.log("LIST ORDERS: ", keyword, pageNumber, 0, null, type, startDate, endDate, paymentId)
+            console.log("LIST ORDERS: ", keyword, pageNumber, delivery, null, type, startDate, endDate, paymentId)
         }
 
-    }, [dispatch, history, keyword, pageNumber,delivery, type, startDate, endDate, paymentId]);
+    }, [dispatch, history, keyword, pageNumber, type, startDate, endDate, paymentId]);
 
     useEffect(() => {
-        //dispatch(listOrders({ keyword, pageNumber, delivery: 0, type: 0 }));
         dispatch(listAgreements());
         dispatch(listPayments());
 
@@ -129,7 +130,7 @@ const OrderScreen = ({ history }) => {
         const endOfDay = new Date(tempEndDate);
         endOfDay.setHours(23, 59, 59, 999);
         setEndDate(endOfDay);
-        dispatch(listOrders(keyword, pageNumber, delivery, null, type, startDate, endDate, paymentId));
+        dispatch(listOrders(keyword, pageNumber, null, null, type, startDate, endDate, paymentId));
     };
 
     const handleClearFilters = () => {
@@ -207,90 +208,93 @@ const OrderScreen = ({ history }) => {
     );
 
 
-    const renderTable = () => (
-        <table className="table table-hover text-nowrap">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Cliente</th>
-                    <th className="d-none d-sm-table-cell">Mesa</th>
-                    <th className="d-none d-sm-table-cell">Convenio</th>
-                    <th>Pagada</th>
-                    <th>Método Pago</th>
-                    <th>Total</th>
-                    <th>Fecha Pago</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {orders.map((order) => (
-                    <tr key={order.id}>
-                        <td>{order.id}</td>
-                        <td>{order.client.name}</td>
-                        <td className="d-none d-sm-table-cell h4">
-                            {order.table ? (
-                                <span className={"badge bg-primary"}>
-                                    {order.table.name}
-                                </span>
-                            ) : (
-                                <span className={"badge bg-info"}>
-                                    DOMICILIO
-                                </span>
-                            )}
-                        </td>
-
-                        <td className="d-none d-sm-table-cell">
-                        {getAgreementName(order.client.agreementId)}
-                        </td>
-
-                        <td>
-                            {order.isPaid ? (
-                                <h4 className="text-success">
-                                    <i className="fas fa-check"></i>
-                                </h4>
-                            ) : (
-                                <h4 className="text-danger">
-                                    <i className="far fa-times-circle"></i>
-                                </h4>
-                            )}
-                        </td>
-
-                        <td>
-                            {order.isPaid ? (
-                                <>
-                                {getPaymentName(order.paymentId)}
-                                </>
-                            ) : (
-                                <h4 className="text-danger">
-                                    <i className="far fa-times-circle"></i>
-                                </h4>
-                            )}
-                        </td>
-
-                        <td className="d-none d-sm-table-cell h4">
-                            <span className={"badge bg-success"}>
-                                ${order.total}
-                            </span>
-                        </td>
-
-                        <td className="d-none d-sm-table-cell">
-                            <FormattedDate dateString={order.createdAt} />
-                        </td>
-
-                        <td>
-                            <Link
-                                to={`/order/${order.id}/view`}
-                                className="btn btn-info btn-lg"
-                            >
-                                Ver
-                            </Link>
-                        </td>
+    const renderTable = () => {
+        if (orders === undefined || orders.length === 0) {
+            return (
+                <div className="alert alert-info" role="alert">
+                    No hay órdenes para mostrar.
+                </div>
+            );
+        }
+    
+        return (
+            <table className="table table-hover text-nowrap">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Cliente</th>
+                        <th className="d-none d-sm-table-cell">Mesa</th>
+                        <th className="d-none d-sm-table-cell">Convenio</th>
+                        <th>Pagada</th>
+                        <th>Método Pago</th>
+                        <th>Total</th>
+                        <th>Fecha Pago</th>
+                        <th></th>
                     </tr>
-                ))}
-            </tbody>
-        </table>
-    );
-
+                </thead>
+                <tbody>
+                    {orders.map((order) => (
+                        <tr key={order.id}>
+                            <td>{order.id}</td>
+                            <td>{order.client.name}</td>
+                            <td className="d-none d-sm-table-cell h4">
+                                {order.table ? (
+                                    <span className={"badge bg-primary"}>
+                                        {order.table.name}
+                                    </span>
+                                ) : (
+                                    <span className={"badge bg-info"}>
+                                        DOMICILIO
+                                    </span>
+                                )}
+                            </td>
+                            <td className="d-none d-sm-table-cell">
+                                {getAgreementName(order.client.agreementId)}
+                            </td>
+                            <td>
+                                {order.isPaid ? (
+                                    <h4 className="text-success">
+                                        <i className="fas fa-check"></i>
+                                    </h4>
+                                ) : (
+                                    <h4 className="text-danger">
+                                        <i className="far fa-times-circle"></i>
+                                    </h4>
+                                )}
+                            </td>
+                            <td>
+                                {order.isPaid ? (
+                                    <>
+                                        {getPaymentName(order.paymentId)}
+                                    </>
+                                ) : (
+                                    <h4 className="text-danger">
+                                        <i className="far fa-times-circle"></i>
+                                    </h4>
+                                )}
+                            </td>
+                            <td className="d-none d-sm-table-cell h4">
+                                <span className={"badge bg-success"}>
+                                    ${order.total}
+                                </span>
+                            </td>
+                            <td className="d-none d-sm-table-cell">
+                                <FormattedDate dateString={order.createdAt} />
+                            </td>
+                            <td>
+                                <Link
+                                    to={`/order/${order.id}/view`}
+                                    className="btn btn-info btn-lg"
+                                >
+                                    Ver
+                                </Link>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        );
+    };
     const renderOrders = () => (
         <>
             <div className="card ">
@@ -352,7 +356,6 @@ const OrderScreen = ({ history }) => {
         </>
     );
 
-
     return (
         <>
             <HeaderContent name={"Historial de Órdenes"} />
@@ -376,4 +379,4 @@ const OrderScreen = ({ history }) => {
     );
 };
 
-export default OrderScreen;
+export default OrderFridgeScreen;

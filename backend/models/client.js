@@ -15,6 +15,7 @@ module.exports = (sequelize, DataTypes) => {
                 as: "orders",
             });
             this.belongsTo(models.Agreement, { foreignKey: "agreementId", as: "agreement" });
+            this.belongsTo(models.Reservation, { foreignKey: "reservationId", as: "reservation" });
         }
     }
     Client.init(
@@ -26,6 +27,8 @@ module.exports = (sequelize, DataTypes) => {
             dni: DataTypes.STRING,
             agreementId: DataTypes.INTEGER,
             has_reservation: DataTypes.BOOLEAN,
+            has_order: DataTypes.BOOLEAN,
+            reservationId: DataTypes.INTEGER,
         },
         {
             sequelize,

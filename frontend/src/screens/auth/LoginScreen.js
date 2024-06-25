@@ -7,6 +7,7 @@ import Message from "../../components/Message";
 const LoginScreen = ({ history }) => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [errors, setErrors] = useState({});
 
     const dispatch = useDispatch();
 
@@ -23,7 +24,24 @@ const LoginScreen = ({ history }) => {
 
     const submitHandler = (e) => {
         e.preventDefault();
-        dispatch(login(email, password));
+        let errorsCheck = {};
+
+        if (!email) {
+            errorsCheck.email = "Email es requerido";
+        }
+        if (!password) {
+            errorsCheck.password = "Contraseña es requerida";
+        }
+        if (Object.keys(errorsCheck).length > 0) {
+            setErrors(errorsCheck);
+        } else {
+            setErrors({});
+        }
+        if (Object.keys(errorsCheck).length === 0) {
+            dispatch(login(email, password));
+        }
+
+        
     };
 
     return (
@@ -67,6 +85,8 @@ const LoginScreen = ({ history }) => {
                                     </div>
                                 </div>
                             </div>
+                            {errors.email && <Message message={errors.email} color={"warning"} />}
+
                             <div className="input-group mb-3">
                                 <input
                                     type="password"
@@ -83,6 +103,8 @@ const LoginScreen = ({ history }) => {
                                     </div>
                                 </div>
                             </div>
+                            {errors.password && <Message message={errors.password} color={"warning"} />}
+
 
                             <div className="row justify-content-end">
                                 <div className="col-4">

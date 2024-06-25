@@ -3,7 +3,10 @@ const {check} = require('express-validator')
 exports.agreementCreateValidator = [
     check('name')
         .notEmpty()
-        .withMessage('Name is required')
+        .withMessage('Nombre es requerido')
         .isString()
-        .withMessage('Name must be a string')
+        .withMessage('Nombre debe ser un texto'),
+    check('selectedServices')
+        .notEmpty()
+        .withMessage('Debe seleccionar al menos 1 servicio')
 ]

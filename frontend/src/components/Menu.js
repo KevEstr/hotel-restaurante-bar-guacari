@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { Link, Redirect } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
+import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 
 const Menu = ({ history }) => {
     const dispatch = useDispatch();
@@ -78,31 +79,48 @@ const Menu = ({ history }) => {
                                 ) : userInfo.isAdmin === true ? (
                                     <>
                                         <li className="nav-header">ADMINISTRADOR</li>
+                                        <OverlayTrigger
+                                        placement="right"
+                                        overlay={<Tooltip id="tooltip-top">Crea y edita usuarios</Tooltip>}> 
                                         <li className="nav-item">
                                             <Link to="/user" className="nav-link">
                                                 <i className="nav-icon fas fa-users" />{" "}
                                                 <p> Usuarios</p>
                                             </Link>
                                         </li>
+                                        </OverlayTrigger>
                                     </>
                                 ) : (
                                     ""
                                 )}
 
                                 <li className="nav-header">SISTEMA HOTELERO</li>
+                                <OverlayTrigger
+                                placement="right"
+                                overlay={<Tooltip id="tooltip-top">Crea y edita habitaciones</Tooltip>}>
                                 <li className="nav-item">
                                     <Link to="/room" className="nav-link">
                                         <i className="nav-icon fas fa-solid fa-bed" />{" "}
                                         <p> Habitaciones </p>
                                     </Link>
                                 </li>
+                                </OverlayTrigger>
 
+                                <OverlayTrigger
+                                placement="right"
+                                overlay={<Tooltip id="tooltip-top">Crea y visualiza reservas</Tooltip>}>
                                 <li className="nav-item">
                                     <Link to="/activeReservation" className="nav-link">
                                         <i className="nav-icon fas fa-solid fa-calendar-check" />{" "}
                                         <p> Reservas </p>
                                     </Link>
                                 </li>
+                                </OverlayTrigger>
+
+                                <OverlayTrigger
+                                placement="right"
+                                overlay={<Tooltip id="tooltip-top">Crea y edita servicios ofrecidos</Tooltip>}>
+
                                 <li className="nav-item">
                                     <Link to="/service" className="nav-link">
                                         <i className="nav-icon fas fa-solid fa-soap" />{" "}
@@ -110,35 +128,85 @@ const Menu = ({ history }) => {
                                     </Link>
                                 </li>
 
+                                </OverlayTrigger>
+                                
+                                <OverlayTrigger
+                                placement="right"
+                                overlay={<Tooltip id="tooltip-top">Visualiza el histórico de reservas</Tooltip>}> 
                                 <li className="nav-item">
                                     <Link to="/reservation" className="nav-link">
                                         <i className="nav-icon far fa-clipboard" />{" "}
-                                        <p> Historial</p>
+                                        <p> Historial Reservas</p>
                                     </Link>
                                 </li>
+                                </OverlayTrigger>
+
+                                <OverlayTrigger
+                                placement="right"
+                                overlay={<Tooltip id="tooltip-top">Procesa las ventas de la nevera</Tooltip>}> 
+                                <li className="nav-item">
+                                    <Link to="/fridgeorder/create" className="nav-link">
+                                        <i className="nav-icon far fa-clipboard" />{" "}
+                                        <p> Nevera</p>
+                                    </Link>
+                                </li>
+                                </OverlayTrigger>
+                                <OverlayTrigger
+                                placement="right"
+                                overlay={<Tooltip id="tooltip-top">Visualiza el histórico de ventas</Tooltip>}> 
+                                <li className="nav-item">
+                                    <Link to="/fridgeorder" className="nav-link">
+                                        <i className="nav-icon far fa-clipboard" />{" "}
+                                        <p> Historial Nevera</p>
+                                    </Link>
+                                </li>
+                                </OverlayTrigger>
 
                                 <li className="nav-header">GESTIÓN DEL HOTEL</li>
+                                <OverlayTrigger
+                                placement="right"
+                                overlay={<Tooltip id="tooltip-top">Crea y edita productos de la nevera</Tooltip>}> 
+                                <li className="nav-item">
+                                    <Link to="/fridgeproduct" className="nav-link">
+                                        <i className="nav-icon fas fa-solid fa-people-arrows" />{" "}
+                                        <p>Productos</p>
+                                    </Link>
+                                </li>
+                                </OverlayTrigger>
 
+                                <OverlayTrigger
+                                placement="right"
+                                overlay={<Tooltip id="tooltip-top">Crea y edita convenios</Tooltip>}> 
                                 <li className="nav-item">
                                     <Link to="/agreement" className="nav-link">
                                         <i className="nav-icon fas fa-solid fa-people-arrows" />{" "}
                                         <p>Convenios</p>
                                     </Link>
                                 </li>
+                                </OverlayTrigger>
 
+                                <OverlayTrigger
+                                placement="right"
+                                overlay={<Tooltip id="tooltip-top">Revisa y exporta informes financieros</Tooltip>}> 
                                 <li className="nav-item">
                                     <Link to="/" className="nav-link">
                                         <i className="nav-icon fas fa-solid fa-money-bill" />{" "}
                                         <p>Facturación</p>
                                     </Link>
                                 </li>
+                                </OverlayTrigger>
 
+                                <OverlayTrigger
+                                placement="right"
+                                overlay={<Tooltip id="tooltip-top">Revisa y exporta informes financieros</Tooltip>}> 
                                 <li className="nav-item">
                                     <Link to="/client" className="nav-link">
                                         <i className="nav-icon fas fa-user" />{" "}
                                         <p> Clientes</p>
                                     </Link>
                                 </li>
+                                </OverlayTrigger>
+
                     </ul>
                 </nav>
                 {/* /.sidebar-menu */}
@@ -266,7 +334,7 @@ const Menu = ({ history }) => {
                     </li>
                     <li className="nav-header">REPORTES</li>
                     <li className="nav-item">
-                        <Link to="/ingredientmovement" className="nav-link">
+                        <Link to="/ingredientmovements" className="nav-link">
                             <i className="nav-icon fas fa-border-all" />{" "}
                             <p> Ingredientes</p>
                         </Link>

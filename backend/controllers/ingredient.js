@@ -9,16 +9,20 @@ const {
 //@route    POST /api/ingredients
 //@access   Private/ingredient
 exports.createIngredient = asyncHandler(async (req, res) => {
-    const { name, ingredientType, stock=0, concept } = req.body;
-    const userId = req.user.id;
+    const { name, stock=0, minQty } = req.body;
 
-    if (!userId) {
+    if (!name) {
         res.status(404);
-        throw new Error("User ID is required");
+        throw new Error("Nombre es requerido");
+    }
+
+    if (!minQty) {
+        res.status(404);
+        throw new Error("Cantidad mínima es requerida");
     }
     
     // Crear el ingrediente
-    const createdIngredient = await Ingredient.create({ name, ingredientType, stock});
+    const createdIngredient = await Ingredient.create({ name, stock, minQty});
 
     res.status(201).json({ ingredient: createdIngredient });
 });
@@ -70,7 +74,7 @@ exports.getIngredient = asyncHandler(async (req, res) => {
 //@route    PUT /api/ingredients/:id
 //@access   Private/user
 exports.updateIngredient = asyncHandler(async (req, res) => {
-    const { name, quantity, concept, operation, totalPrice } = req.body;
+    const { name, quantity, concept, operation, totalPrice, minQty } = req.body;
     const userId = req.user.id;
 
     if (!userId) {
@@ -90,6 +94,7 @@ exports.updateIngredient = asyncHandler(async (req, res) => {
         let oldStock = Number(aux);
         let newQuantity= Number(quantity)
         ingredient.name = name;
+        ingredient.minQty= minQty;
         // Registrar el movimiento de inventario si cambia el stock
         if(oldStock<0){
             await InventoryMovement.create({
@@ -120,6 +125,7 @@ exports.updateIngredient = asyncHandler(async (req, res) => {
                     totalPrice: totalPrice
                 });
                 ingredient.averagePrice = newAveragePrice;
+                ingredient.stock= newQuantity;
 
             } else {
                 // Es una salida

@@ -11,6 +11,7 @@ import DataTableLoader from "../../components/loader/DataTableLoader";
 import LoaderHandler from "../../components/loader/LoaderHandler";
 import Search from "../../components/Search";
 import Pagination from "../../components/Pagination";
+import Message from "../../components/Message";
 
 /* Actions */
 import { createAgreement, listAgreements, deleteAgreement } from "../../actions/agreementActions";
@@ -71,10 +72,14 @@ const AgreementScreen = ({ history, match }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
 
+        console.log("serviceIds: ", serviceIds);
         let errorsCheck = {};
 
         if (!name) {
             errorsCheck.name = "Nombre es requerido";
+        }
+        if (!selectedServices || selectedServices.length === 0) {
+            errorsCheck.selectedServices = "Debe seleccionar almenos 1 servicio";
         }
 
         if (Object.keys(errorsCheck).length > 0) {
@@ -167,6 +172,7 @@ const AgreementScreen = ({ history, match }) => {
                         setData={setName}
                         errors={errors}
                     />
+                    {errors.name && <Message message={errors.name} color={"warning"} />}
                     <div>
                         <label style={{fontWeight: 'normal' }}>Servicios</label>
                         <div className="form-group">
@@ -186,6 +192,7 @@ const AgreementScreen = ({ history, match }) => {
                                 </div>
                             ))}
                         </div>
+                        {errors.selectedServices && <Message message={errors.selectedServices} color={"warning"} />}
                     </div>
                     <hr />
                     <button type="submit" className="btn btn-primary">

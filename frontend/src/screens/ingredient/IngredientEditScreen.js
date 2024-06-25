@@ -20,6 +20,7 @@ import {
     updateIngredient,
     listIngredientDetails,
 } from "../../actions/ingredientActions";
+import { min } from "date-fns";
 
 const IngredientEditScreen = ({ history, match }) => {
     const ingredientId = parseInt(match.params.id);
@@ -27,6 +28,7 @@ const IngredientEditScreen = ({ history, match }) => {
     const [name, setName] = useState("");
     const [ingredientType, setIngredientType] = useState(null);
     const [stock, setStock] = useState(0);
+    const [minQty, setMinQty] = useState(0);
     const [concept, setConcept] = useState("");
     const [operation, setOperation] = useState(""); // Por defecto entrada
     const [totalPrice, setTotalPrice] = useState(null); // Por defecto entrada
@@ -87,6 +89,7 @@ const IngredientEditScreen = ({ history, match }) => {
         if (!totalPrice && operation === 'entrada') {
             errorsCheck.concept = "Precio de compra es requerido";
         }
+        if(!minQty) errorsCheck.minQty = "Cantidad mínima es requerida para productos simples";
 
         if (Object.keys(errorsCheck).length > 0) {
             setErrors(errorsCheck);
@@ -103,6 +106,7 @@ const IngredientEditScreen = ({ history, match }) => {
                     concept,
                     operation,
                     totalPrice,
+                    minQty,
                 })
             );
         }
@@ -138,6 +142,13 @@ const IngredientEditScreen = ({ history, match }) => {
     const renderForm = () => (
         <form onSubmit={handleSubmit}>
             {console.log('showPrice:', showPrice)}
+            {stock < 0 && 
+                        
+                        <div style={{ backgroundColor: "red", borderColor: "black", padding: "15px", borderRadius: "10px", maxWidth: "900px", margin: "0 auto"}}>
+                                    Este ingrediente tiene existencia negativa, se recomienda realizar inventario y registrar la entrada de mercancía actual NOTA: El ajuste de cantidad ${stock} se realiza de forma automática.
+                                </div>
+                    }
+            
             <div className="form-row" style={{marginTop: '20px'}}>
                 <div className="form-group col-md-4">
                     <Input
@@ -148,22 +159,14 @@ const IngredientEditScreen = ({ history, match }) => {
                         errors={errors}
                     />
                 </div>
-                <div className="form-group col-md-3">
-                    <label style={{fontWeight: 'normal'}}>Tipo de Ingrediente:</label>
-                    <input type="text" className="form-control" value={ingredientType} readOnly />
-                </div>
                 <div className="form-group col-md-4">
                     <label style={{fontWeight: 'normal'}}>Cantidad en el Inventario:</label>
                     <input type="text" className="form-control" value={stock} readOnly />
-                    {stock < 0 && 
-                        <Message 
-                            message={`Este ingrediente tiene existencia negativa, se recomienda realizar inventario y registrar la entrada de mercancía actual.<br /> 
-                            <br /> 
-                            <strong>NOTA:</strong> El ajuste de cantidad ${stock} se realiza de forma automática.`} 
-                            color={"danger"} 
-                        />
-                    }
                 </div>
+                <div className="col-12 col-md-4 mb-3" style={{ textAlign: 'center', marginTop: '10px' }}>
+                        <Input name={"cantidad mínima en gr/und"} type={"number"} data={minQty} setData={setMinQty} errors={errors} />
+                        {errors.minQty && <Message message={errors.minQty} color={"warning"} />}
+                    </div>
             </div>
             <div className="form-row" style={{marginTop: '20px'}}>
                 
@@ -195,7 +198,7 @@ const IngredientEditScreen = ({ history, match }) => {
 
                 <div className="form-group col-md-2" style={{marginLeft: '-15px'}}>
                     <Input
-                        name={"Cantidad"}
+                        name={"Cantidad en gr/und"}
                         type={"number"}
                         data={quantity}
                         setData={setQuantity}

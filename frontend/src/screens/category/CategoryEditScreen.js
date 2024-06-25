@@ -100,6 +100,8 @@ const CategoryEditScreen = ({ history, match }) => {
                 errors={errors}
             />
             <hr />
+            {errors.name && <Message message={errors.name} color={"warning"} />}
+
             <button type="submit" className="btn btn-success">
                 Confirmar
             </button>

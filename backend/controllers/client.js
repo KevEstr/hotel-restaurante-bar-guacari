@@ -1,5 +1,9 @@
 const asyncHandler = require("express-async-handler");
 const Client = require("../models").Client;
+const Reservation = require("../models").Reservation;
+const Service = require("../models").Service;
+
+
 const { Op } = require("sequelize");
 
 //@desc     Create a client
@@ -28,6 +32,14 @@ exports.getClients = asyncHandler(async (req, res) => {
     const keyword = req.query.keyword ? req.query.keyword : null;
     const hasReservation = req.query.has_reservation === "true";
     let options = {
+        include: {
+            model: Reservation,
+            as: "reservation",
+            include: {
+                model: Service,
+                as: "service",
+            },
+        },
         attributes: {
             exclude: ["updatedAt"],
         },
@@ -66,7 +78,16 @@ exports.getClients = asyncHandler(async (req, res) => {
 //@route    GET /api/clients/:id
 //@access   Private/user
 exports.getClient = asyncHandler(async (req, res) => {
-    const client = await Client.findByPk(req.params.id);
+    const client = await Client.findByPk(req.params.id, {
+        include: {
+            model: Reservation,
+            as: "reservation",
+            include: {
+                model: Service,
+                as: "service",
+            },
+        },
+    });
 
     if (client) {
         res.json(client);

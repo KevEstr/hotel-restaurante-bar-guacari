@@ -10,8 +10,8 @@ module.exports = (sequelize, DataTypes) => {
          */
         static associate(models) {
             // Define association here
-            this.belongsTo(models.Ingredient, { foreignKey: "ingredientId" });
-            this.belongsTo(models.User, { foreignKey: "userId" });
+            this.belongsTo(models.Ingredient, { foreignKey: "ingredientId" , as: "ingredient" });
+            this.belongsTo(models.User, { foreignKey: "userId" , as: "user" });
         }
     }
     InventoryMovement.init(

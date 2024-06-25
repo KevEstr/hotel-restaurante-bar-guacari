@@ -40,15 +40,32 @@ exports.createReservation = asyncHandler(async (req, res) => {
         await payment.save();
     }
 
+    // Calculate the number of nights
+    const startDate = new Date(start_date);
+    const endDate = new Date(end_date);
+    const oneDay = 24 * 60 * 60 * 1000; // hours * minutes * seconds * milliseconds
+    const numberOfNights = Math.round(Math.abs((endDate - startDate) / oneDay));
+
     if (services && services.length > 0) {
         await Promise.all(services.map(async (service) => {
+            const maxLimitPerStay = numberOfNights * service.maxLimit;
             await ReservationService.create({
                 reservationId: createdReservation.id,
                 serviceId: service.id,
-                maxLimit: service.maxLimit,
+                maxLimit: maxLimitPerStay,
+                availableQuota: maxLimitPerStay
             });
         }));
     }
+
+    const client = await Client.findByPk(clientId);
+    if (client) {
+        client.reservationId = createdReservation.id;
+        await client.save();
+    }
+
+    console.log("CREATED RESERVATION: ",createdReservation);
+    console.log("CLIENT: ",client);
 
     if (rooms && rooms.length > 0) {
         await Promise.all(rooms.map(async (roomId) => {

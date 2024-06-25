@@ -34,6 +34,8 @@ module.exports = (sequelize, DataTypes) => {
             isComposite: DataTypes.BOOLEAN,
             stock: DataTypes.INTEGER,
             averagePrice: DataTypes.DECIMAL(10,2),
+            minQty: DataTypes.INTEGER,
+            type: DataTypes.BOOLEAN,
         },
         {
             sequelize,

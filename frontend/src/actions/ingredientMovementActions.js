@@ -19,7 +19,7 @@ import {
 } from '../constants/ingredientMovementConstants';
 
 // List all ingredient movements with optional filters
-export const listIngredientMovements = (filters = {}) => async (dispatch, getState) => {
+export const listIngredientMovements = (keyword = '', pageNumber = '', startDate = '', endDate = '', type = '') => async (dispatch, getState) => {
     try {
         dispatch({ type: INGREDIENT_MOVEMENT_LIST_REQUEST });
 
@@ -29,10 +29,12 @@ export const listIngredientMovements = (filters = {}) => async (dispatch, getSta
             headers: {
                 Authorization: `Bearer ${userInfo.token}`,
             },
-            params: filters,
         };
 
-        const { data } = await axios.get('/api/ingredientmovements', config);
+        const { data } = await axios.get('/api/ingredientmovements', {
+            params: { keyword, pageNumber, startDate, endDate, type },
+            ...config,
+        });
 
         dispatch({ type: INGREDIENT_MOVEMENT_LIST_SUCCESS, payload: data });
     } catch (error) {

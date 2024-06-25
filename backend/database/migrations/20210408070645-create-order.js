@@ -22,6 +22,11 @@ module.exports = {
                 allowNull: false,
                 defaultValue: false,
             },
+            type: {
+                type: Sequelize.BOOLEAN,
+                allowNull: false,
+                defaultValue: false,
+            },
             note: {
                 type: Sequelize.STRING,
                 allowNull: true,

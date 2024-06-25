@@ -253,6 +253,8 @@ const UserScreen = ({ history }) => {
                         setData={setName}
                         errors={errors}
                     />
+                    {errors.name && <div className="text-danger">{errors.name}</div>}
+
                     <Input
                         name={"email"}
                         type={"email"}
@@ -267,6 +269,8 @@ const UserScreen = ({ history }) => {
                         setData={setPassword}
                         errors={errors}
                     />
+                    {errors.password && <div className="text-danger">{errors.password}</div>}
+
                     <Checkbox
                         name={"Admin"}
                         data={isAdmin}

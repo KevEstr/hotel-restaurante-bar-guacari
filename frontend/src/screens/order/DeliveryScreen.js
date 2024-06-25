@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+import {FormattedDate} from "../../utils/formattedDate";
 
 /* components */
 import HeaderContent from "../../components/HeaderContent";
@@ -12,6 +13,24 @@ import Search from "../../components/Search";
 /* actions */
 import { listOrders } from "../../actions/orderActions";
 
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Paper,
+    TextField,
+    MenuItem,
+    Button,
+    CircularProgress,
+} from '@material-ui/core';
+//import { DatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import subDays from 'date-fns/subDays';
+
 const DeliveryScreen = ({ history }) => {
     const dispatch = useDispatch();
 
@@ -20,12 +39,38 @@ const DeliveryScreen = ({ history }) => {
     const userLogin = useSelector((state) => state.userLogin);
     const { userInfo } = userLogin;
 
+    const [paymentId, setPaymentId] = useState('');
+    const [startDate, setStartDate] = useState(null);
+    const [endDate, setEndDate] = useState(null);
+    const [tempStartDate, setTempStartDate] = useState(null);
+    const [tempEndDate, setTempEndDate] = useState(null);
+
     const orderList = useSelector((state) => state.orderList);
     const { loading, error, orders, page, pages } = orderList;
+    let type = "false";
+    let delivery= "true";
+
 
     useEffect(() => {
+        const endDate = new Date(); // Hoy
+        const startDate = subDays(endDate, 6); // Hace 6 días
+        setTempStartDate(startDate);
+        setTempEndDate(endDate);
+        setStartDate(startDate);
+        setEndDate(endDate);
+    }, []);
+
+    useEffect(() => {
+        if (startDate && endDate) {
+            dispatch(listOrders(keyword, pageNumber, delivery, null, type, startDate, endDate, paymentId));
+            console.log("LIST ORDERS: ", keyword, pageNumber, 0, null, type, startDate, endDate, paymentId)
+        }
+
+    }, [dispatch, history, keyword, pageNumber,delivery, type, startDate, endDate, paymentId]);
+
+    /*useEffect(() => {
         dispatch(listOrders({ keyword, pageNumber, delivery: true }));
-    }, [dispatch, history, userInfo, pageNumber, keyword]);
+    }, [dispatch, history, userInfo, pageNumber, keyword]);*/
 
     const renderCreateButton = () => (
         <Link to="/order/create/delivery">
@@ -35,6 +80,26 @@ const DeliveryScreen = ({ history }) => {
         </Link>
     );
 
+    const handleFilter = () => {
+        const startOfDay = new Date(tempStartDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        setStartDate(startOfDay);
+        
+        const endOfDay = new Date(tempEndDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        setEndDate(endOfDay);
+        dispatch(listOrders(keyword, pageNumber, delivery, null, type, startDate, endDate, paymentId));
+    };
+
+    const handleClearFilters = () => {
+        setStartDate(null);
+        setEndDate(null);
+        setTempStartDate(null);
+        setTempEndDate(null);
+        setPaymentId('');
+        setKeyword('');
+    };
+
     const renderTable = () => (
         <table className="table table-hover text-nowrap">
             <thead>
@@ -43,6 +108,8 @@ const DeliveryScreen = ({ history }) => {
                     <th>Cliente</th>
                     <th className="d-none d-sm-table-cell">Dirección</th>
                     <th className="d-none d-sm-table-cell">Tel</th>
+                    <th className="d-none d-sm-table-cell">Total</th>
+                    <th className="d-none d-sm-table-cell">Fecha</th>
                     <th>Revisar</th>
                 </tr>
             </thead>
@@ -56,6 +123,14 @@ const DeliveryScreen = ({ history }) => {
                         </td>
                         <td className="d-none d-sm-table-cell">
                             {order.client.phone}
+                        </td>
+                        <td className="d-none d-sm-table-cell h4">
+                            <span className={"badge bg-success"}>
+                                ${order.total}
+                            </span>
+                        </td>
+                        <td className="d-none d-sm-table-cell">
+                            <FormattedDate dateString={order.createdAt} />
                         </td>
                         <td>
                             <Link
@@ -73,7 +148,40 @@ const DeliveryScreen = ({ history }) => {
 
     const renderDeliveries = () => (
         <>
+        
             <div className="card">
+            <div style={{ padding: 16 }}>
+                        <DatePicker
+                            selected={tempStartDate}
+                            onChange={(date) => setTempStartDate(date)}
+                            dateFormat="yyyy/MM/dd"
+                            placeholderText="Fecha de Inicio"
+                        />
+                        <DatePicker
+                            selected={tempEndDate}
+                            onChange={(date) => setTempEndDate(date)}
+                            dateFormat="yyyy/MM/dd"
+                            placeholderText="Fecha de Fin"
+                        />
+                        <TextField
+                            label="Tipo"
+                            value={paymentId}
+                            onChange={(e) => setPaymentId(e.target.value)}
+                            select
+                        >
+                            <MenuItem value="">Todos</MenuItem>
+                            <MenuItem value="3">Efectivo</MenuItem>
+                            <MenuItem value="2">Transferencia</MenuItem>
+                            <MenuItem value="1">Crédito</MenuItem>
+
+                        </TextField>
+                        <Button onClick={handleFilter} variant="contained" color="primary">
+                            Filtrar
+                        </Button>
+                        <Button onClick={handleClearFilters} variant="contained" color="secondary">
+                            Limpiar filtros
+                        </Button>
+                    </div>
                 <div className="card-header">
                     <h3 className="card-title">Domicilios activos</h3>
                     <div className="card-tools">

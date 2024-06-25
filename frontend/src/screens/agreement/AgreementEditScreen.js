@@ -18,6 +18,8 @@ import {
     updateAgreement,
     listAgreementDetails,
 } from "../../actions/agreementActions";
+import Message from "../../components/Message";
+
 
 import { getServices } from '../../actions/serviceActions';
 
@@ -86,9 +88,8 @@ const AgreementEditScreen = ({ history, match }) => {
         if (!name) {
             errorsCheck.name = "Nombre es requerido";
         }
-        if(serviceIds.length<1){
-            errorsCheck.serviceIds = "Debe seleccionar al menos  un servicio";
-
+        if (!serviceIds || serviceIds.length === 0) {
+            errorsCheck.serviceIds = "Debe seleccionar almenos 1 servicio";
         }
 
         if (Object.keys(errorsCheck).length > 0) {
@@ -126,6 +127,8 @@ const AgreementEditScreen = ({ history, match }) => {
                 setData={setName}
                 errors={errors}
             />
+            {errors.name && <Message message={errors.name} color={"warning"} />}
+
             <div>
                 {services && services.map((service) => (
                     <div key={service.id}>
@@ -138,6 +141,8 @@ const AgreementEditScreen = ({ history, match }) => {
                         <label htmlFor={service.id}>{ service.name}</label>
                     </div>
                 ))}
+                {errors.serviceIds && <Message message={errors.serviceIds} color={"warning"} />}
+
             </div>
             
             <hr />

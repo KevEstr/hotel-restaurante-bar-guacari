@@ -33,6 +33,11 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.FLOAT,
                 allowNull: false,
             },
+            availableQuota:{
+                type: DataTypes.FLOAT,
+                allowNull: false,            
+            } 
+
         },
         {
             sequelize,

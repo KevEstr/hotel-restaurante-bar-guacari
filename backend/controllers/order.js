@@ -7,6 +7,10 @@ const Product = require("../models").Product;
 const Ingredient = require("../models").Ingredient;
 const OrderProduct = require("../models").OrderProduct;
 const OrderAudit = require("../models").OrderAudit;
+const ReservationService = require("../models").ReservationService;
+const Reservation = require("../models").Reservation;
+const Service = require("../models").Service;
+
 
 
 //utils
@@ -29,8 +33,19 @@ const {
 exports.getOrders = asyncHandler(async (req, res) => {
     const pageSize = 5;
     const page = Number(req.query.pageNumber) || 1;
-    const delivery = Boolean(req.query.delivery) || false;
+    const delivery = req.query.delivery === undefined ? undefined : true;
+    console.log("DELIVERY: ",req.query.delivery);
     const keyword = req.query.keyword ? req.query.keyword : null;
+    const startDate = req.query.startDate ? req.query.startDate : null;
+    const endDate = req.query.endDate ? req.query.endDate : null;
+
+
+    const type = req.query.type === "true"? true : false;
+    console.log("req.query.type",req.query.type);
+    const paymentId = req.query.paymentId ? Number(req.query.paymentId) : null;
+
+    console.log("TYPE: ",type, startDate, endDate, paymentId, delivery);
+
     let options = {
         include: [
             { model: Client, as: "client" },
@@ -48,6 +63,25 @@ exports.getOrders = asyncHandler(async (req, res) => {
         offset: pageSize * (page - 1),
         limit: pageSize,
     };
+
+    if (startDate && endDate) {
+        const startOfDay = new Date(startDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(endDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        options = {
+            ...options,
+            where: {
+                ...options.where,
+                createdAt: {
+                    [Op.between]: [startOfDay, endOfDay] ,
+                },
+                type: {
+                    [Op.eq]: type,
+                },
+            },
+        };
+    }
 
     if (keyword) {
         options = {
@@ -69,11 +103,37 @@ exports.getOrders = asyncHandler(async (req, res) => {
             where: {
                 ...options.where,
                 delivery: {
-                    [Op.eq]: true,
+                    [Op.eq]: delivery,
                 },
             },
         };
     }
+
+    /*if (type) {
+        options = {
+            ...options,
+            where: {
+                ...options.where,
+                type: {
+                    [Op.eq]: type,
+                },
+            },
+        };
+    }*/
+
+    if (paymentId) {
+        options = {
+            ...options,
+            where: {
+                ...options.where,
+                paymentId: {
+                    [Op.eq]: paymentId,
+                },
+            },
+        };
+    }
+
+    console.log("OPTIONS: ",options)
 
     const count = await Order.count({ ...options });
     const orders = await Order.findAll({ ...options });
@@ -155,24 +215,105 @@ const findDifferences = (oldProducts, newProducts) => {
 //@access   Private/user
 exports.createOrder = asyncHandler(async (req, res) => {
     //get data from request
-    const { total, tableId, clientId, products, delivery, note, userId, paymentId } = req.body;
-
+    const { total, tableId, clientId, products, delivery, note, userId, paymentId, type, confirmExceedQuota } = req.body;
+    
     try {
+        // verificar si el cliente tiene cupo sufuciente
+
+        const client = await Client.findByPk(clientId, {
+            include: {
+                model: Reservation,
+                as: "reservation",
+                include: {
+                    model: Service,
+                    as: "service",
+                    through: {
+                        model: ReservationService,
+                        as: "reservationService",
+                    },
+                },
+            },
+        });
+            
+        if (!client) {
+            return res.status(404).json({ message: "Cliente no encontrado" });
+        }
+        let sufficientQuota = true;
+        let extraPayment = 0;
+
+
+        if (client.has_reservation && client.reservation && client.reservation.service.length > 0) {
+            const foodService = client.reservation.service.find(service => service.id === 1);
+
+            if (foodService) {
+                const reservationService = await ReservationService.findOne({
+                    where: {
+                        reservationId: client.reservation.id,
+                        serviceId: foodService.id,
+                    },
+                });
+
+                if (reservationService) {
+                    if (reservationService.availableQuota < total) {
+                        sufficientQuota = false;
+                        extraPayment = total - reservationService.availableQuota;
+
+                        if (!confirmExceedQuota) {
+                            return res.status(400).json({ 
+                                message: `No hay suficiente cupo para este servicio. El cliente debe pagar ${extraPayment} adicional.`,
+                                extraPayment
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!sufficientQuota && confirmExceedQuota) {
+            const reservationService = await ReservationService.findOne({
+                where: {
+                    reservationId: client.reservation.id,
+                    serviceId: 1, // Assuming service id 1 is for food service
+                },
+            });
+            if (reservationService) {
+                reservationService.availableQuota -=total;
+                await reservationService.save();
+            }
+        } else if (sufficientQuota) {
+            // Adjust the available quota
+            const reservationService = await ReservationService.findOne({
+                where: {
+                    reservationId: client.reservation.id,
+                    serviceId: 1, // Assuming service id 1 is for food service
+                },
+            });
+            if (reservationService) {
+                reservationService.availableQuota -= total;
+                await reservationService.save();
+            }
+        }
+
+
         // Verificar si hay suficiente inventario
         const createdOrder = await Order.create({
             total,
             tableId: !delivery ? tableId : null,
             userId: userId,
             clientId: clientId,
-            delivery: delivery,
+            delivery: type ? false : delivery, 
             note: note,
             paymentId: paymentId,
+            type: type,
+            isPaid: type ? true : false,
         });
+        console.log("type: ",type);
+        console.log("createdOrder: ",createdOrder);
 
         // Crear productos en la orden
         await addProductsInOrder(createdOrder, products);
-
-        // Actualizar la mesa a ocupada si no es una entrega
+        
+        console.log("DELIVERY: ",delivery);
         if (!delivery) {
             await updateTable(createdOrder.tableId, true);
         }
@@ -237,9 +378,34 @@ const adjustInventoryForChanges = async (productChanges, userId, orderId) => {
 //@access   Private/user
 exports.updateOrder = asyncHandler(async (req, res) => {
     const orderId = req.params.id;
-    const { total, tableId, clientId, products, delivery, note, userId, paymentId } = req.body;
+    const { total, tableId, clientId, products, delivery, note, userId, paymentId, confirmExceedQuota  } = req.body;
+    console.log("orderId: ",orderId);
+    console.log("req.body: ",req.body);
 
     try {
+
+        const client = await Client.findByPk(clientId, {
+            include: {
+                model: Reservation,
+                as: "reservation",
+                include: {
+                    model: Service,
+                    as: "service",
+                    through: {
+                        model: ReservationService,
+                        as: "reservationService",
+                    },
+                },
+            },
+        });
+            
+        if (!client) {
+            return res.status(404).json({ message: "Cliente no encontrado" });
+        }
+        
+
+        
+
         const order = await Order.findByPk(orderId);
         if (!order) {
             return res.status(404).json({ message: "Order not found" });
@@ -251,14 +417,73 @@ exports.updateOrder = asyncHandler(async (req, res) => {
             return res.status(400).json({ message: "There is no stock available for the updated products" });
         }*/
 
-        // Actualizar la orden
-        order.total = total;
-        order.clientId = clientId;
-        order.delivery = delivery;
-        order.note = note;
-        order.tableId = !delivery ? tableId : null;
-        order.userId= userId;
-        order.paymentId = paymentId;
+       
+
+        let sufficientQuota = true;
+        let quotaChange = total - order.total;
+        let extraPayment = 0;
+
+        if (client.has_reservation && client.reservation && client.reservation.service.length > 0) {
+            const foodService = client.reservation.service.find(service => service.id === 1);
+
+            if (foodService) {
+                const reservationService = await ReservationService.findOne({
+                    where: {
+                        reservationId: client.reservation.id,
+                        serviceId: foodService.id,
+                    },
+                });
+
+                if (reservationService) {
+                    if (quotaChange > 0 && reservationService.availableQuota < quotaChange) {
+                        sufficientQuota = false;
+                        extraPayment = quotaChange - reservationService.availableQuota;
+
+                        if (!confirmExceedQuota) {
+                            return res.status(400).json({ 
+                                message: `No hay suficiente cupo para este servicio. El cliente debe pagar ${extraPayment} adicional.`,
+                                extraPayment
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        // If not enough quota but confirmed by client, reduce the quota to zero and calculate extra payment
+        if (!sufficientQuota && confirmExceedQuota) {
+            const reservationService = await ReservationService.findOne({
+                where: {
+                    reservationId: client.reservation.id,
+                    serviceId: 1, // Assuming service id 1 is for food service
+                },
+            });
+            if (reservationService) {
+                reservationService.availableQuota -=quotaChange;
+                await reservationService.save();
+            }
+        } else if (sufficientQuota) {
+            // Adjust the available quota
+            const reservationService = await ReservationService.findOne({
+                where: {
+                    reservationId: client.reservation.id,
+                    serviceId: 1, // Assuming service id 1 is for food service
+                },
+            });
+            if (reservationService) {
+                reservationService.availableQuota -= quotaChange;
+                await reservationService.save();
+            }
+        }
+
+         // Actualizar la orden
+         order.total = total;
+         order.clientId = clientId;
+         order.delivery = delivery;
+         order.note = note;
+         order.tableId = !delivery ? tableId : null;
+         order.userId= userId;
+         order.paymentId = paymentId;
 
         const oldProducts = await order.getProducts({
             include: [
@@ -269,6 +494,10 @@ exports.updateOrder = asyncHandler(async (req, res) => {
                         attributes: ['ingredientId', 'productId', 'quantity']
                     }
                 },
+                {
+                    model: OrderProduct,
+                    as: 'OrderProduct', // Asegúrate de que coincida con cómo está definido en tu modelo
+                }
             ]
         });
         
@@ -324,7 +553,14 @@ exports.updateOrderDelivery = asyncHandler(async (req, res) => {
 //@route    DELETE /api/orders/:id
 //@access   Private/user
 exports.deleteOrder = asyncHandler(async (req, res) => {
-    const order = await Order.findByPk(req.params.id);
+    const order = await Order.findByPk(req.params.id, {
+        include: { all: true, nested: true },
+    });
+
+    const orderProducts = await order.products
+    console.log("orderProducts: ", orderProducts);
+    console.log("orderProducts: ", orderProducts[0].OrderProduct);
+
   
     if (order) {
       // Guardar los datos de la reservación en la tabla de auditoría
@@ -341,6 +577,8 @@ exports.deleteOrder = asyncHandler(async (req, res) => {
         table.occupied = false;
         await table.save();
       }
+
+      updateStockAndCreateMovement(orderProducts, order.userId, order.id, 0, false, false, true);
 
       await order.destroy();
 

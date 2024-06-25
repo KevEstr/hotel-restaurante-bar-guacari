@@ -1,22 +1,39 @@
 // controllers/ingredientMovementController.js
 const asyncHandler = require('express-async-handler');
 const { InventoryMovement, Ingredient, User } = require('../models');
+const { Op } = require("sequelize");
+
 
 // @desc    Fetch all ingredient movements
 // @route   GET /api/ingredientmovements
 // @access  Private
 const getIngredientMovements = asyncHandler(async (req, res) => {
-    const { startDate, endDate, type } = req.query;
+    const {keyword, startDate, endDate, type } = req.query;
     let query = {};
 
     if (startDate && endDate) {
+        const startOfDay = new Date(startDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(endDate);
+        endOfDay.setHours(23, 59, 59, 999);
         query.createdAt = { 
-            [Op.between]: [new Date(startDate), new Date(endDate)] 
+            [Op.between]: [startOfDay, endOfDay] 
         };
     }
 
     if (type) {
         query.type = type;
+    }
+
+    if (keyword) {
+        // Agregar lógica para filtrar por palabra clave
+        query[Op.or] = [
+            { id: { [Op.like]: `%${keyword}%` } },
+            { concept: { [Op.like]: `%${keyword}%` } },
+            { '$ingredient.name$': { [Op.like]: `%${keyword}%` } },
+            { '$user.name$': { [Op.like]: `%${keyword}%` } },
+            // Agregar más campos si es necesario
+        ];
     }
 
     const movements = await InventoryMovement.findAll({

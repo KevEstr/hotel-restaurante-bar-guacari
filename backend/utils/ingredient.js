@@ -96,7 +96,7 @@ exports.verifyStock = async (productData) => {
     return true;
 };
 
-exports.updateStockAndCreateMovement = async (productData, userId, orderId, condition, isUpdate, flag) => {
+exports.updateStockAndCreateMovement = async (productData, userId, orderId, condition, isUpdate, flag, isDeleted) => {
     if(isUpdate===true){
         //throw new Error(`IS UPDATE productData ${JSON.stringify(productData, null, 2)}`);
         productData.forEach(async productPair =>  {
@@ -290,9 +290,11 @@ exports.updateStockAndCreateMovement = async (productData, userId, orderId, cond
                                     ingredientId: ingredient.id,
                                     quantity: Number(ingredient.ProductIngredient.quantity) * Number(quantity),
                                     type: 'entrada', // Tipo de movimiento: salida
-                                    concept: flag 
-                                    ? `Entrada de inventario por creación de la orden ${orderId}` 
-                                    : `Entrada de inventario por modificación de la orden ${orderId}`,
+                                    concept: isDeleted
+                                        ? `Entrada de inventario por eliminación de la orden ${orderId}`
+                                        : flag
+                                            ? `Entrada de inventario por creación de la orden ${orderId}`
+                                            : `Entrada de inventario por modificación de la orden ${orderId}`,
                                     totalPrice: Number(ingredient.ProductIngredient.quantity) * Number(quantity) * Number(ingredientStock.averagePrice),
                                 });
                 
@@ -305,7 +307,7 @@ exports.updateStockAndCreateMovement = async (productData, userId, orderId, cond
                         // es un producto simple
                         const productStock = await Product.findByPk(product.id);
                         // Calcular la cantidad a deducir del stock del producto
-                        const quantityToDeduct = product.quantity;
+                        const quantityToDeduct = product.OrderProduct?.quantity || product.quantity;
                         // Actualizar el stock del producto
                         productStock.stock = Number(productStock.stock)+quantityToDeduct;
                         await productStock.save();
@@ -315,9 +317,11 @@ exports.updateStockAndCreateMovement = async (productData, userId, orderId, cond
                             productId: product.id,
                             quantity: quantityToDeduct,
                             type: 'entrada', // Tipo de movimiento: entrada
-                            concept: flag 
-                                    ? `Entrada de inventario por creación de la orden ${orderId}` 
-                                    : `Entrada de inventario por modificación de la orden ${orderId}`,
+                            concept: isDeleted
+                                    ? `Entrada de inventario por eliminación de la orden ${orderId}`
+                                    : flag
+                                        ? `Entrada de inventario por creación de la orden ${orderId}`
+                                        : `Entrada de inventario por modificación de la orden ${orderId}`,
                             totalPrice: quantityToDeduct * Number(productStock.averagePrice),
                         });
                         if (!movement) {

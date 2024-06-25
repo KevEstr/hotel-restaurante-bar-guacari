@@ -5,7 +5,14 @@ import Header from "./components/Header";
 import Menu from "./components/Menu";
 import Footer from "./components/Footer";
 
+
 /* SCREENS */
+
+import FridgeOrderCreateScreen from "./screens/order/FridgeOrderCreateScreen";
+import FridgeProductScreen from "./screens/product/FridgeProductScreen";
+import OrderFridgeScreen from "./screens/order/OrderFridgeScreen";
+
+
 import OrderScreen from "./screens/order/OrderScreen";
 import DeliveryScreen from "./screens/order/DeliveryScreen";
 import OrderCreateScreen from "./screens/order/OrderCreateScreen";
@@ -29,6 +36,7 @@ import ReservationScreen from "./screens/reservation/ReservationScreen";
 import ReservationCreateScreen from "./screens/reservation/ReservationCreateScreen";
 import ReservationEditScreen from "./screens/reservation/ReservationEditScreen";
 import ReservationViewScreen from "./screens/reservation/ReservationViewScreen";
+
 
 import ProductScreen from "./screens/product/ProductScreen";
 import ProductEditScreen from "./screens/product/ProductEditScreen";
@@ -113,6 +121,8 @@ const Main = () => {
                     />
 
                     <PrivateRoute path="/product" component={ProductScreen} />
+                    <PrivateRoute path="/fridgeproduct" component={FridgeProductScreen} />
+
 
                     <PrivateRoute
                         path="/room/:id/edit"
@@ -176,7 +186,14 @@ const Main = () => {
                         path="/order/create"
                         component={OrderCreateScreen}
                     />
+
+                    <PrivateRoute
+                        path="/fridgeorder/create"
+                        component={FridgeOrderCreateScreen}
+                    />
                     <PrivateRoute path="/order" component={OrderScreen} />
+                    <PrivateRoute path="/fridgeorder" component={OrderFridgeScreen} />
+
                     <PrivateRoute path="/reservation" component={ReservationScreen} />
                     <PrivateRoute
                         path="/not-authorized"

@@ -8,6 +8,8 @@ import Modal from "react-modal";
 import Input from "../../components/form/Input";
 import ModalButton from "../../components/ModalButton";
 import DataTableLoader from "../../components/loader/DataTableLoader";
+import Message from "../../components/Message";
+
 
 /* Actions */
 import { listIngredients, createIngredient, deleteIngredient } from "../../actions/ingredientActions";
@@ -24,6 +26,7 @@ const IngredientScreen = ({ history }) => {
     const [name, setName] = useState("");
     const [ingredientType, setIngredientType] = useState(false);
     const [stock, setStock] = useState(0);
+    const [minQty, setMinQty] = useState(0);
 
     const [errors, setErrors] = useState({});
 
@@ -55,7 +58,6 @@ const IngredientScreen = ({ history }) => {
     useEffect(() => {
         if (createSuccess) {
             setName("");
-            setIngredientType(false);
             setStock(0);
             setModalIsOpen(false);
         }
@@ -98,13 +100,13 @@ const IngredientScreen = ({ history }) => {
         setConfirmDelete(true);
     };
 
-    useEffect(() => {
+    /*useEffect(() => {
         const negativeStockIngredients = ingredients.filter(ingredient => ingredient.stock < 0);
         if (negativeStockIngredients.length > 0) {
             const ingredientNames = negativeStockIngredients.map(ingredient => ingredient.name).join(', ');
             alert(`EXISTENCIA NEGATIVA: Se recomienda realizar inventario de los ingredientes ${ingredientNames} y realizar la entrada respectiva`);
         }
-    }, [ingredients]);
+    }, [ingredients]);*/
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -115,8 +117,8 @@ const IngredientScreen = ({ history }) => {
         if (!name) {
             errorsCheck.name = "Nombre es requerido";
         }
-        if (ingredientType === null || ingredientType === undefined){
-            errorsCheck.ingredientType = "Tipo de Ingrediente es requerido";
+        if (!minQty) {
+            errorsCheck.minQty = "Cantidad mínima es requerida para ingredientes";
         }
         if (Object.keys(errorsCheck).length > 0) {
             setErrors(errorsCheck);
@@ -127,12 +129,9 @@ const IngredientScreen = ({ history }) => {
         if (Object.keys(errorsCheck).length === 0) {
             const ingredient = {
                 name: name,
-                ingredientType: ingredientType,
-                stock: 45,
-                userId: userInfo.id
+                stock: 0,
+                minQty: minQty,
             };
-
-            console.log('TIPO DE INGREDIENTE ENVIADO: ', ingredient.ingredientType);
 
             dispatch(createIngredient(ingredient));
         }
@@ -189,16 +188,10 @@ const IngredientScreen = ({ history }) => {
                         errors={errors}
                     />
 
-                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
-                    <label style={{ fontWeight: 'normal', marginRight: '30px' }}>Cantidad Por:</label>
-                    <RadioButtonGroup
-                        name="ingredientType"
-                        options={radioOptions}
-                        selectedOption={ingredientType}
-                        setSelectedOption={setIngredientType}
-                        errors={errors}
-                    />
-                </div>
+                    <div className="col-12 col-md-4 mb-3" style={{ textAlign: 'center', marginTop: '10px' }}>
+                        <Input name={"cantidad mínima en gr/und"} type={"number"} data={minQty} setData={setMinQty} errors={errors} />
+                        {errors.minQty && <Message message={errors.minQty} color={"warning"} />}
+                    </div>
                     
 
                     <button type="submit" className="btn btn-primary">
@@ -216,27 +209,41 @@ const IngredientScreen = ({ history }) => {
         </>
     );
 
+    const renderNegativeStockIngredients = () => {
+        const negativeStockIngredients = ingredients.filter(ingredient => ingredient.stock < 0);
+        if (negativeStockIngredients.length === 0) return null;
+
+        return (
+            <div className="alert alert-danger mt-3">
+                <strong>EXISTENCIA NEGATIVA:</strong> Se recomienda realizar inventario de los siguientes ingredientes y realizar la entrada respectiva:
+                <ul>
+                    {negativeStockIngredients.map(ingredient => (
+                        <li key={ingredient.id}>{ingredient.name}</li>
+                    ))}
+                </ul>
+            </div>
+        );
+    };
+
     const renderIngredientsTable = () => (
         <table className="table table-hover text-nowrap">
             <thead>
                 <tr>
                     <th>ID</th>
                     <th>Nombre</th>
-                    <th>Tipo de Ingrediente</th>
+                    <th>Cantidad mínima</th>
                     <th>Inventario</th>
-                    <th className="d-none d-sm-table-cell">Creado en</th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
                 {ingredients.map((ingredient) => (
-                    <tr key={ingredient.id}>
+                    <tr key={ingredient.id} style={{ backgroundColor: ingredient.stock <= ingredient.minQty ? '#f8d7da' : 'inherit' }}>
                         <td>{ingredient.id}</td>
                         <td>{ingredient.name}</td>
-                        <td>{ingredient.ingredientType ? 'Peso' : 'Unidad'}</td>
-                        <td>{ingredient.stock}</td>
-                        <td className="d-none d-sm-table-cell">
-                            {ingredient.createdAt.slice(0, 10)}
+                        <td>{ingredient.minQty}</td>
+                        <td style={{ color: ingredient.stock < 0 ? 'red' : 'inherit' }}>
+                            {ingredient.stock}
                         </td>
                         <td>
                             <Link
@@ -269,6 +276,7 @@ const IngredientScreen = ({ history }) => {
                 <div className="container-fluid">
                     {renderModalCreateIngredient()}
                     {renderDeleteConfirmationModal()}
+                    {renderNegativeStockIngredients()}
 
                     <div className="row">
                         <div className="col-12">

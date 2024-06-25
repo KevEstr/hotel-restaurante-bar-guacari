@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import Modal from "react-modal";
+import { modalStyles } from "../../utils/styles";
 
 /* Components */
 import Message from "../../components/Message";
@@ -36,6 +38,8 @@ const OrderEditScreen = ({ history, match }) => {
 
     const [table, setTable] = useState(null);
     const [total, setTotal] = useState(0);
+    const [prevTotal, setPrevTotal] = useState(0);
+
     const [client, setClient] = useState(null);
     const [delivery, setDelivery] = useState(false);
     const [note, setNote] = useState("");
@@ -45,7 +49,12 @@ const OrderEditScreen = ({ history, match }) => {
     const [ingredientStocks, setIngredientStocks] = useState({});
     const [productStocks, setProductStocks] = useState({});
     const [user, setUser] = useState(null);
-
+    const [selectedCategory, setSelectedCategory] = useState("Todas");
+    const [categories, setCategories] = useState([]);  // Definimos el estado de categorías
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [modal, setModal] = useState(false);
+    const [difference, setDifference] = useState(false);
+    const [availableQuota, setAvailableQuota] = useState(false);
 
 
     const dispatch = useDispatch();
@@ -66,7 +75,8 @@ const OrderEditScreen = ({ history, match }) => {
     const userList = useSelector((state) => state.userList);
     const { loading:usersLoading, error:usersError, users, page, pages } = userList;
 
-    
+    const categoryList = useSelector((state) => state.categoryList);
+    const { categories: fetchedCategories } = categoryList;
 
     //order edit state
     const orderUpdate = useSelector((state) => state.orderUpdate);
@@ -89,6 +99,12 @@ const OrderEditScreen = ({ history, match }) => {
     }, [successUpdate]);
 
     useEffect(() => {
+        if (fetchedCategories && fetchedCategories.length > 0) {
+            setCategories([{ id: "all", name: "Todas" }, ...fetchedCategories]);
+        }
+    }, [fetchedCategories]);
+
+    useEffect(() => {
         //load order
         if (order) {
             console.log("ORDEN PREVIA: ",order)
@@ -103,6 +119,7 @@ const OrderEditScreen = ({ history, match }) => {
                 setNote(order.note ? order.note : note);
                 setDelivery(order.delivery ? order.delivery : delivery);
                 setUser(order.user.id? order.user.id : null)
+                setPrevTotal(order.total? order.total : null);
                 console.log("Usuarios: ", users)
 
                 if (order.products) {
@@ -149,6 +166,26 @@ const OrderEditScreen = ({ history, match }) => {
             setErrors({});
         }
 
+        const clientObj = clients.find((c) => c.id === client);
+        console.log("clientObj: ", clientObj);
+        if (clientObj.has_reservation && clientObj.reservation && clientObj.reservation.service.length > 0) {
+            const foodService = clientObj.reservation.service.find(service => service.id === 1);
+            console.log("foodService: ", foodService);
+            if (foodService && foodService.ReservationService.availableQuota < (total-prevTotal)) {
+                // Calcular la diferencia
+                const difference = (total-prevTotal) - foodService.ReservationService.availableQuota;
+                console.log("difference: ", difference);
+                console.log("prevTotal: ", prevTotal);
+                console.log("total: ", total);
+
+                // Mostrar el modal de confirmación de pago adicional
+                setModal(true);
+                setDifference(difference);
+                setAvailableQuota(foodService.ReservationService.availableQuota) // Establecer la diferencia en el estado
+                return; // Detener la función hasta que se confirme la acción
+            }
+        }
+
         if (Object.keys(errorsCheck).length === 0) {
             // Crear un array para almacenar los productos con sus ingredientes
             const productsWithIngredients = productsInOrder.map((product) => {
@@ -177,19 +214,91 @@ const OrderEditScreen = ({ history, match }) => {
                 }
             });
         
-            const order = {
-                id: orderId,
-                total: total,
-                tableId: !delivery ? table : null,
-                clientId: client,
-                products: productsInOrder,
-                delivery: delivery,
-                note: note,
-                userId: user,
-            };
-            console.log("ORDEN A ACTUALIZAR: ",order)
-            dispatch(updateOrder(order));
+            proceedWithOrder();
         }
+    };
+
+    const proceedWithOrder = () => {
+        console.log("USUARIO: ", user);
+        console.log("Productos en la orden: ", productsInOrder);
+    
+        /* Create order */
+        const newOrder = {
+            id: orderId,
+            total: total,
+            tableId: !delivery ? table : 0,
+            clientId: client,
+            products: productsInOrder,
+            delivery: delivery,
+            note: note,
+            userId: user,
+            confirmExceedQuota: true,
+        };
+    
+        /* Make request */
+        console.log("ORDEN A CREAR: ", newOrder);
+        dispatch(updateOrder(newOrder));
+    };
+
+    const renderModalExceedQuota = () => (
+        <Modal
+            style={modalStyles}
+            isOpen={modal}
+            onRequestClose={() => setModal(false)}
+        >
+            <div className="modal-body">
+            <p className="text-center">
+                La orden excede el cupo disponible ${availableQuota} por ${difference}. ¿El cliente desea proceder y pagar la diferencia?
+            </p>
+            <div className="modal-footer">
+                <button onClick={proceedWithOrder} className="btn btn-primary">
+                    Confirmar
+                </button>
+                <button onClick={() => setModal(false)} className="btn btn-danger">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+        </Modal>
+    );
+
+    const handleCategoryFilter = (categoryName) => {
+        setSelectedCategory(categoryName);
+    };
+
+    const renderCategoryDropdown = () => (
+        <div className="d-flex justify-content-between align-items-center">
+            <h3 className="card-title mb-0">Crear órden</h3>
+            <div className="dropdown">
+                <button
+                    className="btn btn-primary dropdown-toggle"
+                    type="button"
+                    onClick={toggleDropdown}
+                >
+                    Filtro
+                </button>
+                <div
+                    className={`dropdown-menu dropdown-menu-right ${isDropdownOpen ? 'show' : ''}`}
+                    style={{ minWidth: '200px' }}
+                >
+                    {categories.map((category) => (
+                        <button
+                            key={category.id}
+                            className={`dropdown-item ${
+                                selectedCategory === category.name ? 'active' : ''
+                            }`}
+                            onClick={() => handleCategoryFilter(category.name)}
+                        >
+                            {category.name}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+
+    const toggleDropdown = () => {
+        setIsDropdownOpen(!isDropdownOpen);
     };
 
     const filterFreeTables = () => {
@@ -209,6 +318,8 @@ const OrderEditScreen = ({ history, match }) => {
             ingredientStocks={ingredientStocks}
             productStocks={productStocks}
             setProductStocks={setProductStocks}
+            selectedCategory={selectedCategory === "Todas" ? null : selectedCategory}
+            setSelectedCategory={setSelectedCategory}
         />
     );
 
@@ -324,6 +435,7 @@ const OrderEditScreen = ({ history, match }) => {
                             <div className="card">
                                 <div className="card-header">
                                     <h3 className="card-title"> </h3>
+                                    {renderCategoryDropdown()}
                                     <Loader variable={loading} />
                                     <Message message={error} color={"danger"} />
                                 </div>
@@ -378,6 +490,8 @@ const OrderEditScreen = ({ history, match }) => {
     </div>
 </div>
 {renderSubmitButton()}
+{renderModalExceedQuota()}
+
 
                                 </div>
                                 {/* /.card-body */}

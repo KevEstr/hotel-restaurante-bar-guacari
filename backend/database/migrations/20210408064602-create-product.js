@@ -39,6 +39,21 @@ module.exports = {
         type: Sequelize.BOOLEAN,
         allowNull: false,
     },
+    paymentId: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    minQty: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    type: {
+      type: Sequelize.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,

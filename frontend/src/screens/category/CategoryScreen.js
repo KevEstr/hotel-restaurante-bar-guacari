@@ -11,6 +11,8 @@ import DataTableLoader from "../../components/loader/DataTableLoader";
 import LoaderHandler from "../../components/loader/LoaderHandler";
 import Search from "../../components/Search";
 import Pagination from "../../components/Pagination";
+import Message from "../../components/Message";
+
 
 /* Actions */
 import { createCategory, listCategories, deleteCategory } from "../../actions/categoryActions";
@@ -137,6 +139,7 @@ const CategoryScreen = ({ history, match }) => {
                         setData={setName}
                         errors={errors}
                     />
+                    {errors.name && <Message message={errors.name} color={"warning"} />}
 
                     <hr />
                     <button type="submit" className="btn btn-primary">

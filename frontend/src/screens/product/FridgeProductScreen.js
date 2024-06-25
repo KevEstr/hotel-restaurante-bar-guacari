@@ -19,12 +19,17 @@ import { listIngredients } from "../../actions/ingredientActions";
 import { modalStyles } from "../../utils/styles";
 import useWindowSize from '../../utils/sizeWindow';
 
+
+
 Modal.setAppElement("#root");
 
-const ProductScreen = ({ history }) => {
+const FridgeProductScreen = ({ history }) => {
     const [name, setName] = useState("");
     const [price, setPrice] = useState(0);
     const [minQty, setMinQty] = useState(0);
+
+
+
 
     const [stock, setStock] = useState(0);
     const [category, setCategory] = useState(null);
@@ -62,8 +67,9 @@ const ProductScreen = ({ history }) => {
             resetForm();
             setModalIsOpen(false);
         }
-        dispatch(listProducts(keyword, pageNumber,selectedCategory));
-    }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess, selectedCategory, deleteSuccess]);
+        let type= true;
+        dispatch(listProducts(null, null, type, null));
+    }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess, deleteSuccess]);
 
     
     const resetForm = () => {
@@ -95,13 +101,8 @@ const ProductScreen = ({ history }) => {
         if (isComposite && ingredientsInOrder.length === 0) {
             errorsCheck.ingredientsInOrder = "Se necesitan ingredientes";
         }
-        if (!minQty) {
+        if (isSimple && !minQty) {
             errorsCheck.minQty = "Cantidad mínima es requerida para productos simples";
-        }
-
-        if (!isSimple &&!isComposite) {
-            errorsCheck.isSimple = "Es necesario especificar si es producto simple o compuesto";
-            errorsCheck.isComposite = "Es necesario especificar si es producto simple o compuesto";
         }
 
 
@@ -122,6 +123,7 @@ const ProductScreen = ({ history }) => {
             isComposite: isComposite,  // Include this to indicate product type
             ingredients: isComposite ? ingredientsInOrder : [], // Solo incluir ingredientes si es compuesto
             minQty: isSimple? minQty : null, // Solo incluir cantidad mínima si es simple
+            type: true,
         };
 
         dispatch(createProduct(product));
@@ -273,12 +275,10 @@ const ProductScreen = ({ history }) => {
                                     checked={isSimple}
                                     onChange={handleSimpleChange}
                                 />
-                                {errors.isSimple && <Message message={errors.isSimple} color={"warning"} />}
                                 <label className="form-check-label" htmlFor="simpleProduct">
                                     Producto Simple
                                 </label>
                             </div>
-                            
                         </div>
                         <div className="col-12 col-md-4 mb-3" style={{ textAlign: 'center', marginTop: '10px' }}>
                             <div className="form-check">
@@ -293,8 +293,6 @@ const ProductScreen = ({ history }) => {
                                     Producto Compuesto
                                 </label>
                             </div>
-                            {errors.isComposite && <Message message={errors.isComposite} color={"warning"} />}
-
         </div>
     </div>
 </div>
@@ -365,7 +363,7 @@ const renderProductsTable = () => (
                 <tr 
                     key={product.id}
                     style={{ backgroundColor: !product.isComposite &&product.stock <= product.minQty ? '#f8d7da' : 'inherit' }}
-                >
+                >{console.log(product)}
                     <td>{product.id}</td>
                     <td>{product.name}</td>
                     <td>{product.price}</td>
@@ -373,6 +371,7 @@ const renderProductsTable = () => (
                     <td className="d-none d-sm-table-cell">{!product.isComposite ? product.minQty : ''}</td>
                     <td className="d-none d-sm-table-cell">{product.category.name}</td>
                     <td>
+                        
                         <Link to={`/product/${product.id}/edit`} className="btn btn-warning btn-lg mr-3">
                             Editar
                         </Link>
@@ -428,4 +427,4 @@ const renderProductsTable = () => (
     );
 };
 
-export default ProductScreen;
+export default FridgeProductScreen;

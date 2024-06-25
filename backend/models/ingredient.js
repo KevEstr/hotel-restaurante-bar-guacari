@@ -26,9 +26,9 @@ module.exports = (sequelize, DataTypes) => {
     Ingredient.init(
         {
             name: DataTypes.TEXT,
-            ingredientType: DataTypes.BOOLEAN,
             stock: DataTypes.DECIMAL(10, 2),
-            averagePrice: DataTypes.DECIMAL(10, 2)
+            averagePrice: DataTypes.DECIMAL(10, 2),
+            minQty: DataTypes.INTEGER
         },
         {
             sequelize,

@@ -6,12 +6,10 @@ exports.ingredientCreateValidator = [
         .withMessage('Name is required')
         .isString()
         .withMessage('Name must be a string'),
-    check('ingredientType')
+    check('minQty')
         .notEmpty()
-        .withMessage('ingredientType is required')
-        .isBoolean()
-        .withMessage('Tipo de ingrediente es requerido'),
-    check('stock')
+        .withMessage('Cantidad mínima es requerida')
         .isNumeric()
-        .withMessage('Stock must be a number')
+        .withMessage('Canitdad mínima debe ser boolean'),	
+
 ]

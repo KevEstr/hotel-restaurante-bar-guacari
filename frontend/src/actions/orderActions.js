@@ -126,8 +126,9 @@ export const listOrdersByClient = (clientId) => async (dispatch, getState) => {
 };
 
 //get all orders with pagination
-export const listOrders = (options) => async (dispatch, getState) => {
-    const { keyword, pageNumber, delivery, clientId } = options;
+export const listOrders = (keyword='', pageNumber='', delivery='', clientId='', type='', startDate='', endDate='', paymentId='') => async (dispatch, getState) => {
+    //const { keyword, pageNumber, delivery, clientId, type, startDate, endDate, paymentId } = options;
+    //console.log("OPTIONS ACTIONS: ",options);
     try {
         dispatch({
             type: ORDER_LIST_REQUEST,
@@ -146,13 +147,20 @@ export const listOrders = (options) => async (dispatch, getState) => {
         };
 
         // Construct query params
-        let query = `/api/orders/?`;
-        if (keyword) query += `keyword=${keyword}&`;
-        if (pageNumber) query += `pageNumber=${pageNumber}&`;
-        if (delivery) query += `delivery=true&`;
-        if (clientId) query += `clientId=${clientId}`;
+        /*let query = `/api/orders/?type=${type}`;
+        if (keyword) query += `&keyword=${keyword}`;
+        if (pageNumber) query += `&pageNumber=${pageNumber}`;
+        if (delivery) query += `&delivery=true`;
+        if (clientId) query += `&clientId=${clientId}`;
+        if (startDate) query += `&startDate=${startDate}`;
+        if (endDate) query += `&endDate=${endDate}`;
+        if (paymentId) query += `&paymentId=${paymentId}`;*/
 
-        const { data } = await axios.get(query, config);
+
+        const { data } = await axios.get(`/api/orders`,{
+            params: { keyword, pageNumber, delivery, clientId, type, startDate, endDate, paymentId },
+            ...config,
+        });
 
         dispatch({
             type: ORDER_LIST_SUCCESS,

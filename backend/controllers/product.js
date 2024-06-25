@@ -17,7 +17,7 @@ const {
 //@route    POST /api/products
 //@access   Private/product
 exports.createProduct = asyncHandler(async (req, res) => {
-    const { name, price, categoryId, isComposite, ingredients } = req.body;
+    const { name, price, categoryId, isComposite, ingredients, minQty, type } = req.body;
     const category = await Category.findByPk(categoryId);
 
     if (!category) {
@@ -30,6 +30,8 @@ exports.createProduct = asyncHandler(async (req, res) => {
         price,
         isComposite,
         stock: isComposite ? 0 : 0, // Solo asigna stock si es un producto simple
+        minQty: isComposite ? 0 : minQty,
+        type: type,
     });
 
     if (isComposite && ingredients && ingredients.length > 0) {
@@ -47,7 +49,7 @@ exports.createProduct = asyncHandler(async (req, res) => {
 //@route    PUT /api/products/:id
 //@access   Private/user
 exports.updateProduct = asyncHandler(async (req, res) => {
-    const { name, price, categoryId, isComposite, ingredients, quantity, concept, operation, totalPrice} = req.body;
+    const { name, price, categoryId, isComposite, ingredients, quantity, concept, operation, totalPrice, minQty} = req.body;
     const userId = req.user.id;
     // Buscar el producto por ID
     const product = await Product.findByPk(req.params.id);
@@ -69,6 +71,9 @@ exports.updateProduct = asyncHandler(async (req, res) => {
         }
         
         if(isComposite===false){
+            if(minQty){
+                product.minQty=minQty;
+            }
 
             let oldStock = Number(product.stock);
             if(oldStock<0){
@@ -171,6 +176,7 @@ exports.getProducts = asyncHandler(async (req, res) => {
     const page = Number(req.query.pageNumber) || 1;
 
     const keyword = req.query.keyword ? req.query.keyword : null;
+    const type = req.query.type !== undefined ? req.query.type : null;
 
     let options = {
         include: [
@@ -200,6 +206,13 @@ exports.getProducts = asyncHandler(async (req, res) => {
             },
         };
     }
+    if (type !== null) {
+        options.where = {
+            ...options.where,
+            type: type === 'true',
+        };
+    }
+    
     const count = await Product.count({ ...options });
     const products = await Product.findAll({ ...options });
 

@@ -32,6 +32,7 @@ const ProductsTable = ({
     setIngredientStocks,
     productStocks,
     setProductStocks,
+    type,
 }) => {
     //add product to order
     const dispatch = useDispatch();
@@ -92,7 +93,7 @@ const ProductsTable = ({
 
     useEffect(() => {
         dispatch(listAllIngredients());
-        dispatch(listProducts());
+        dispatch(listProducts(null, null, type, null));
     }, [dispatch]);
 
     /*useEffect(() => {
@@ -157,9 +158,9 @@ const ProductsTable = ({
 
 
     useEffect(() => {
-        let allProducts = dispatch(listProducts(keyword, pageNumber));
+        let allProducts = dispatch(listProducts(keyword, pageNumber, type));
         console.log("TABLE ALL PRODUCTS: ",allProducts)
-        dispatch(listProducts(keyword, pageNumber));
+        dispatch(listProducts(keyword, null, type, pageNumber));
     }, [dispatch,keyword, pageNumber]);
 
     useEffect(() => {
@@ -186,7 +187,7 @@ const ProductsTable = ({
     //refresh products table
     const refreshProducts = (e) => {
         e.preventDefault();
-        dispatch(listProducts(keyword, pageNumber));
+        dispatch(listProducts(keyword, null, type, pageNumber));
     };
 
     const mapProducts = (productsToMap) => {
@@ -224,58 +225,61 @@ const ProductsTable = ({
 
     const renderProducts1 = () => {
         const uniqueCategories = [...new Set(products.map(product => product.category.name))];
+        const filteredProductsByCategory = selectedCategory ? filteredProducts.filter(product => product.category.name === selectedCategory) : filteredProducts;
     
         return (
             <div className="row" style={{ overflowY: 'auto', maxHeight: '600px' }}>
                 {uniqueCategories.map(category => (
-                    <div key={category} className="col-md-12 mb-4">
-                        <h2 style={{ marginBottom: '20px', marginTop: '20px'}}>{category}</h2>
-                        <div className="row">
-                            {filteredProducts.map(product => {
-                                if (product.category.name === category) {
-                                    const isInOrder = inOrder(product, productsInOrder);
-                                    return (
-                                        <div key={product.id} className="col-md-3 d-flex justify-content-center mb-3">
-                                            <button
-                                                className={`btn ${getCategoryBackgroundClass(product.category.name)}`}
-                                                onClick={(e) => addProduct(e, product)}
-                                                disabled={isInOrder}
-                                                style={{
-                                                    width: '300px', // Ajusta este valor al tamaño deseado
-                                                    height: '200px', // Ajusta este valor al tamaño deseado
-                                                    margin: '1px', // Espaciado entre los cuadros
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    justifyContent: 'center',
-                                                    alignItems: 'center',
-                                                    textAlign: 'center',
-                                                    border: '1px solid #ddd',
-                                                    borderRadius: '5px',
-                                                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-                                                }}
-                                            >
-                                                <div className="button-content">
-                                                    <h4 style={{ fontSize: '24px', lineHeight: '1.2', margin: '0', fontWeight: 'normal' }}>
-                                                        <LinesEllipsis
-                                                            text={product.name}
-                                                            maxLine={3}
-                                                            ellipsis="..."
-                                                            trimRight
-                                                            basedOn="letters"
-                                                        />
-                                                    </h4>
-                                                    {isInOrder && (
-                                                        <p style={{ fontSize: '12px', margin: '0' }}>En la orden</p>
-                                                    )}
-                                                </div>
-                                            </button>
-                                        </div>
-                                    );
-                                }
-                                return null;
-                            })}
+                    filteredProductsByCategory.length > 0 && filteredProductsByCategory.some(product => product.category.name === category) && (
+                        <div key={category} className="col-md-12 mb-4">
+                            <h2 style={{ marginBottom: '20px', marginTop: '20px'}}>{category}</h2>
+                            <div className="row">
+                                {filteredProductsByCategory.map(product => {
+                                    if (product.category.name === category) {
+                                        const isInOrder = inOrder(product, productsInOrder);
+                                        return (
+                                            <div key={product.id} className="col-md-3 d-flex justify-content-center mb-3">
+                                                <button
+                                                    className={`btn ${getCategoryBackgroundClass(product.category.name)}`}
+                                                    onClick={(e) => addProduct(e, product)}
+                                                    disabled={isInOrder}
+                                                    style={{
+                                                        width: '300px', // Ajusta este valor al tamaño deseado
+                                                        height: '200px', // Ajusta este valor al tamaño deseado
+                                                        margin: '1px', // Espaciado entre los cuadros
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        justifyContent: 'center',
+                                                        alignItems: 'center',
+                                                        textAlign: 'center',
+                                                        border: '1px solid #ddd',
+                                                        borderRadius: '5px',
+                                                        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+                                                    }}
+                                                >
+                                                    <div className="button-content">
+                                                        <h4 style={{ fontSize: '24px', lineHeight: '1.2', margin: '0', fontWeight: 'normal' }}>
+                                                            <LinesEllipsis
+                                                                text={product.name}
+                                                                maxLine={3}
+                                                                ellipsis="..."
+                                                                trimRight
+                                                                basedOn="letters"
+                                                            />
+                                                        </h4>
+                                                        {isInOrder && (
+                                                            <p style={{ fontSize: '12px', margin: '0' }}>En la orden</p>
+                                                        )}
+                                                    </div>
+                                                </button>
+                                            </div>
+                                        );
+                                    }
+                                    return null;
+                                })}
+                            </div>
                         </div>
-                    </div>
+                    )
                 ))}
             </div>
         );
