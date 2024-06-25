@@ -14,7 +14,7 @@ module.exports = {
         allowNull: false,
       },
       concept: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(40),
         allowNull: true,
       },
       deletedBy: {

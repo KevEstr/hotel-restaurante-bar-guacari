@@ -16,19 +16,23 @@ module.exports = (sequelize, DataTypes) => {
             });
             this.belongsTo(models.Agreement, { foreignKey: "agreementId", as: "agreement" });
             this.belongsTo(models.Reservation, { foreignKey: "reservationId", as: "reservation" });
+
+            Client.hasMany(models.Laundry, {
+                foreignKey: "clientId",
+                as: "laundries",
+            });
+            
         }
     }
     Client.init(
         {
             name: DataTypes.STRING,
-            address: DataTypes.STRING,
+            lastnames: DataTypes.STRING,
             phone: DataTypes.STRING,
-            email: DataTypes.STRING,
             dni: DataTypes.STRING,
             agreementId: DataTypes.INTEGER,
             has_reservation: DataTypes.BOOLEAN,
             has_order: DataTypes.BOOLEAN,
-            reservationId: DataTypes.INTEGER,
         },
         {
             sequelize,

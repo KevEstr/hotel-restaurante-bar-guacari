@@ -134,6 +134,12 @@ const Menu = ({ history }) => {
                                 placement="right"
                                 overlay={<Tooltip id="tooltip-top">Visualiza el histórico de reservas</Tooltip>}> 
                                 <li className="nav-item">
+                                    <Link to="/laundry" className="nav-link">
+                                        <i className="nav-icon fas fa-solid fa-soap" />{" "}
+                                        <p> Lavandería </p>
+                                    </Link>
+                                </li>
+                                <li className="nav-item">
                                     <Link to="/reservation" className="nav-link">
                                         <i className="nav-icon far fa-clipboard" />{" "}
                                         <p> Historial Reservas</p>

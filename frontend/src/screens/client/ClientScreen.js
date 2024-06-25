@@ -19,7 +19,6 @@ import Message from "../../components/Message";
 import { createClient, listClients, deleteClient} from "../../actions/clientActions";
 import { listAgreements } from "../../actions/agreementActions";
 
-
 /* Styles */
 import { modalStyles } from "../../utils/styles";
 
@@ -38,11 +37,11 @@ const ClientScreen = ({ history, match}) => {
     const [keyword, setKeyword] = useState("");
 
     const [name, setName] = useState("");
-    const [address, setAddress] = useState("");
+    const [lastnames, setLastNames] = useState("");
     const [phone, setPhone] = useState("");
-    const [email, setEmail] = useState("");
     const [dni, setDni] = useState("");
     const [has_reservation, setHasReservation] = useState(false);
+    const [has_order, setHasOrder] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [clientIdToDelete, setClientIdToDelete] = useState(null);
 
@@ -71,15 +70,16 @@ const ClientScreen = ({ history, match}) => {
 
     useEffect(() => {
         dispatch(listClients(keyword, pageNumber));
+        dispatch(listAgreements());
         if (createSuccess) {
             setName("");
-            setAddress("");
+            setLastNames("");
             setPhone("");
-            setEmail("");
             setDni("");
             setAgreement("");
             setModalIsOpen(false);
             setHasReservation(false);
+            setHasOrder(false);
         }
     }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess, deleteSuccess]);
 
@@ -119,29 +119,18 @@ const ClientScreen = ({ history, match}) => {
         setConfirmDelete(true);
     };
 
+    const getAgreementName = (agreementId) => {
+        if (agreements && agreements.length > 0) {
+          const agreement = agreements.find((agreement) => agreement.id === agreementId);
+          return agreement ? agreement.name : '';
+        }
+        return '';
+      };
 
     const handleSubmit = (e) => {
         e.preventDefault();
 
         let errorsCheck = {};
-
-        if (!name) {
-            errorsCheck.name = "Nombre es requerido";
-        }
-        if (!address) {
-            errorsCheck.address = "Dirección es requerida";
-        }
-
-        if (!phone) {
-            errorsCheck.phone = "Teléfono es requerido";
-        }
-        if (!email) {
-            errorsCheck.email = "Email es requerido";
-        }
-
-        if (!dni) {
-            errorsCheck.dni = "CC requerida";
-        }
 
         if (Object.keys(errorsCheck).length > 0) {
             setErrors(errorsCheck);
@@ -152,13 +141,16 @@ const ClientScreen = ({ history, match}) => {
         if (Object.keys(errorsCheck).length === 0) {
             const client = {
                 name: name,
-                address: address,
+                lastnames: lastnames,
                 phone: phone,
-                email: email,
                 dni: dni,
                 agreementId: agreement,
                 has_reservation: has_reservation,
+                has_order: has_order,
             };
+
+            console.log('datos del cliente' + name, lastnames, phone, dni, agreement, has_reservation, has_order)
+            console.log(client)
 
             dispatch(createClient(client));
         }
@@ -204,10 +196,10 @@ const ClientScreen = ({ history, match}) => {
                     </div>
                     <div style={{ flex: '1 1 45%' }}>
                         <Input
-                            name={"dirección"}
+                            name={"apellidos"}
                             type={"text"}
-                            data={address}
-                            setData={setAddress}
+                            data={lastnames}
+                            setData={setLastNames}
                             errors={errors}
                         />
                     </div>
@@ -217,15 +209,6 @@ const ClientScreen = ({ history, match}) => {
                             type={"text"}
                             data={phone}
                             setData={setPhone}
-                            errors={errors}
-                        />
-                    </div>
-                    <div style={{ flex: '1 1 45%' }}>
-                        <Input
-                            name={"email"}
-                            type={"email"}
-                            data={email}
-                            setData={setEmail}
                             errors={errors}
                         />
                     </div>
@@ -270,43 +253,31 @@ const ClientScreen = ({ history, match}) => {
         <table className="table table-hover text-nowrap">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th className="d-none d-sm-table-cell">Dirección</th>
-                    <th className="d-none d-sm-table-cell">Tel</th>
-                    <th className="d-none d-sm-table-cell">Email</th>
-                    <th className="d-none d-sm-table-cell">CC</th>
-                    <th className="d-none d-sm-table-cell">Convenio</th>
-                    <th className="d-none d-sm-table-cell">¿Cliente Activo?</th>
-                    <th className="d-none d-sm-table-cell">Creado en</th>
-                    <th></th>
+                    <th className="text-center">ID</th>
+                    <th className="text-center">Nombre</th>
+                    <th className="text-center">Apellidos</th>
+                    <th className="text-center d-none d-sm-table-cell">Tel</th>
+                    <th className="text-center d-none d-sm-table-cell">CC</th>
+                    <th className="text-center d-none d-sm-table-cell">Convenio</th>
+                    <th className="text-center d-none d-sm-table-cell">¿Tiene Reserva Activa?</th>
+                    <th className="text-center d-none d-sm-table-cell">¿Tiene Órden Activa?</th>
+                    <th className="text-center d-none d-sm-table-cell">Creado en</th>
+                    <th className="text-center"></th>
                 </tr>
             </thead>
             <tbody>
                 {clients.map((client) => (
                     <tr key={client.id}>
-                        <td>{client.id}</td>
-                        <td>{client.name}</td>
-                        <td className="d-none d-sm-table-cell">
-                            {client.address}
-                        </td>
-                        <td className="d-none d-sm-table-cell">
-                            {client.phone}
-                        </td>
-                        <td className="d-none d-sm-table-cell">
-                            {client.email}
-                        </td>
-                        <td className="d-none d-sm-table-cell">{client.dni}</td>
-                        <td className="d-none d-sm-table-cell">
-                            {client.agreementId}
-                        </td>
-                        <td className="d-none d-sm-table-cell">
-                        {client.has_reservation ? "Sí" : "No"}
-                        </td>
-                        <td className="d-none d-sm-table-cell">
-                            {client.createdAt.slice(0, 10)}
-                        </td>
-                        <td>
+                        <td className="text-center">{client.id}</td>
+                        <td className="text-center">{client.name}</td>
+                        <td className="text-center">{client.lastnames}</td>
+                        <td className="text-center d-none d-sm-table-cell">{client.phone}</td>
+                        <td className="text-center d-none d-sm-table-cell">{client.dni}</td>
+                        <td className="text-center d-none d-sm-table-cell">{getAgreementName(client.agreementId)}</td>
+                        <td className="text-center d-none d-sm-table-cell">{client.has_reservation ? "Sí" : "No"}</td>
+                        <td className="text-center d-none d-sm-table-cell">{client.has_order ? "Sí" : "No"}</td>
+                        <td className="text-center d-none d-sm-table-cell">{client.createdAt.slice(0, 10)}</td>
+                        <td className="text-center">
                             <Link
                                 to={`/client/${client.id}/edit`}
                                 className="btn btn-warning btn-lg mr-3"
@@ -325,11 +296,11 @@ const ClientScreen = ({ history, match}) => {
             </tbody>
         </table>
     );
-
+    
     return (
         <>
             <HeaderContent name={"Clientes"} />
-
+    
             <section className="content">
                 <div className="container-fluid">
                     {renderModalCreateClient()}
@@ -358,7 +329,7 @@ const ClientScreen = ({ history, match}) => {
                                 </div>
                                 {/* /.card-body */}
                             </div>
-
+    
                             <Pagination
                                 page={page}
                                 pages={pages}

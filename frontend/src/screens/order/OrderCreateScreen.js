@@ -44,6 +44,8 @@ import {
     ProductLoader
 } from "../../components/loader/SkeletonLoaders";
 
+import generateOrder from "../../utils/generateOrder";
+
 import { listProducts, createProduct } from "../../actions/productActions";
 import { listCategories } from "../../actions/categoryActions";
 import { listUsers, register } from "../../actions/userActions";
@@ -178,6 +180,24 @@ const OrderCreateScreen = ({ match }) => {
     
         if (Object.keys(errorsCheck).length === 0) {
             proceedWithOrder();
+            console.log("USUARIO: ",user)
+            console.log("Productos en la orden: ",productsInOrder)
+            /* Create order */
+            const order = {
+                total: total,
+                tableId: !delivery ? table : 0,
+                clientId: client,
+                products: productsInOrder,
+                delivery: delivery,
+                note: note,
+                userId: user,
+            };
+            /* Make request */
+            console.log("ORDEN A CREAR: ",order)
+
+            dispatch(createOrder(order))
+
+
         }
     };
     
@@ -199,7 +219,27 @@ const OrderCreateScreen = ({ match }) => {
     
         /* Make request */
         console.log("ORDEN A CREAR: ", order);
-        dispatch(createOrder(order));
+        dispatch(createOrder(order).then((createdOrder) => {
+
+            const newOrder = {
+                id: createdOrder.id, 
+                table: getTableName(createdOrder.tableId),
+                client: getClientName(createdOrder.clientId),
+                waiter: getUserName(createdOrder.userId),
+                date: new Date().toLocaleString(),
+                products: productsInOrder.map(product => ({
+                    quantity: product.quantity,
+                    name: product.name,
+                    productNote: product.note
+                })),
+                note: note
+            };
+
+            generateOrder(newOrder, true);
+
+            
+
+        }));
         dispatch(updateClientHasReservation(order.clientId, true));
     };
 
@@ -225,6 +265,30 @@ const OrderCreateScreen = ({ match }) => {
         </Modal>
     );
 
+
+    const getTableName = (tableId) => {
+        if (tables && tables.length > 0) {
+          const table = tables.find((table) => table.id === tableId);
+          return table ? table.name : '';
+        }
+        return '';
+      };
+
+      const getClientName = (clientId) => {
+        if (clients && clients.length > 0) {
+            const client = clients.find((client) => client.id === clientId);
+            return client ? client.name : '';
+        }
+        return '';
+    };
+    
+    const getUserName = (userId) => {
+        if (users && users.length > 0) {
+            const user = users.find((user) => user.id === userId);
+            return user ? user.name : '';
+        }
+        return '';
+    };
 
     const toggleDropdown = () => {
         setIsDropdownOpen(!isDropdownOpen);
@@ -337,7 +401,7 @@ const OrderCreateScreen = ({ match }) => {
             <Select
                 data={client}
                 setData={setClient}
-                items={clients.filter(client => client.has_reservation)}
+                items={clients.filter(client => client.has_reservation && !client.has_order)}
                 search={searchClients}
             />
             {console.log("CLIENTES: ",clients)}

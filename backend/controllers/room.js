@@ -72,7 +72,7 @@ exports.getRoom = asyncHandler(async (req, res) => {
 //@access   Private/user
 
 exports.updateRoom = asyncHandler(async (req, res) => {
-    const { name, active_status} = req.body;
+    const { name, active_status, concept} = req.body;
 
     const room = await Room.findByPk(req.params.id);
 
@@ -81,6 +81,7 @@ exports.updateRoom = asyncHandler(async (req, res) => {
             room.name = name;
         }
         room.active_status = active_status;
+        room.concept = concept;
         const updatedRoom = await room.save();
         res.json(updatedRoom);
     } else {

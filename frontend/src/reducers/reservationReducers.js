@@ -66,7 +66,6 @@ export const ReservationStatisticsReducer = (
             },
         },
     },
-    
     action
 ) => {
     switch (action.type) {
@@ -88,7 +87,7 @@ export const ReservationStatisticsReducer = (
                     statistics: {
                         total: 0,
                         today: 0,
-                        reservations: 0
+                        reservations: 0,
                     },
                 },
             };

@@ -1,7 +1,9 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import axios from 'axios';
 
-const generateInvoice = (reservation, clientOrdersList, clientReservationsList) => {
+
+const generateInvoice = async (reservation, clientOrdersList, clientReservationsList, agreementName, paymentMethodName) => {
     const doc = new jsPDF();
 
     // Función para añadir encabezado de la empresa
@@ -31,12 +33,11 @@ const generateInvoice = (reservation, clientOrdersList, clientReservationsList) 
         doc.setTextColor(128, 128, 128); // Cambiar color a gris
         doc.setFontSize(14);
         doc.setTextColor(0, 0, 0);
-        doc.text(reservation.client.name, 10, yOffset + 5);
+        doc.text(`${reservation.client.name} ${reservation.client.lastnames}`, 10, yOffset + 5);
         doc.setFontSize(10);
         doc.setTextColor(128, 128, 128);
-        doc.text(reservation.client.address, 10, yOffset + 10);
+        doc.text(agreementName, 10, yOffset + 10);
         doc.text(reservation.client.phone, 10, yOffset + 15);
-        doc.text(reservation.client.email, 10, yOffset + 20);
         doc.setFont("helvetica");
         doc.setTextColor(0, 0, 0); // Restaurar color a negro
         doc.text('Factura #:', 200, yOffset, { align: 'right' });
@@ -45,6 +46,7 @@ const generateInvoice = (reservation, clientOrdersList, clientReservationsList) 
         doc.text(reservation.id.toString(), 240, yOffset, { align: 'right' });
         doc.text(`Fecha de pago: ${new Date().toLocaleString()}`, 200, yOffset + 5, { align: 'right' });
         doc.text(`Fecha de factura: ${new Date().toLocaleString()}`, 200, yOffset + 10, { align: 'right' });
+        doc.text(`Método de pago: ${paymentMethodName}`, 200, yOffset + 15, {align: 'right'});
         doc.line(10, yOffset + 25, 200, yOffset + 25); // Línea separadora
         doc.setTextColor(0, 0, 0); // Restaurar color a negro
     };
@@ -82,104 +84,131 @@ const generateInvoice = (reservation, clientOrdersList, clientReservationsList) 
     // Añadir información del cliente y de la factura
     addClientAndInvoiceInfo();
 
-    // Tabla de órdenes
-    autoTable(doc, {
-        startY: 90,
-        head: [['#', 'Producto', 'Cantidad', 'Precio unitario', 'Total']],
-        body: formattedOrders.map(order => [
-            order.index,
-            order.title,
-            order.quantity,
-            order.price,
-            order.total
-        ]),
-        styles: { overflow: 'linebreak', fontSize: 10, lineColor: [255, 255, 255], lineWidth: 0 }, // Quitar todas las líneas
-        headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] },
-        theme: 'plain',
-        tableLineColor: [255, 255, 255], // Quitar líneas horizontales
-        tableLineWidth: 0,
-        columnStyles: {
-            0: { cellWidth: 10 },
-            1: { cellWidth: 'auto' },
-            2: { cellWidth: 20, halign: 'right' },
-            3: { cellWidth: 30, halign: 'right' },
-            4: { cellWidth: 30, halign: 'right' }
+    // Añadir tabla de órdenes si hay datos
+    if (formattedOrders.length > 0) {
+        autoTable(doc, {
+            startY: 90,
+            head: [['#', 'Producto', 'Cantidad', 'Precio unitario', 'Total']],
+            body: formattedOrders.map(order => [
+                order.index,
+                order.title,
+                order.quantity,
+                order.price,
+                order.total
+            ]),
+            styles: { overflow: 'linebreak', fontSize: 10, lineColor: [255, 255, 255], lineWidth: 0 }, // Quitar todas las líneas
+            headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] },
+            theme: 'plain',
+            tableLineColor: [255, 255, 255], // Quitar líneas horizontales
+            tableLineWidth: 0,
+            columnStyles: {
+                0: { cellWidth: 10 },
+                1: { cellWidth: 'auto' },
+                2: { cellWidth: 20, halign: 'right' },
+                3: { cellWidth: 30, halign: 'right' },
+                4: { cellWidth: 30, halign: 'right' }
+            }
+        });
+
+        // Resumen de órdenes
+        autoTable(doc, {
+            startY: doc.previousAutoTable.finalY + 10,
+            head: [['', '', '', '', '']],
+            body: [
+                ['', '', '', 'Total:', subtotalOrders],
+                ['', '', '', 'IVA:', '20%'],
+                ['', '', '', 'Subtotal:', subtotalOrders]
+            ],
+            styles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], lineColor: [255, 255, 255], lineWidth: 0 }, // Quitar todas las líneas
+            headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0] },
+            columnStyles: {
+                0: { cellWidth: 30 },
+                1: { cellWidth: 30 },
+                2: { cellWidth: 30 },
+                3: { halign: 'right', cellWidth: 30 },
+                4: { halign: 'right', cellWidth: 30 }
+            },
+            tableWidth: 'wrap',
+            theme: 'plain',
+            margin: { right: 30 } // Ajuste de margen derecho
+        });
+
+        if (formattedReservations.length > 0) {
+            doc.addPage();
         }
-    });
+    }
 
-    // Resumen de órdenes
-    autoTable(doc, {
-        startY: doc.previousAutoTable.finalY + 10,
-        head: [['', '', '', '', '']],
-        body: [
-            ['Total:', subtotalOrders, '', '', ''],
-            ['IVA:', '20%', '', '', ''],
-            ['Subtotal:', subtotalOrders, '', '', '']
-        ],
-        styles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], lineColor: [255, 255, 255], lineWidth: 0 }, // Quitar todas las líneas
-        headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0]},
-        columnStyles: {
-            0: { halign: 'right' },
-            1: { halign: 'right' }
-        },
-        tableWidth: 'wrap',
-        theme: 'plain'
-    });
+    // Añadir tabla de reservas si hay datos
+    if (formattedReservations.length > 0) {
+        // Añadir encabezado de la empresa en la nueva página
+        addCompanyHeader();
 
-    // Añadir nueva página para reservas
-    doc.addPage();
+        // Añadir información del cliente y de la factura en la nueva página
+        addClientAndInvoiceInfo();
 
-    // Añadir encabezado de la empresa en la nueva página
-    addCompanyHeader();
+        autoTable(doc, {
+            startY: 90,
+            head: [['#', 'Habitación', 'Fecha de inicio', 'Fecha de fin', 'Precio por noche', 'Total']],
+            body: formattedReservations.map(reservation => [
+                reservation.index,
+                reservation.title,
+                reservation.startDate,
+                reservation.endDate,
+                reservation.price,
+                reservation.total
+            ]),
+            styles: { overflow: 'linebreak', fontSize: 10, lineColor: [255, 255, 255], lineWidth: 0 }, // Quitar todas las líneas
+            headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] },
+            theme: 'plain',
+            tableLineColor: [255, 255, 255], 
+            tableLineWidth: 0,
+            columnStyles: {
+                0: { cellWidth: 10 },
+                1: { cellWidth: 'auto' },
+                2: { cellWidth: 30, halign: 'right' },
+                3: { cellWidth: 30, halign: 'right' },
+                4: { cellWidth: 30, halign: 'right' },
+                5: { cellWidth: 30, halign: 'right' }
+            }
+        });
 
-    // Añadir información del cliente y de la factura en la nueva página
-    addClientAndInvoiceInfo();
+        // Resumen de reservas
+        autoTable(doc, {
+            startY: doc.previousAutoTable.finalY + 10,
+            head: [['', '', '', '', '', '']],
+            body: [
+                ['', '', '', '', 'Total:', subtotalReservations],
+                ['', '', '', '', 'IVA:', '20%'],
+                ['', '', '', '', 'Subtotal:', subtotalReservations]
+            ],
+            styles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], lineColor: [255, 255, 255], lineWidth: 0 }, // Quitar todas las líneas
+            headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0] },
+            columnStyles: {
+                0: { cellWidth: 30 },
+                1: { cellWidth: 30 },
+                2: { cellWidth: 30 },
+                3: { cellWidth: 30 },
+                4: { halign: 'right', cellWidth: 30 },
+                5: { halign: 'right', cellWidth: 30 }
+            },
+            tableWidth: 'wrap',
+            theme: 'plain',
+            margin: { right: 30 } // Ajuste de margen derecho
+        });
+    }
 
-    // Tabla de reservas
-    autoTable(doc, {
-        startY: 90,
-        head: [['#', 'Habitación', 'Fecha de inicio', 'Fecha de fin', 'Precio por noche', 'Total']],
-        body: formattedReservations.map(reservation => [
-            reservation.index,
-            reservation.title,
-            reservation.startDate,
-            reservation.endDate,
-            reservation.price,
-            reservation.total
-        ]),
-        styles: { overflow: 'linebreak', fontSize: 10, lineColor: [255, 255, 255], lineWidth: 0 }, // Quitar todas las líneas
-        headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] },
-        theme: 'plain',
-        tableLineColor: [255, 255, 255], 
-        tableLineWidth: 0,
-        columnStyles: {
-            0: { cellWidth: 10 },
-            1: { cellWidth: 'auto' },
-            2: { cellWidth: 30, halign: 'right' },
-            3: { cellWidth: 30, halign: 'right' },
-            4: { cellWidth: 30, halign: 'right' },
-            5: { cellWidth: 30, halign: 'right' }
-        }
-    });
-
-    // Resumen de reservas
-    autoTable(doc, {
-        startY: doc.previousAutoTable.finalY + 10,
-        head: [['', '', '', '', '', '']],
-        body: [
-            ['Total:', subtotalReservations, '', '', '', ''],
-            ['IVA:', '20%', '', '', '', ''],
-            ['Subtotal:', subtotalReservations, '', '', '', '']
-        ],
-        styles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], lineColor: [255, 255, 255], lineWidth: 0 }, // Quitar todas las líneas
-        headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0] },
-        columnStyles: {
-            0: {halign: 'right' },
-            1: { halign: 'right' }
-        },
-        tableWidth: 'wrap',
-        theme: 'plain'
-    });
+    try {
+        await axios.post('/api/invoices', {
+          reservation,
+          clientOrdersList,
+          clientReservationsList,
+          agreementName,
+          paymentMethodName
+        });
+        console.log('Factura guardada exitosamente');
+      } catch (error) {
+        console.error('Error al guardar la factura:', error);
+      }
 
     // Guardar el PDF
     doc.save(`Factura_${reservation.id}.pdf`);

@@ -9,7 +9,7 @@ import ViewBox from "../../components/ViewBox";
 import LoaderHandler from "../../components/loader/LoaderHandler";
 import ModalButton from "../../components/ModalButton";
 import { BigSpin } from "../../components/loader/SvgLoaders";
-import Select from "../../components/Select";
+import generateInvoiceOrder from "../../utils/generateInvoiceOrder";
 
 /* constants */
 import { ORDER_UPDATE_RESET, ORDER_DELETE_RESET } from "../../constants/orderConstants";
@@ -19,6 +19,7 @@ import {
     listOrderDetails,
     updateOrderToPaid,
     deleteOrder,
+    listOrdersClient,
 } from "../../actions/orderActions";
 
 import { listPayments } from '../../actions/paymentActions';
@@ -40,10 +41,10 @@ const OrderViewScreen = ({ history, match }) => {
     const orderDetails = useSelector((state) => state.orderDetails);
     const { loading, error, order } = orderDetails;
 
-    const [paymentId, setPaymentId] = useState(null);
+    const clientOrders = useSelector(state => state.clientOrders);
+    const { loading: loadingOrders, error: errorOrders, orders: clientOrdersList } = clientOrders;
 
-    const [deleteModal, setDeleteModal] = useState(false);
-    const [concept, setConcept] = useState("");
+    const [paymentId, setPaymentId] = useState(null);
 
     const [reason, setReason] = useState('');
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -134,11 +135,17 @@ const OrderViewScreen = ({ history, match }) => {
         e.preventDefault();
         const updatedOrder = {
             id: orderId,
-            paymentId: paymentId // Añadir el paymentId al actualizar la orden
+            paymentId: paymentId, 
         };
         setModal(false);
         dispatch(updateOrderToPaid(updatedOrder));
-    };
+
+        const isCreditPayment = paymentId === 1;
+
+        if (!isCreditPayment) {
+            generateInvoiceOrder(order);
+        }
+    }
 
     const handleEdit = (e) => {
         e.preventDefault();
@@ -171,7 +178,6 @@ const OrderViewScreen = ({ history, match }) => {
                 </div>
             </div>
         );
-
         const renderDeleteOrderButton = () => (
             <div className="card">
               <div className="card-header bg-danger">Eliminar Órden</div>

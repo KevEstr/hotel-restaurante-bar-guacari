@@ -6,6 +6,9 @@ import Input from "../../components/form/Input";
 import HeaderContent from "../../components/HeaderContent";
 import ButtonGoBack from "../../components/ButtonGoBack";
 import LoaderHandler from "../../components/loader/LoaderHandler";
+import Select from "../../components/Select";
+import Message from "../../components/Message";
+
 
 /* Constants */
 import {
@@ -17,14 +20,23 @@ import {
 /* Actions */
 import { listClientDetails, updateClient } from "../../actions/clientActions";
 
+import { listAgreements } from "../../actions/agreementActions";
+
 const ClientEditScreen = ({ history, match }) => {
     const clientId = parseInt(match.params.id);
 
     const [name, setName] = useState("");
-    const [address, setAddress] = useState("");
+    const [lastnames, setLastNames] = useState("");
     const [phone, setPhone] = useState("");
-    const [email, setEmail] = useState("");
     const [dni, setDni] = useState("");
+    const [agreementId, setAgreementId] = useState("");
+
+
+    const agreementFromUrl = window.location.href.indexOf("agreement") !== -1;
+
+    const [agreement, setAgreement] = useState(
+        agreementFromUrl ? parseInt(match.params.id) : null
+    );
 
     const [errors, setErrors] = useState({});
 
@@ -36,6 +48,9 @@ const ClientEditScreen = ({ history, match }) => {
     //client details state
     const clientDetails = useSelector((state) => state.clientDetails);
     const { loading, error, client } = clientDetails;
+
+    const agreementList = useSelector((state) => state.agreementList);
+    const { agreements } = agreementList;
 
     //client update state
     const clientUpdate = useSelector((state) => state.clientUpdate);
@@ -62,13 +77,17 @@ const ClientEditScreen = ({ history, match }) => {
             } else {
                 //set states
                 setName(client.name);
-                setAddress(client.address);
+                setLastNames(client.lastnames);
                 setPhone(client.phone);
-                setEmail(client.email);
+                setAgreementId(client.agreementId);
                 setDni(client.dni);
             }
         }
     }, [dispatch, history, clientId, client, successUpdate]);
+
+    const searchAgreements = (e) => {
+        dispatch(listAgreements(e.target.value));
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -78,17 +97,10 @@ const ClientEditScreen = ({ history, match }) => {
         if (!name) {
             errorsCheck.name = "Nombre es requerido";
         }
-        if (!address) {
-            errorsCheck.address = "Dirección es requerida";
-        }
 
         if (!phone) {
             errorsCheck.phone = "Teléfono es requerido";
         }
-        if (!email) {
-            errorsCheck.email = "Email es requerido.";
-        }
-
         if (!dni) {
             errorsCheck.dni = "CC es requerida";
         }
@@ -104,14 +116,23 @@ const ClientEditScreen = ({ history, match }) => {
                 updateClient({
                     id: clientId,
                     name,
-                    address,
+                    lastnames,
                     phone,
-                    email,
                     dni,
+                    agreementId,
                 })
             );
         }
     };
+
+    const renderAgreementsSelect = () => (
+        <Select
+            data={agreementId}
+            setData={setAgreementId}
+            items={agreements}
+            search={searchAgreements}
+        />
+    );
 
     const renderForm = () => (
         <form onSubmit={handleSubmit}>
@@ -123,10 +144,10 @@ const ClientEditScreen = ({ history, match }) => {
                 errors={errors}
             />
             <Input
-                name={"Dirección"}
+                name={"Apellidos"}
                 type={"text"}
-                data={address}
-                setData={setAddress}
+                data={lastnames}
+                setData={setLastNames}
                 errors={errors}
             />
             <Input
@@ -137,19 +158,19 @@ const ClientEditScreen = ({ history, match }) => {
                 errors={errors}
             />
             <Input
-                name={"Email"}
-                type={"email"}
-                data={email}
-                setData={setEmail}
-                errors={errors}
-            />
-            <Input
                 name={"CC"}
                 type={"text"}
                 data={dni}
                 setData={setDni}
                 errors={errors}
             />
+            <div style={{ flex: '1 1 45%' }}>
+                        <label style={{fontWeight: 'normal'}}>Convenio:</label>
+                        {renderAgreementsSelect()}
+                        {errors.agreement && (
+                            <Message message={errors.agreement} color={"warning"} />
+                        )}
+                    </div>
 
             <hr />
             <button type="submit" className="btn btn-success">

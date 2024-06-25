@@ -21,7 +21,7 @@ module.exports = {
         allowNull: false
       },
       note: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(50),
         defaultValue: null
       },
       quantity: {

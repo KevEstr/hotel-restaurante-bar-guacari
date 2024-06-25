@@ -25,9 +25,25 @@ const Select = ({ items, data, setData, disabled, search = () => {} }) => {
         setData(parseInt(element.value));
     };
 
+    const options = mapSelect();
+    const isMultiColumn = options.length > 10; // Cambiar a 2 columnas si hay más de 10 opciones
+
+    const customStyles = {
+        menu: (provided) => ({
+            ...provided,
+            display: 'flex',
+            flexDirection: 'column',
+        }),
+        menuList: (provided) => ({
+            ...provided,
+            display: 'grid',
+            gridTemplateColumns: isMultiColumn ? '1fr 1fr' : '1fr',
+        }),
+    };
+
     return (
         <ReactSelect
-            options={mapSelect()}
+            options={options}
             onChange={handleChange}
             value={current}
             onKeyDown={search}
@@ -35,6 +51,7 @@ const Select = ({ items, data, setData, disabled, search = () => {} }) => {
             placeholder="Selecciona un valor"
             isDisabled={disabled}
             isSearchable
+            styles={customStyles}
         />
     );
 };

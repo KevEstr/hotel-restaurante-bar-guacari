@@ -108,7 +108,7 @@ export const createReservation = (reservation) => async (dispatch, getState) => 
             payload: data,
         });
 
-        dispatch(updateClientHasReservation(reservation.clientId, true));
+        dispatch(updateClientHasReservation(reservation.clientId, 1));
 
     } catch (error) {
         dispatch({
@@ -138,7 +138,6 @@ export const listReservationsDetails = (id) => async (dispatch, getState) => {
             },
         };
 
-        //api call to get category
         const { data } = await axios.get(`/api/reservations/${id}`, config);
         dispatch({
             type: RESERVATION_DETAILS_SUCCESS,
@@ -254,7 +253,7 @@ export const deleteReservation = (reservationId, reason) => async (dispatch, get
   // Actualizar el estado de las habitaciones a active_status: false
       const rooms = reservation.rooms;
     await Promise.all(rooms.map(async (room) => {
-      const updatedRoom = { ...room, active_status: false };
+      const updatedRoom = { ...room, active_status: 0 };
       await axios.put(`/api/rooms/${room.id}`, updatedRoom, config);
     }));
 

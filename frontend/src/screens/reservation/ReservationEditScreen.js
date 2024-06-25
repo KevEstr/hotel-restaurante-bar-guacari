@@ -146,7 +146,7 @@ const ReservationEditScreen = ({ history, match }) => {
     };
 
     const filterFreeRooms = () => {
-        return rooms.filter((roomItem) => roomItem.active_status === false || roomItem.id === room);
+        return rooms.filter((roomItem) => roomItem.active_status === 0 || roomItem.id === room);
     };
 
     const searchRooms = (e) => {

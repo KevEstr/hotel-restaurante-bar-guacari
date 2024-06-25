@@ -21,6 +21,14 @@ import {
 } from "./reducers/categoryReducers";
 
 import {
+    laundryListReducer,
+    laundryCreateReducer,
+    laundryDetailsReducer,
+    laundryUpdateReducer,
+    laundryDeleteReducer,
+} from "./reducers/laundryReducers";
+
+import {
     agreementListReducer,
     agreementCreateReducer,
     agreementDetailsReducer,
@@ -113,6 +121,10 @@ import{
     ReservationStatisticsReducer
 } from "./reducers/reservationReducers";
 
+import{
+    invoiceDetailsReducer
+} from "./reducers/invoiceReducers";
+
 const reducer = combineReducers({
 
     roleList: roleListReducer,
@@ -136,6 +148,12 @@ const reducer = combineReducers({
     categoryDetails: categoryDetailsReducer,
     categoryUpdate: categoryUpdateReducer,
     categoryDelete: categoryDeleteReducer,
+
+    laundryList: laundryListReducer,
+    laundryCreate: laundryCreateReducer,
+    laundryDetails: laundryDetailsReducer,
+    laundryUpdate: laundryUpdateReducer,
+    laundryDelete: laundryDeleteReducer,
 
     agreementList: agreementListReducer,
     agreementCreate: agreementCreateReducer,
@@ -201,6 +219,9 @@ const reducer = combineReducers({
     reservationDelete: reservationDeleteReducer,
 
     section: sectionReducer,
+
+    invoiceDetails: invoiceDetailsReducer,
+
 
 });
 

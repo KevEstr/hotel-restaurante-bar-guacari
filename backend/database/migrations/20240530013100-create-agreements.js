@@ -9,24 +9,12 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       name: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(20),
         allowNull: false
       },
       userId: {
         type: Sequelize.INTEGER,
         allowNull: false
-      },
-      max_daily_food: {
-        type: Sequelize.INTEGER,
-        defaultValue: 100000
-      },
-      max_daily_laundry: {
-        type: Sequelize.INTEGER,
-        defaultValue: 15000
-      },
-      max_daily_hydration: {
-        type: Sequelize.INTEGER,
-        defaultValue: 25000
       },
       createdAt: {
         allowNull: false,

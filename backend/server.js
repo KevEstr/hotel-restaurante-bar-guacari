@@ -31,6 +31,9 @@ const agreementRoutes = require("./routes/agreement");
 const roleRoutes = require("./routes/role");
 const serviceRoutes = require('./routes/service');
 const paymentRoutes = require('./routes/payment');
+const invoiceRoutes = require('./routes/invoice');
+const laundryRoutes = require('./routes/laundry');
+
 
 /* Routes */
 app.use("/api/users", userRoutes);
@@ -48,7 +51,8 @@ app.use("/api/agreements", agreementRoutes);
 app.use("/api/roles", roleRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/payments", paymentRoutes);
-
+app.use("/api/invoices", invoiceRoutes);
+app.use("/api/laundries", laundryRoutes);
 
 const rootPath = path.resolve();
 
