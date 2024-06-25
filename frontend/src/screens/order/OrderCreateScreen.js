@@ -175,7 +175,10 @@ const OrderCreateScreen = ({ match }) => {
                     note: note
                 };
     
-                generateOrder(newOrder);
+                generateOrder(newOrder, true);
+
+                
+
             });
 
 
@@ -319,7 +322,7 @@ const OrderCreateScreen = ({ match }) => {
             <Select
                 data={client}
                 setData={setClient}
-                items={clients.filter(client => client.has_reservation)}
+                items={clients.filter(client => client.has_reservation && !client.has_order)}
                 search={searchClients}
             />
             {errors.client && (

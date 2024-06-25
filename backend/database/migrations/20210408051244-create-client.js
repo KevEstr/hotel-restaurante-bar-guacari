@@ -9,26 +9,20 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       name: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(20),
         allowNull: false
       },
-      address: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        defaultValue: 'Address'
+      lastnames: {
+        type: Sequelize.STRING(40),
+        allowNull: false
       },
       phone: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(13),
         allowNull: false,
         defaultValue: '999999999'
       },
-      email: {
-        type: Sequelize.STRING,
-        unique: true,
-        allowNull: false
-      },
       dni: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(13),
         unique: true,
         allowNull: false
       },
@@ -37,6 +31,10 @@ module.exports = {
         allowNull: false
       },
       has_reservation: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false
+      },
+      has_order: {
         type: Sequelize.BOOLEAN,
         allowNull: false
       },

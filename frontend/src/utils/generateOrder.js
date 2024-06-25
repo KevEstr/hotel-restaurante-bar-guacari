@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import printJS from "print-js";
 
 const generateOrder = (order) => {
   const { id, table, client, waiter, date, products, note } = order;
@@ -18,9 +19,9 @@ const generateOrder = (order) => {
   // Información de la orden
   doc.setFontSize(8);
   let currentY = 10; // Ajustar Y inicial a 10mm
-  doc.text(`Cuenta: ${client} - Orden 1`, 5, currentY);
+  doc.text(`Cuenta: ${client}`, 5, currentY);
   currentY += 4; // Reducir espacio
-  doc.text(`Mesa: ${table} - PRINCIPAL`, 5, currentY);
+  doc.text(`Mesa: ${table}`, 5, currentY);
   currentY += 4; // Reducir espacio
   doc.text(`Mesero: ${waiter}`, 5, currentY);
   currentY += 4; // Reducir espacio
@@ -80,7 +81,7 @@ const generateOrder = (order) => {
       lineHeight: 1
     },
     columnStyles: columnWidths,
-    margin: { left: hasNotes ? 0 : 5 } // Mover la tabla hacia la izquierda si hay notas
+    margin: { left: hasNotes ? 0 : 5 } 
   });
 
   // Nota del pedido
@@ -89,8 +90,15 @@ const generateOrder = (order) => {
     doc.text(`Nota: ${note}`, 5, noteStartY); // Ajustar X a 5mm
   }
 
-  // Guardar el PDF
-  doc.save(`Orden_${id}.pdf`);
+  // Generar el PDF como un blob
+  const pdfBlob = doc.output('blob');
+
+  // Usar printJS para imprimir el PDF
+  printJS({
+    printable: URL.createObjectURL(pdfBlob),
+    type: 'pdf',
+    onPrintDialogClose: () => URL.revokeObjectURL(pdfBlob) // Liberar memoria
+  });
 };
 
 export default generateOrder;

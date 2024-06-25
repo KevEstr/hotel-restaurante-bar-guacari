@@ -248,8 +248,8 @@ exports.getStatistics = asyncHandler(async (req, res) => {
             },
             limit: 5,
             include: [
-                { model: Client, as: 'client', attributes: ['id', 'name'] }, // Usar el alias 'client'
-                { model: Room, as: 'room', attributes: ['id', 'name'] } // Usar el alias 'room'
+                { model: Client, as: 'client', attributes: ['id', 'name'] },
+                { model: Room, as: 'room', attributes: ['id', 'name'] }
             ],
         });
 
@@ -280,28 +280,52 @@ exports.getStatistics = asyncHandler(async (req, res) => {
                 is_paid: false,
             },
             include: [
-                { model: Client, as: 'client', attributes: ['id', 'name'] }, // Usar el alias 'client'
-                { model: Room, as: 'room', attributes: ['id', 'name'] } // Usar el alias 'room'
+                { model: Client, as: 'client', attributes: ['id', 'name'] },
+                { model: Room, as: 'room', attributes: ['id', 'name'] }
             ],
             attributes: {
                 exclude: ["userId", "clientId", "roomId"],
             },
         });
 
-        res.json({
+        // Total de habitaciones no en mantenimiento
+        const totalRooms = await Room.count({
+            where: {
+                active_status: {
+                    [Op.ne]: 2, // Excluye habitaciones en mantenimiento (asumiendo 2 es el estado de mantenimiento)
+                },
+            },
+        });
+
+        // Habitaciones ocupadas
+        const reservedRooms = await Room.count({
+            where: {
+                active_status: 1, // Asumiendo 1 es el estado para habitaciones ocupadas
+            },
+        });
+
+        const response = {
             statistics: {
                 total: totalSales,
                 today: todaySales,
                 reservations: totalOrdersPaid,
+                totalRooms,
+                reservedRooms,
             },
             sales,
             reservations,
-        });
+        };
+
+        console.log("Response data:", response);
+
+        res.json(response);
     } catch (error) {
         console.error("Error fetching statistics: ", error);
         res.status(500).json({ message: error.message });
     }
 });
+
+
 
 exports.updateReservationEnd = asyncHandler(async (req, res) => {
     const { paymentId } = req.body; // Recibir paymentId desde la solicitud

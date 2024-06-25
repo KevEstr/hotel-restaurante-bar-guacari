@@ -13,7 +13,6 @@ import ModalButton from "../../components/ModalButton";
 import { FormattedDate, FormattedTime } from "../../utils/formattedDate";
 import { updateClientReservationStatus } from '../../actions/clientActions';
 
-
 /* constants */
 import { RESERVATION_UPDATE_RESET } from "../../constants/reservationConstants";
 import { RESERVATION_DELETE_RESET } from "../../constants/reservationConstants";
@@ -48,6 +47,7 @@ const ReservationViewScreen = ({ history, match }) => {
     const [totalPayment, setTotalPayment] = useState(0);
     const [hasActiveOrders, setHasActiveOrders] = useState(false);
     const [showWarningModal, setShowWarningModal] = useState(false);
+    const [paymentMethodName, setPaymentMethodName] = useState('');
 
     const dispatch = useDispatch();
 
@@ -55,7 +55,6 @@ const ReservationViewScreen = ({ history, match }) => {
     const reservationDetails = useSelector((state) => state.reservationDetails);
     const { loading, error, reservation } = reservationDetails;
     const [modal, setModal] = useState(false);
-    
 
     const reservationDelete = useSelector((state) => state.reservationDelete);
     const { loading: loadingDelete, success: successDelete, error: errorDelete } = reservationDelete;
@@ -74,6 +73,11 @@ const ReservationViewScreen = ({ history, match }) => {
         dispatch(deleteReservation(reservationId, reason));
         setShowDeleteModal(false);
       };
+
+      const handlePaymentMethodChange = (paymentId, paymentName) => {
+        setPaymentId(paymentId);
+        setPaymentMethodName(paymentName);
+    };
       
     const clientReservations = useSelector(state => state.clientReservations);
     const { reservations: clientReservationsList } = clientReservations;
@@ -100,29 +104,35 @@ const ReservationViewScreen = ({ history, match }) => {
     };
 
     useEffect(() => {
-        if (successUpdate | successDelete) {
-            dispatch({ type: RESERVATION_UPDATE_RESET });
-            dispatch({ type: RESERVATION_DELETE_RESET });
-                history.push("/activeReservation");
-        }
-        if (reservation) {
-            if (!reservation.id || reservation.id !== reservationId) {
-                dispatch(listReservationsDetails(reservationId));
-            }
-            else {
-                // Si la reserva está correctamente cargada, cargar las órdenes del cliente
-                dispatch(listOrdersClient(reservation.clientId));
-                dispatch(listReservationsByClient(reservation.clientId));
-                calculateTotalPayment(reservation, clientOrdersList);
-                
-            }
-            
-        }
-
+        // Cargar detalles de la reserva y otros datos iniciales
+        dispatch(listReservationsDetails(reservationId));
         dispatch(listAgreements());
         dispatch(listPayments());
-
-    }, [dispatch, history, reservation, reservationId, successUpdate, successDelete]);
+    }, [dispatch, reservationId]);
+    
+    useEffect(() => {
+        if (reservation) {
+            // Cargar órdenes del cliente y reservas por cliente cuando la reserva esté disponible
+            dispatch(listOrdersClient(reservation.clientId));
+            dispatch(listReservationsByClient(reservation.clientId));
+        }
+    }, [dispatch, reservation]);
+    
+    useEffect(() => {
+        // Calcular el pago total cuando se actualicen las órdenes del cliente o la reserva
+        if (reservation && clientOrdersList) {
+            calculateTotalPayment(reservation, clientOrdersList);
+        }
+    }, [reservation, clientOrdersList]);
+    
+    useEffect(() => {
+        // Redirigir cuando se actualice o elimine la reserva
+        if (successUpdate || successDelete) {
+            dispatch({ type: RESERVATION_UPDATE_RESET });
+            dispatch({ type: RESERVATION_DELETE_RESET });
+            history.push("/activeReservation");
+        }
+    }, [dispatch, history, successUpdate, successDelete]);
 
     const getAgreementName = (agreementId) => {
         if (agreements && agreements.length > 0) {
@@ -141,9 +151,8 @@ const ReservationViewScreen = ({ history, match }) => {
             setTotalPayment(totalPayment);
         }
     };
-    
       
-      const getPaymentName = (paymentId) => {
+    const getPaymentName = (paymentId) => {
         if (payments && payments.length > 0) {
           const payment = payments.find((payment) => payment.id === paymentId);
           return payment ? payment.name : '';
@@ -155,8 +164,7 @@ const ReservationViewScreen = ({ history, match }) => {
         e.preventDefault();
         history.push(`/reservation/${reservationId}/edit`);
     };
-
-        
+   
     const renderReservationEdit = () => (
         <div className="card">
             <div className="card-header bg-warning">Editar Reservación</div>
@@ -173,7 +181,6 @@ const ReservationViewScreen = ({ history, match }) => {
         </div>
     );
 
-    
     const renderReservationButton = () => (
         <div className="col-12 col-md-3">
             {reservation && !reservation.active_status && renderReservationEdit()}
@@ -264,7 +271,7 @@ const ReservationViewScreen = ({ history, match }) => {
                                 id={`paymentMethod${payment.id}`}
                                 value={payment.id}
                                 checked={paymentId === payment.id}
-                                onChange={() => setPaymentId(payment.id)}
+                                onChange={() => handlePaymentMethodChange(payment.id, payment.name)}
                             />
                             <label
                                 className="form-check-label"
@@ -289,7 +296,7 @@ const ReservationViewScreen = ({ history, match }) => {
         </Modal>
     );
 
-        const renderReservationInfo = () => (
+    const renderReservationInfo = () => (
             <div className="row">
        
                 <div className="col-12 col-md-6">
@@ -362,47 +369,56 @@ const ReservationViewScreen = ({ history, match }) => {
         </div>
     );
                 
-const renderRoomsInfo = () => 
-    reservation && (
-        <>
-        <div className="row">
-            <div className="col-12 col-md-6">
-        <ViewBox
-            title="Habitaciones"
-            paragraph={
-                <div>
-                    {clientReservationsList && clientReservationsList.length > 0 ? (
-                        clientReservationsList.reduce((roomNames, reservation) => {
-                            if (reservation.rooms && reservation.rooms.length > 0) {
-                                const roomNamesForReservation = reservation.rooms.map(room => room.name).join(', ');
-                                return roomNames.length > 0 ? `${roomNames}, ${roomNamesForReservation}` : roomNamesForReservation;
+    const renderRoomsInfo = () => 
+        reservation && (
+            <>
+                <div className="row">
+                    <div className="col-12 col-md-6">
+                        <ViewBox
+                            title="Habitaciones"
+                            paragraph={
+                                <div>
+                                    {clientReservationsList && clientReservationsList.length > 0 ? (
+                                        [...new Set(clientReservationsList.reduce((roomNames, reservation) => {
+                                            if (reservation.rooms && reservation.rooms.length > 0) {
+                                                const roomNamesForReservation = reservation.rooms.map(room => room.name);
+                                                return roomNames.concat(roomNamesForReservation);
+                                            }
+                                            return roomNames;
+                                        }, []))].join(', ')
+                                    ) : (
+                                        'No hay habitaciones asociadas a esta reserva.'
+                                    )}
+                                </div>
                             }
-                            return roomNames;
-                        }, '')
-                    ) : (
-                        'No hay habitaciones asociadas a esta reserva.'
+                            icon={'fas fa-bed'}
+                            color={'bg-info'}
+                        />
+                    </div>
+
+                    <div className="col-12 col-md-6">
+                    {reservation.quantity && (
+                        <ViewBox
+                            title={reservation.quantity}
+                            paragraph={"Número de personas"}
+                            icon={"fas fa-user"}
+                            color={"bg-info"}
+                        />
                     )}
                 </div>
-             }
-                icon={'fas fa-bed'}
-                color={'bg-warning'}
-        />
-            </div>
-
-        <div className="col-12 col-md-6">
-
-            <ViewBox
-                    title={"Nota:"}
-                    paragraph={reservation.note}
-                    icon={"far fa-sticky-note"}
-                    color={"bg-silver"}
-                />
-
+                    
+                    <div className="col-12 col-md-6">
+                        <ViewBox
+                            title={"Nota:"}
+                            paragraph={reservation.note}
+                            icon={"far fa-sticky-note"}
+                            color={"bg-silver"}
+                        />
+                    </div>
                 </div>
-            </div>
-        </>
-
-            )
+            </>
+        );
+    
 
 
 const renderOrderInfo = () =>
@@ -433,96 +449,11 @@ const renderOrderInfo = () =>
                     )}
                 </div>
 
-                <div className="col-12 col-md-6">
-                    {reservation.quantity && (
-                        <ViewBox
-                            title={reservation.quantity}
-                            paragraph={"Número de personas"}
-                            icon={"fas fa-user"}
-                            color={"bg-info"}
-                        />
-                    )}
+                <div className="col-12 col-md-12">
+                    {renderServicesTable()}
                 </div>
 
-                <div className="col-12 col-md-6">
-                    {reservation.service && reservation.service.length > 0 ? (
-                        reservation.service.map((service, index) => {
-                            if (service.name === 'Alimentación') {
-                                return (
-                                    <ViewBox
-                                        key={index}
-                                        title={service.ReservationService.maxLimit}
-                                        paragraph={service.name}
-                                        icon={'fas fa-utensils'}
-                                        color={'bg-warning'}
-                                    />
-                                );
-                            }
-                            return null;
-                        })
-                    ) : (
-                        <ViewBox
-                            title={'0'}
-                            paragraph={'Alimentación'}
-                            icon={'fas fa-utensils'}
-                            color={'bg-warning'}
-                        />
-                    )}
                 </div>
-            
-                <div className="col-12 col-md-6">
-                    {reservation.service && reservation.service.length > 0 ? (
-                        reservation.service.map((service, index) => {
-                            if (service.name === 'Lavanderia') {
-                                return (
-                                    <ViewBox
-                                        key={index}
-                                        title={service.ReservationService.maxLimit}
-                                        paragraph={service.name}
-                                        icon={'fas fa-soap'}
-                                        color={'bg-warning'}
-                                    />
-                                );
-                            }
-                            return null;
-                        })
-                    ) : (
-                        <ViewBox
-                            title={'0'}
-                            paragraph={'Lavandería'}
-                            icon={'fas fa-soap'}
-                            color={'bg-warning'}
-                        />
-                    )}
-                </div>
-            
-            
-                <div className="col-12 col-md-6">
-                    {reservation.service && reservation.service.length > 0 ? (
-                        reservation.service.map((service, index) => {
-                            if (service.name === 'Hidratación') {
-                                return (
-                                    <ViewBox
-                                        key={index}
-                                        title={service.ReservationService.maxLimit}
-                                        paragraph={service.name}
-                                        icon={'fas fa-tint'}
-                                        color={'bg-warning'}
-                                    />
-                                );
-                            }
-                            return null;
-                        })
-                    ) : (
-                        <ViewBox
-                            title={'0'}
-                            paragraph={'Hidratación'}
-                            icon={'fas fa-tint'}
-                            color={'bg-warning'}
-                        />
-                    )}
-                </div>
-            </div>
         </>
     );
 
@@ -539,6 +470,51 @@ const renderOrderInfo = () =>
 
         </>
     );
+
+    const servicesInfo = [
+    { name: "Hidratación", icon: "fas fa-tint", label: "Tope máximo de hidratación" },
+    { name: "Alimentación", icon: "fas fa-utensils", label: "Tope máximo de alimentación" },
+    { name: "Lavandería", icon: "fas fa-soap", label: "Tope máximo de lavandería" }
+];
+
+const renderServicesTable = () => (
+    <div className="card">
+        <div className="card-header border-0">
+            <h3 className="card-title">Servicios</h3>
+        </div>
+        <div className="card-body">
+            {reservation.service && reservation.service.length > 0 ? (
+                servicesInfo.map((serviceInfo, index) => {
+                    const service = reservation.service.find(s => s.name === serviceInfo.name);
+                    return service ? (
+                        <div key={index} className="d-flex justify-content-between align-items-center border-bottom mb-3">
+                            <p className="text-primary text-xl">
+                                <i className={serviceInfo.icon}></i>
+                            </p>
+                            <p className="d-flex flex-column text-right">
+                                <span className="font-weight-bold">
+                                    <span className="text-success">
+                                        <i className="fas fa-dollar-sign text-success"></i>{" "}
+                                        {service.ReservationService.maxLimit}
+                                    </span>
+                                </span>
+                                <span className="text-muted">{serviceInfo.label}</span>
+                            </p>
+                        </div>
+                    ) : null;
+                })
+            ) : (
+                <div className="d-flex justify-content-center align-items-center border-bottom mb-3">
+                    <p className="text-muted">No hay servicios asociados a esta reserva.</p>
+                </div>
+            )}
+        </div>
+    </div>
+);
+
+    
+    
+
 
     const handleReservation = async (e) => {
         e.preventDefault();
@@ -562,8 +538,9 @@ const renderOrderInfo = () =>
                 // Realizar la actualización en el backend
             await dispatch(updateRoom(updatedRoom));
         }));
+            const agreementName = getAgreementName(reservation.client.agreementId);
             dispatch(updateClientReservationStatus(reservation.clientId, false));
-            generateInvoice(reservation, clientOrdersList, clientReservationsList);
+            generateInvoice(reservation, clientOrdersList, clientReservationsList, agreementName, paymentMethodName);
 
         };
 

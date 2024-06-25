@@ -135,7 +135,7 @@ const OrderViewScreen = ({ history, match }) => {
         e.preventDefault();
         const updatedOrder = {
             id: orderId,
-            paymentId: paymentId // Añadir el paymentId al actualizar la orden
+            paymentId: paymentId, 
         };
         setModal(false);
         dispatch(updateOrderToPaid(updatedOrder));

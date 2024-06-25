@@ -212,7 +212,7 @@ const ReservationCreateScreen = ({ history, match }) => {
                             <option value="">Seleccione una habitación</option>
                             {filterFreeRooms().map((room) => (
                                 <option key={room.id} value={room.id}>
-                                    Habitación {room.id}
+                                    Habitación {room.name}
                                 </option>
                             ))}
                         </select>

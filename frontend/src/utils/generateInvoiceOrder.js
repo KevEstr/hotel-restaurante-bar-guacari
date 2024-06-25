@@ -34,9 +34,9 @@ const generateInvoice = (order) => {
         doc.text(order.client.name, 10, yOffset + 5);
         doc.setFontSize(10);
         doc.setTextColor(128, 128, 128);
-        doc.text(order.client.address, 10, yOffset + 10);
+        // doc.text(order.client.address, 10, yOffset + 10);
         doc.text(order.client.phone, 10, yOffset + 15);
-        doc.text(order.client.email, 10, yOffset + 20);
+        // doc.text(order.client.email, 10, yOffset + 20);
         doc.setFont("helvetica");
         doc.setTextColor(0, 0, 0); // Restaurar color a negro
         doc.text('Factura #:', 200, yOffset, { align: 'right' });

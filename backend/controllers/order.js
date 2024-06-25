@@ -111,6 +111,12 @@ exports.updateOrderPay = asyncHandler(async (req, res) => {
             await table.save();
         }
 
+        const client = await Client.findByPk(order.clientId);
+        if (client) {
+            client.has_order = 0;
+            await client.save();
+        }
+
         order.isPaid = !order.isPaid;
         order.paymentId = paymentId; // Asignar paymentId a la orden
 
@@ -176,6 +182,12 @@ exports.createOrder = asyncHandler(async (req, res) => {
         if (!delivery) {
             await updateTable(createdOrder.tableId, true);
         }
+
+        await Client.update(
+            { has_order: 1 },
+            { where: { id: clientId } }
+        );
+        
 
         // Actualizar el stock y crear movimientos de inventario
         await updateStockAndCreateMovement(products, userId, createdOrder.id,-1,false,true);
@@ -341,6 +353,12 @@ exports.deleteOrder = asyncHandler(async (req, res) => {
         table.occupied = false;
         await table.save();
       }
+
+      const client = await Client.findByPk(order.clientId);
+        if (client) {
+            client.has_order = 0;
+            await client.save();
+        }
 
       await order.destroy();
 

@@ -2,7 +2,8 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import axios from 'axios';
 
-const generateInvoice = async (reservation, clientOrdersList, clientReservationsList) => {
+
+const generateInvoice = async (reservation, clientOrdersList, clientReservationsList, agreementName, paymentMethodName) => {
     const doc = new jsPDF();
 
     // Función para añadir encabezado de la empresa
@@ -32,12 +33,11 @@ const generateInvoice = async (reservation, clientOrdersList, clientReservations
         doc.setTextColor(128, 128, 128); // Cambiar color a gris
         doc.setFontSize(14);
         doc.setTextColor(0, 0, 0);
-        doc.text(reservation.client.name, 10, yOffset + 5);
+        doc.text(`${reservation.client.name} ${reservation.client.lastnames}`, 10, yOffset + 5);
         doc.setFontSize(10);
         doc.setTextColor(128, 128, 128);
-        doc.text(reservation.client.address, 10, yOffset + 10);
+        doc.text(agreementName, 10, yOffset + 10);
         doc.text(reservation.client.phone, 10, yOffset + 15);
-        doc.text(reservation.client.email, 10, yOffset + 20);
         doc.setFont("helvetica");
         doc.setTextColor(0, 0, 0); // Restaurar color a negro
         doc.text('Factura #:', 200, yOffset, { align: 'right' });
@@ -46,6 +46,7 @@ const generateInvoice = async (reservation, clientOrdersList, clientReservations
         doc.text(reservation.id.toString(), 240, yOffset, { align: 'right' });
         doc.text(`Fecha de pago: ${new Date().toLocaleString()}`, 200, yOffset + 5, { align: 'right' });
         doc.text(`Fecha de factura: ${new Date().toLocaleString()}`, 200, yOffset + 10, { align: 'right' });
+        doc.text(`Método de pago: ${paymentMethodName}`, 200, yOffset + 15, {align: 'right'});
         doc.line(10, yOffset + 25, 200, yOffset + 25); // Línea separadora
         doc.setTextColor(0, 0, 0); // Restaurar color a negro
     };
@@ -114,18 +115,22 @@ const generateInvoice = async (reservation, clientOrdersList, clientReservations
             startY: doc.previousAutoTable.finalY + 10,
             head: [['', '', '', '', '']],
             body: [
-                ['Total:', subtotalOrders, '', '', ''],
-                ['IVA:', '20%', '', '', ''],
-                ['Subtotal:', subtotalOrders, '', '', '']
+                ['', '', '', 'Total:', subtotalOrders],
+                ['', '', '', 'IVA:', '20%'],
+                ['', '', '', 'Subtotal:', subtotalOrders]
             ],
             styles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], lineColor: [255, 255, 255], lineWidth: 0 }, // Quitar todas las líneas
-            headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0]},
+            headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0] },
             columnStyles: {
-                0: { halign: 'right' },
-                1: { halign: 'right' }
+                0: { cellWidth: 30 },
+                1: { cellWidth: 30 },
+                2: { cellWidth: 30 },
+                3: { halign: 'right', cellWidth: 30 },
+                4: { halign: 'right', cellWidth: 30 }
             },
             tableWidth: 'wrap',
-            theme: 'plain'
+            theme: 'plain',
+            margin: { right: 30 } // Ajuste de margen derecho
         });
 
         if (formattedReservations.length > 0) {
@@ -172,18 +177,23 @@ const generateInvoice = async (reservation, clientOrdersList, clientReservations
             startY: doc.previousAutoTable.finalY + 10,
             head: [['', '', '', '', '', '']],
             body: [
-                ['Total:', subtotalReservations, '', '', '', ''],
-                ['IVA:', '20%', '', '', '', ''],
-                ['Subtotal:', subtotalReservations, '', '', '', '']
+                ['', '', '', '', 'Total:', subtotalReservations],
+                ['', '', '', '', 'IVA:', '20%'],
+                ['', '', '', '', 'Subtotal:', subtotalReservations]
             ],
             styles: { fillColor: [255, 255, 255], textColor: [0, 0, 0], lineColor: [255, 255, 255], lineWidth: 0 }, // Quitar todas las líneas
             headStyles: { fillColor: [255, 255, 255], textColor: [0, 0, 0] },
             columnStyles: {
-                0: {halign: 'right' },
-                1: { halign: 'right' }
+                0: { cellWidth: 30 },
+                1: { cellWidth: 30 },
+                2: { cellWidth: 30 },
+                3: { cellWidth: 30 },
+                4: { halign: 'right', cellWidth: 30 },
+                5: { halign: 'right', cellWidth: 30 }
             },
             tableWidth: 'wrap',
-            theme: 'plain'
+            theme: 'plain',
+            margin: { right: 30 } // Ajuste de margen derecho
         });
     }
 
@@ -191,7 +201,9 @@ const generateInvoice = async (reservation, clientOrdersList, clientReservations
         await axios.post('/api/invoices', {
           reservation,
           clientOrdersList,
-          clientReservationsList
+          clientReservationsList,
+          agreementName,
+          paymentMethodName
         });
         console.log('Factura guardada exitosamente');
       } catch (error) {

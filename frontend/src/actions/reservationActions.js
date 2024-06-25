@@ -138,7 +138,6 @@ export const listReservationsDetails = (id) => async (dispatch, getState) => {
             },
         };
 
-        //api call to get category
         const { data } = await axios.get(`/api/reservations/${id}`, config);
         dispatch({
             type: RESERVATION_DETAILS_SUCCESS,

@@ -6,15 +6,15 @@ const { Op } = require("sequelize");
 //@route    POST /api/clients
 //@access   Private/user
 exports.createClient = asyncHandler(async (req, res) => {
-    const { name, address, phone, email, dni, agreementId, has_reservation} = req.body;
+    const { name, lastnames, phone, dni, agreementId, has_reservation, has_order} = req.body;
     const createdClient = await Client.create({
         name,
-        address,
+        lastnames,
         phone,
-        email,
         dni,
         agreementId,
         has_reservation,
+        has_order
     });
     res.status(201).json(createdClient);
 });
@@ -40,9 +40,8 @@ exports.getClients = asyncHandler(async (req, res) => {
             [Op.or]: [
                 { id: { [Op.like]: `%${keyword}%` } },
                 { name: { [Op.like]: `%${keyword}%` } },
-                { address: { [Op.like]: `%${keyword}%` } },
+                { lastnames: { [Op.like]: `%${keyword}%` } },
                 { phone: { [Op.like]: `%${keyword}%` } },
-                { email: { [Op.like]: `%${keyword}%` } },
                 { dni: { [Op.like]: `%${keyword}%` } },
                 { agreementId: { [Op.like]: `%${keyword}%` } },
             ],
@@ -80,15 +79,14 @@ exports.getClient = asyncHandler(async (req, res) => {
 //@route    PUT /api/clients/:id
 //@access   Private/user
 exports.updateClient = asyncHandler(async (req, res) => {
-    const { name, address, phone, email, dni, agreementId, has_reservation } = req.body;
+    const { name, lastnames, phone, dni, agreementId, has_reservation } = req.body;
 
     const client = await Client.findByPk(req.params.id);
 
     if (client) {
         client.name = name;
-        client.address = address;
+        client.lastnames = lastnames;
         client.phone = phone;
-        client.email = email;
         client.dni = dni;
         client.agreementId = agreementId
         client.has_reservation = has_reservation;

@@ -1,7 +1,7 @@
 const { Invoice, Reservation, Order, Client } = require('../models');
 
 const createInvoice = async (req, res) => {
-  const { reservation, clientOrdersList, clientReservationsList } = req.body;
+  const { reservation, clientOrdersList, clientReservationsList, agreementName, paymentMethodName } = req.body;
 
   const formattedOrders = clientOrdersList.flatMap(order =>
     order.products.map(product => ({
@@ -35,6 +35,8 @@ const createInvoice = async (req, res) => {
       subtotalOrders,
       subtotalReservations,
       total,
+      agreementName,
+      paymentMethodName,
       invoiceDate: new Date()
     });
 

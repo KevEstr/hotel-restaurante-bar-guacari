@@ -17,6 +17,8 @@ module.exports = (sequelize, DataTypes) => {
             reservationId: DataTypes.INTEGER,
             clientDetails: DataTypes.JSON,
             orders: DataTypes.JSON,
+            agreementName: DataTypes.STRING,
+            paymentMethodName: DataTypes.STRING,
             reservations: DataTypes.JSON,
             subtotalOrders: DataTypes.FLOAT,
             subtotalReservations: DataTypes.FLOAT,

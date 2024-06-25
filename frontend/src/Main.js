@@ -16,6 +16,9 @@ import OrderEditScreen from "./screens/order/OrderEditScreen";
 import TableScreen from "./screens/table/TableScreen";
 import TableEditScreen from "./screens/table/TableEditScreen";
 
+import LaundryScreen from "./screens/laundry/LaundryScreen";
+import LaundryEditScreen from "./screens/laundry/LaundryEditScreen";
+
 import ServiceScreen from "./screens/service/ServiceScreen";
 import ServiceEditScreen from "./screens/service/ServiceEditScreen";
 
@@ -113,6 +116,15 @@ const Main = () => {
                     />
 
                     <PrivateRoute path="/product" component={ProductScreen} />
+
+                    <PrivateRoute
+                        path="/laundry/:id/edit"
+                        component={LaundryEditScreen}
+                    />
+
+                    <PrivateRoute path="/laundry" component={LaundryScreen} />
+
+                    
 
                     <PrivateRoute
                         path="/room/:id/edit"

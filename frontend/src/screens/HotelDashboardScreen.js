@@ -9,7 +9,6 @@ import DataTableLoader from "../components/loader/DataTableLoader";
 import LoaderHandler from "../components/loader/LoaderHandler";
 
 /* Actions */
-
 import {
     OccupiedTableLoader,
     SkeletonBoxes,
@@ -20,15 +19,20 @@ import { getStatistics } from "../actions/reservationActions";
 
 const HotelDashboardScreen = ({ history }) => {
     const dispatch = useDispatch();
-
     //user state
     const userLogin = useSelector((state) => state.userLogin);
     const { userInfo } = userLogin;
 
     const reservationStatistics = useSelector((state) => state.reservationStatistics);
-    const { loading, error, data } = reservationStatistics;
+    const { loading, error, data = { reservations: [], sales: [], statistics: {} } } = reservationStatistics;
 
     const { reservations, sales, statistics } = data;
+
+    const totalRooms = statistics.totalRooms || 0;
+    const reservedRooms = statistics.reservedRooms || 0;
+    const maintenanceRooms = statistics.maintenanceRooms || 0;
+    const availableRooms = totalRooms - reservedRooms - maintenanceRooms;
+    const occupiedPercentage = totalRooms ? (reservedRooms / totalRooms) * 100 : 0;    
 
     useEffect(() => {
         if (!userInfo) {
@@ -37,14 +41,10 @@ const HotelDashboardScreen = ({ history }) => {
         dispatch(getStatistics());
     }, [dispatch, history, userInfo]);
 
-    //get all in place orders
-    const reservationsInPlace = (reservations) => {
-        const reservationsInPlace = reservations.filter(function (item) {
-            return item.delivery === false;
-        });
+    useEffect(() => {
+        console.log("reservationStatistics data:", data);
+    }, [data]);
 
-        return reservationsInPlace;
-    };
 
     const getTodaySales = (items) => {
         let day = new Date();
@@ -62,32 +62,32 @@ const HotelDashboardScreen = ({ history }) => {
         history.push(`/reservation/${id}/view`);
     };
 
-    const returnSales = () => {
+    const returnSales = (sales) => {
+        console.log("Sales:", sales);
+        if (!sales || !Array.isArray(sales)) {
+            return null; // o un mensaje de carga o vacío
+        }
+    
         var indents = [];
         for (var i = 0; i < (sales.length > 3 ? 4 : sales.length); i++) {
+            const sale = sales[i];
+            
             indents.push(
-                <tr key={sales[i].id}>
-                    <td className="font-weight-bold">{sales[i].id}</td>
-                    <td className="h4">
-                        {sales[i].delivery ? (
-                            <span className={"badge bg-primary"}>EN RESTAURANTE</span>
-                        ) : (
-                            <span className={"badge bg-info"}>DOMICILIO</span>
-                        )}
-                    </td>
+                <tr key={sale.id}>
+                    <td className="font-weight-bold">{sale.id}</td>
                     <td className="h4">
                         <span className={"badge bg-success"}>
-                            ${sales[i].total}
+                            ${sale.price}
                         </span>
                     </td>
                     <td className="h4">
                         <span className={"badge bg-warning"}>
-                            {sales[i].products.length}
+                            {sale.note ? sale.note.length : 0}
                         </span>
                     </td>
                     <td>
                         <Link
-                            to={`/reservation/${sales[i].id}/view`}
+                            to={`/reservation/${sale.id}/view`}
                             className="btn btn-info"
                         >
                             <i className="fas fa-search"></i>
@@ -103,32 +103,24 @@ const HotelDashboardScreen = ({ history }) => {
         <>
             <SmallBox
                 number={reservations.length}
-                paragraph={"Órdenes Activas"}
+                paragraph={"Reservas Activas"}
                 link={"reservation"}
                 color={"success"}
-                icon={"fas fa-utensils"}
-            />
-
-            <SmallBox
-                number={reservationsInPlace(reservations).length}
-                paragraph={"Reservaciones en restaurante"}
-                link={"active"}
-                color={"info"}
-                icon={"fas fa-users"}
+                icon={"fas fa-solid fa-hotel"}
             />
             <SmallBox
-                number={reservations.length}
-                paragraph={"Total Reservas"}
+                number={`${occupiedPercentage.toFixed(2)}%`}
+                paragraph={"Disponibilidad del Hotel"}
                 link={"reservation"}
-                color={"warning"}
-                icon={"ion ion-bag"}
+                color={"info"}
+                icon={"fas fa-bed"}
             />
         </>
     );
 
     const renderSales = () => (
         <div className="row">
-            <div className="col-12 col-lg-6">
+            <div className="col-12 col-lg-7">
                 <div className="card">
                     <div className="card-header border-0">
                         <h3 className="card-title">Últimas ventas</h3>
@@ -143,9 +135,8 @@ const HotelDashboardScreen = ({ history }) => {
                             <thead>
                                 <tr>
                                     <th>ID</th>
-                                    <th>Tipo</th>
                                     <th>Total</th>
-                                    <th>Productos</th>
+                                    <th>Nota</th>
                                     <th>Más</th>
                                 </tr>
                             </thead>
@@ -154,7 +145,7 @@ const HotelDashboardScreen = ({ history }) => {
                     </div>
                 </div>
             </div>
-            <div className="col-12 col-lg-6">
+            <div className="col-12 col-lg-5">
                 <div className="card">
                     <div className="card-header border-0">
                         <h3 className="card-title">Restobar Panorama</h3>
@@ -167,25 +158,10 @@ const HotelDashboardScreen = ({ history }) => {
                             <p className="d-flex flex-column text-right">
                                 <span className="font-weight-bold">
                                     <i className="ion ion-android-arrow-up text-warning" />{" "}
-                                    {statistics && statistics.reservations}
+                                    {statistics.reservations}
                                 </span>
                                 <span className="text-muted">
-                                    TOTAL ÓRDENES COMPLETADAS
-                                </span>
-                            </p>
-                        </div>
-                        {/* /.d-flex */}
-                        <div className="d-flex justify-content-between align-items-center border-bottom mb-3">
-                            <p className="text-info text-xl">
-                                <i className="fas fa-truck"></i>
-                            </p>
-                            <p className="d-flex flex-column text-right">
-                                <span className="font-weight-bold">
-                                    <i className="ion ion-android-arrow-up text-info" />{" "}
-                                    {statistics && statistics.deliveries}
-                                </span>
-                                <span className="text-muted">
-                                    TOTAL DOMICILIOS COMPLETADOS
+                                    TOTAL RESERVAS COMPLETADAS
                                 </span>
                             </p>
                         </div>
@@ -197,14 +173,13 @@ const HotelDashboardScreen = ({ history }) => {
                                 <span className="font-weight-bold">
                                     <span className="text-success">
                                         <i className="fas fa-dollar-sign text-success"></i>{" "}
-                                        {statistics && statistics.today}
+                                        {statistics.today}
                                     </span>
                                 </span>
                                 <span className="text-muted">VENTAS HOY</span>
                             </p>
                         </div>
-                        {/* /.d-flex */}
-                        <div className="d-flex justify-content-between align-items-center mb-0">
+                        <div className="d-flex justify-content-between align-items-center border-bottom mb-3">
                             <p className="text-danger text-xl">
                                 <i className="fas fa-piggy-bank"></i>
                             </p>
@@ -212,65 +187,49 @@ const HotelDashboardScreen = ({ history }) => {
                                 <span className="font-weight-bold">
                                     <span className="text-success">
                                         <i className="fas fa-dollar-sign"></i>{" "}
-                                        {statistics && statistics.total}
+                                        {statistics.total}
                                     </span>
                                 </span>
                                 <span className="text-muted">TOTAL VENTAS</span>
                             </p>
                         </div>
-                        {/* /.d-flex */}
+                        <div className="d-flex justify-content-between align-items-center border-bottom mb-3">
+                            <p className="text-primary text-xl">
+                                <i className="fas fa-bed"></i>
+                            </p>
+                            <p className="d-flex flex-column text-right">
+                                <span className="font-weight-bold">
+                                    <span className="text-primary">
+                                        <i className="fas fa-door-open"></i>{" "}
+                                        {availableRooms}
+                                    </span>
+                                </span>
+                                <span className="text-muted">HABITACIONES DISPONIBLES</span>
+                            </p>
+                        </div>
+                        <div className="d-flex justify-content-between align-items-center mb-0">
+                            <p className="text-warning text-xl">
+                                <i className="fas fa-hotel"></i>
+                            </p>
+                            <p className="d-flex flex-column text-right">
+                                <span className="font-weight-bold">
+                                    <span className="text-warning">
+                                        <i className="fas fa-hotel"></i>{" "}
+                                        {totalRooms}
+                                    </span>
+                                </span>
+                                <span className="text-muted">HABITACIONES TOTALES</span>
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     );
-
-    const renderOrders = () => (
-        <table className="table m-0 table-hover">
-            <thead>
-                <tr>
-                    <th>Órden ID</th>
-                    <th>Cliente</th>
-                    <th>Mesa</th>
-                    <th>Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                {reservationsInPlace(reservations)
-                    .splice(0, 5)
-                    .map((reservation) => (
-                        <tr
-                            key={reservation.id}
-                            onClick={(e) => handleRowClick(e, reservation.id)}
-                            style={{
-                                cursor: "pointer",
-                            }}
-                        >
-                            <td>
-                                <h4>
-                                    <span className={"badge bg-primary"}>
-                                        {reservation.id}
-                                    </span>
-                                </h4>
-                            </td>
-                            <td>{reservation.client ? reservation.client.name : ""}</td>
-                            <td>{reservation.room ? reservation.room.name : ""}</td>
-                            <td>
-                                <h4>
-                                    <span className={"badge bg-success"}>
-                                        ${reservation.total}
-                                    </span>
-                                </h4>
-                            </td>
-                        </tr>
-                    ))}
-            </tbody>
-        </table>
-    );
-
+    
     return (
         <>
-            <HeaderContent name={"Panel General Del Restaurante"} />
+            <HeaderContent name={"Panel General Del Hotel"} />
 
             <section className="content">
                 <div className="container-fluid">
@@ -284,12 +243,10 @@ const HotelDashboardScreen = ({ history }) => {
                     </div>
 
                     <div className="row">
-                        <div className="col-12 col-md-9">
+                        <div className="col-12 col-md-12">
                             <div className="card">
                                 <div className="card-header border-transparent">
-                                    <h3 className="card-title">
-                                        Últimas órdenes realizadas
-                                    </h3>
+                                    
                                     <div className="card-tools">
                                         <button
                                             type="button"
@@ -299,53 +256,35 @@ const HotelDashboardScreen = ({ history }) => {
                                             <i className="fas fa-minus" />
                                         </button>
                                     </div>
-                                </div>
-                                <div className="card-body p-0">
-                                    <div className="table-responsive">
-                                        <LoaderHandler
-                                            loading={loading}
-                                            error={error}
-                                            loader={<DataTableLoader />}
-                                            render={renderOrders}
-                                        />
-                                    </div>
+                                    {userInfo.isAdmin && (
+                        <LoaderHandler
+                            loading={loading}
+                            error={error}
+                            loader={<SkeletonSales />}
+                            render={renderSales}
+                        />
+                    )}
+
                                 </div>
                                 <div className="card-footer clearfix">
                                     <Link
                                         to={"/reservation/create"}
                                         className="btn btn-sm btn-info float-left"
                                     >
-                                        Generar nueva órden
+                                        Generar nueva reserva
                                     </Link>
                                     <Link
                                         to={"/reservation"}
                                         className="btn btn-sm btn-secondary float-right"
                                     >
-                                        Ver todas las órdenes
+                                        Ver todas las reservas
                                     </Link>
                                 </div>
                             </div>
                         </div>
-                        <div className="col-12 col-md-3">
-                            <div className="card">
-                                <div className="card-header">
-                                    <h3 className="card-title">
-                                        Últimos domicilios generados
-                                    </h3>
-                                    <div className="card-tools">
-                                        <button
-                                            type="button"
-                                            className="btn btn-tool"
-                                            data-card-widget="collapse"
-                                        >
-                                            <i className="fas fa-minus" />
-                                        </button>
-                                    </div>
-                                </div>
+                        
+                            
                                 
-                                
-                            </div>
-                        </div>
                     </div>
                 </div>
                 {/* /.container-fluid */}

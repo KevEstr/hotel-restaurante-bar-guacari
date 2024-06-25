@@ -1,5 +1,8 @@
 import axios from 'axios';
-import { INVOICE_DETAILS_REQUEST, INVOICE_DETAILS_SUCCESS, INVOICE_DETAILS_FAIL } from '../constants/invoiceConstants';
+import { INVOICE_DETAILS_REQUEST, 
+        INVOICE_DETAILS_SUCCESS, 
+        INVOICE_DETAILS_FAIL,
+     } from '../constants/invoiceConstants';
 
 export const getInvoiceDetails = (id) => async (dispatch, getState) => {
     try {

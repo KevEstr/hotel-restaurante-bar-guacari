@@ -58,8 +58,10 @@ const ReservationScreen = ({ history }) => {
       console.error('Error parsing JSON:', error);
     }
 
+    const { agreementName, paymentMethodName } = invoice;
+
     console.log("Datos de la factura:", invoice, clientOrdersList, clientReservationsList);
-        generateInvoiceHistorial(invoice, clientOrdersList, clientReservationsList);
+        generateInvoiceHistorial(invoice, clientOrdersList, clientReservationsList, agreementName, paymentMethodName );
   }
 }, [invoice]);
 

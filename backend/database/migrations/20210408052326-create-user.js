@@ -9,20 +9,20 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       name: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(40),
         allowNull: false
       },
       email: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(40),
         allowNull: false,
         unique: true
       },
       password: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(40),
         allowNull: false
       },
       image: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(20),
         allowNull: false,
         defaultValue: "/avatar.png"
       },
