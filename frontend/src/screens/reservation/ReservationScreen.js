@@ -222,6 +222,7 @@ const ReservationScreen = ({ history }) => {
                 </tr>
             </thead>
             <tbody>
+                {console.log(reservations)}
                 {reservations.slice().reverse().map((reservation) => (
                     <tr key={reservation.id}>
                         <td>{reservation.id}</td>

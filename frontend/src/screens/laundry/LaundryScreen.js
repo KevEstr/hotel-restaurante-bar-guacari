@@ -111,19 +111,25 @@ const LaundryScreen = ({ history, match }) => {
         return '';
       };
 
-    const renderClientsSelect = () => (
-        <>
-            <Select
-                data={client}
-                setData={setClient}
-                items={clients.filter(client => client.has_reservation)}
-                search={searchClients}
-            />
-            {errors.client && (
-                <Message message={errors.client} color={"warning"} />
-            )}
-        </>
-    );
+      const renderClientsSelect = () => {
+        if (!clients || clients.length === 0) {
+            return null; // Si no hay clientes o la lista está vacía, no renderiza nada
+        }
+    
+        return (
+            <>
+                <Select
+                    data={client}
+                    setData={setClient}
+                    items={clients.filter(client => client.has_reservation)}
+                    search={searchClients}
+                />
+                {errors.client && (
+                    <Message message={errors.client} color={"warning"} />
+                )}
+            </>
+        );
+    };
 
     const renderDeleteConfirmationModal = () => (
         <Modal

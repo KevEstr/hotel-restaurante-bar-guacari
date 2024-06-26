@@ -180,31 +180,13 @@ const OrderCreateScreen = ({ match }) => {
     
         if (Object.keys(errorsCheck).length === 0) {
             proceedWithOrder();
-            console.log("USUARIO: ",user)
-            console.log("Productos en la orden: ",productsInOrder)
-            /* Create order */
-            const order = {
-                total: total,
-                tableId: !delivery ? table : 0,
-                clientId: client,
-                products: productsInOrder,
-                delivery: delivery,
-                note: note,
-                userId: user,
-            };
-            /* Make request */
-            console.log("ORDEN A CREAR: ",order)
-
-            dispatch(createOrder(order))
-
-
         }
     };
-    
+
     const proceedWithOrder = () => {
         console.log("USUARIO: ", user);
         console.log("Productos en la orden: ", productsInOrder);
-    
+
         /* Create order */
         const order = {
             total: total,
@@ -216,7 +198,7 @@ const OrderCreateScreen = ({ match }) => {
             userId: user,
             confirmExceedQuota: true,
         };
-    
+
         /* Make request */
         console.log("ORDEN A CREAR: ", order);
         dispatch(createOrder(order).then((createdOrder) => {
@@ -240,6 +222,7 @@ const OrderCreateScreen = ({ match }) => {
             
 
         }));
+
         dispatch(updateClientHasReservation(order.clientId, true));
     };
 
@@ -264,7 +247,6 @@ const OrderCreateScreen = ({ match }) => {
         </div>
         </Modal>
     );
-
 
     const getTableName = (tableId) => {
         if (tables && tables.length > 0) {

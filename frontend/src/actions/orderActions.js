@@ -147,14 +147,14 @@ export const listOrders = (keyword='', pageNumber='', delivery='', clientId='', 
         };
 
         // Construct query params
-        /*let query = `/api/orders/?type=${type}`;
+        let query = `/api/orders/?type=${type}`;
         if (keyword) query += `&keyword=${keyword}`;
         if (pageNumber) query += `&pageNumber=${pageNumber}`;
         if (delivery) query += `&delivery=true`;
         if (clientId) query += `&clientId=${clientId}`;
         if (startDate) query += `&startDate=${startDate}`;
         if (endDate) query += `&endDate=${endDate}`;
-        if (paymentId) query += `&paymentId=${paymentId}`;*/
+        if (paymentId) query += `&paymentId=${paymentId}`;
 
 
         const { data } = await axios.get(`/api/orders`,{

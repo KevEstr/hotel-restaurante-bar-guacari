@@ -129,16 +129,15 @@ const Menu = ({ history }) => {
                                 </li>
 
                                 </OverlayTrigger>
-                                
-                                <OverlayTrigger
-                                placement="right"
-                                overlay={<Tooltip id="tooltip-top">Visualiza el histórico de reservas</Tooltip>}> 
                                 <li className="nav-item">
                                     <Link to="/laundry" className="nav-link">
                                         <i className="nav-icon fas fa-solid fa-soap" />{" "}
                                         <p> Lavandería </p>
                                     </Link>
                                 </li>
+                                <OverlayTrigger
+                                placement="right"
+                                overlay={<Tooltip id="tooltip-top">Visualiza el histórico de reservas</Tooltip>}> 
                                 <li className="nav-item">
                                     <Link to="/reservation" className="nav-link">
                                         <i className="nav-icon far fa-clipboard" />{" "}

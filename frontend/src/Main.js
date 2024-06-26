@@ -137,6 +137,15 @@ const Main = () => {
                     
 
                     <PrivateRoute
+                        path="/laundry/:id/edit"
+                        component={LaundryEditScreen}
+                    />
+
+                    <PrivateRoute path="/laundry" component={LaundryScreen} />
+
+                    
+
+                    <PrivateRoute
                         path="/room/:id/edit"
                         component={RoomEditScreen}
                     />

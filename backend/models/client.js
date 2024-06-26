@@ -33,6 +33,7 @@ module.exports = (sequelize, DataTypes) => {
             agreementId: DataTypes.INTEGER,
             has_reservation: DataTypes.BOOLEAN,
             has_order: DataTypes.BOOLEAN,
+            reservationId: DataTypes.INTEGER,
         },
         {
             sequelize,

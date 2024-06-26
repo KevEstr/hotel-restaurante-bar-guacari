@@ -40,6 +40,8 @@ const OrderScreen = ({ history }) => {
     const [keyword, setKeyword] = useState("");
 
     const [paymentId, setPaymentId] = useState('');
+    const [startDate, setStartDate] = useState(null);
+    const [endDate, setEndDate] = useState(null);
     const [tempStartDate, setTempStartDate] = useState(null);
     const [tempEndDate, setTempEndDate] = useState(null);
 
@@ -55,9 +57,6 @@ const OrderScreen = ({ history }) => {
     const [totalTransfer, setTotalTransfer] = useState(0);
     const [totalCash, setTotalCash] = useState(0);
     const [totalAccumulated, setTotalAccumulated] = useState(0);
-    const [startDate, setStartDate] = useState("");
-    const [endDate, setEndDate] = useState("");
-
 
     const agreementList = useSelector((state) => state.agreementList);
     const { agreements } = agreementList;
@@ -120,7 +119,7 @@ const OrderScreen = ({ history }) => {
         setTotalTransfer(transfer);
         setTotalCash(cash);
         setTotalAccumulated(accumulated);
-    }, [orders]);
+      }, [orders]);
 
       const handleFilter = () => {
         const startOfDay = new Date(tempStartDate);
@@ -148,21 +147,6 @@ const OrderScreen = ({ history }) => {
                 <i className="fas fa-edit" /> Nueva órden
             </button>
         </Link>
-    );
-
-    const DateFilter = ({ setStartDate, setEndDate }) => (
-        <div className="date-filter">
-            <input 
-                type="date" 
-                onChange={(e) => setStartDate(e.target.value)} 
-                placeholder="Fecha de inicio" 
-            />
-            <input 
-                type="date" 
-                onChange={(e) => setEndDate(e.target.value)} 
-                placeholder="Fecha de fin" 
-            />
-        </div>
     );
 
     const getAgreementName = (agreementId) => {
@@ -223,15 +207,7 @@ const OrderScreen = ({ history }) => {
     );
 
 
-    const renderTable = () => {
-        const filteredOrders = orders.filter((order) => {
-            const orderDate = new Date(order.createdAt);
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-            return (!startDate || orderDate >= start) && (!endDate || orderDate <= end);
-        });
-
-        return (
+    const renderTable = () => (
         <table className="table table-hover text-nowrap">
             <thead>
                 <tr>
@@ -247,7 +223,7 @@ const OrderScreen = ({ history }) => {
                 </tr>
             </thead>
             <tbody>
-                {filteredOrders.map((order) => (
+                {orders.map((order) => (
                     <tr key={order.id}>
                         <td>{order.id}</td>
                         <td>{order.client.name}</td>
@@ -313,9 +289,7 @@ const OrderScreen = ({ history }) => {
                 ))}
             </tbody>
         </table>
-        );
-    };
-
+    );
 
     const renderOrders = () => (
         <>
