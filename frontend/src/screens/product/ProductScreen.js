@@ -62,7 +62,8 @@ const ProductScreen = ({ history }) => {
             resetForm();
             setModalIsOpen(false);
         }
-        dispatch(listProducts(keyword, pageNumber,selectedCategory));
+        const type=false;
+        dispatch(listProducts(keyword, selectedCategory, type, pageNumber));
     }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess, selectedCategory, deleteSuccess]);
 
     
@@ -95,7 +96,7 @@ const ProductScreen = ({ history }) => {
         if (isComposite && ingredientsInOrder.length === 0) {
             errorsCheck.ingredientsInOrder = "Se necesitan ingredientes";
         }
-        if (!minQty) {
+        if (!minQty && isSimple) {
             errorsCheck.minQty = "Cantidad mínima es requerida para productos simples";
         }
 
@@ -122,8 +123,9 @@ const ProductScreen = ({ history }) => {
             isComposite: isComposite,  // Include this to indicate product type
             ingredients: isComposite ? ingredientsInOrder : [], // Solo incluir ingredientes si es compuesto
             minQty: isSimple? minQty : null, // Solo incluir cantidad mínima si es simple
+            type: 0,
         };
-
+        console.log("product: ",product)
         dispatch(createProduct(product));
     };
 
@@ -332,12 +334,19 @@ const ProductScreen = ({ history }) => {
 );
 
 const renderNegativeStockProducts = () => {
+    // Verifica si existen productos
+    if (!products || products.length === 0) return null;
+
+    // Filtra los productos con stock negativo
     const negativeStockProducts = products.filter(product => product.stock < 0);
+
+    // Si no hay productos con stock negativo, retorna null
     if (negativeStockProducts.length === 0) return null;
 
+    // Si hay productos con stock negativo, los muestra en la alerta
     return (
         <div className="alert alert-danger mt-3">
-            <strong>EXISTENCIA NEGATIVA:</strong> Se recomienda realizar inventario de los siguientes products y realizar la entrada respectiva:
+            <strong>EXISTENCIA NEGATIVA:</strong> Se recomienda realizar inventario de los siguientes productos y realizar la entrada respectiva:
             <ul>
                 {negativeStockProducts.map(product => (
                     <li key={product.id}>{product.name}</li>

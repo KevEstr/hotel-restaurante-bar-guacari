@@ -394,23 +394,15 @@ export const listOrdersClient = (clientId) => async (dispatch, getState) => {
             }
         };
 
-        const { data } = await axios.get(`/api/orders/client/${clientId}`, config);
-
+        //const { data } = await axios.get(`/api/orders/client/${clientId}`, config);
+        const { data } = await axios.get(`/api/orders/reservation/${clientId}`, config);
         // Aquí puedes modificar la estructura de los datos para incluir los detalles de los productos asociados a cada orden
-        const ordersWithProducts = data.map(async (order) => {
-            const { data: orderDetails } = await axios.get(`/api/orders/${order.id}`, config);
-            return {
-                ...order,
-                products: orderDetails.products
-            };
-        });
-
-        // Espera a que todas las solicitudes de detalles de órdenes se completen
-        const ordersWithProductsData = await Promise.all(ordersWithProducts);
+        console.log("DATA: ",data);
+    
 
         dispatch({
             type: CLIENT_ORDERS_SUCCESS,
-            payload: ordersWithProductsData
+            payload: data
         });
     } catch (error) {
         dispatch({

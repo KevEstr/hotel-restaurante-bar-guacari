@@ -146,7 +146,15 @@ exports.getOrders = asyncHandler(async (req, res) => {
 //@access   Private/user
 exports.getOrder = asyncHandler(async (req, res) => {
     const order = await Order.findByPk(req.params.id, {
-        include: { all: true, nested: true },
+        include: [
+            { model: Client, as: "client" },
+            { model: Table, as: "table" },
+            {
+                model: Product,
+                as: "products",
+                through: { model: OrderProduct, as: "OrderProduct" }
+            },
+        ],
     });
     if (order) {
         res.json(order);
@@ -221,7 +229,7 @@ const findDifferences = (oldProducts, newProducts) => {
 //@access   Private/user
 exports.createOrder = asyncHandler(async (req, res) => {
     //get data from request
-    const { total, tableId, clientId, products, delivery, note, userId, paymentId, type, confirmExceedQuota } = req.body;
+    const { total, tableId, clientId, products, delivery, note, userId, paymentId, type, confirmExceedQuota, reservation_id } = req.body;
     
     try {
         // verificar si el cliente tiene cupo sufuciente
@@ -312,6 +320,7 @@ exports.createOrder = asyncHandler(async (req, res) => {
             paymentId: paymentId,
             type: type,
             isPaid: type ? true : false,
+            reservation_id: reservation_id ? reservation_id : null,
         });
         console.log("type: ",type);
         console.log("createdOrder: ",createdOrder);
@@ -675,8 +684,22 @@ exports.getStatistics = asyncHandler(async (req, res) => {
 });
 
 exports.getClientOrders = asyncHandler(async (req, res) => {
-    const clientId = req.params.id;
-    const orders = await Order.findAll({ where: { clientId } });
+    const reservation_id = req.params.id;
+    console.log("CLIENT ID: ", reservation_id);
+    const orders = await Order.findAll({
+        where: { reservation_id },
+        include: [
+            {
+                model: Product,
+                as: "products",
+                through: {
+                    model: OrderProduct,
+                    as: "OrderProduct",
+                },
+            }
+        ]
+    });
+    console.log("ORDERS: ", orders);
     if (orders) {
         res.json(orders);
     } else {

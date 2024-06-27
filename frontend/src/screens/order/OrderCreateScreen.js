@@ -179,11 +179,11 @@ const OrderCreateScreen = ({ match }) => {
         }
     
         if (Object.keys(errorsCheck).length === 0) {
-            proceedWithOrder();
+            proceedWithOrder(clientObj);
         }
     };
 
-    const proceedWithOrder = () => {
+    const proceedWithOrder = (clientObj) => {
         console.log("USUARIO: ", user);
         console.log("Productos en la orden: ", productsInOrder);
 
@@ -197,11 +197,12 @@ const OrderCreateScreen = ({ match }) => {
             note: note,
             userId: user,
             confirmExceedQuota: true,
+            reservation_id: clientObj.reservation.id ? clientObj.reservation.id : null,
         };
 
         /* Make request */
         console.log("ORDEN A CREAR: ", order);
-        dispatch(createOrder(order).then((createdOrder) => {
+        dispatch(createOrder(order)).then((createdOrder) => {
 
             const newOrder = {
                 id: createdOrder.id, 
@@ -221,7 +222,7 @@ const OrderCreateScreen = ({ match }) => {
 
             
 
-        }));
+        });
 
         dispatch(updateClientHasReservation(order.clientId, true));
     };

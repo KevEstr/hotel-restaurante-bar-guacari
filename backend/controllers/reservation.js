@@ -156,12 +156,11 @@ exports.getReservation = asyncHandler(async (req, res) => {
           ],
         },
         {
-          model: Room,
-          as: 'room',
-          through: {
-            model: RoomReservation,
-            where: { reservationId: req.params.id }  // Condición para incluir solo registros relevantes
-          }
+            model: Room,
+            as: 'room',
+            through: {
+                model: RoomReservation,
+            },
         }
       ]
     });

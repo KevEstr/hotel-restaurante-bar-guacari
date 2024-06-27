@@ -21,7 +21,7 @@ import {
 } from "../constants/productConstants";
 
 //get all products
-export const listProducts = (keyword = "", category = '', type='', pageNumber='') => async (
+export const listProducts = (keyword = '', category = '', type='', pageNumber='') => async (
     dispatch,
     getState
 ) => {
@@ -43,17 +43,17 @@ export const listProducts = (keyword = "", category = '', type='', pageNumber=''
         };
 
         //build query params
-        let query = `/api/products?`;
+        let query = `/api/products?&type=${type}`;
         if (keyword) {
-            query += `keyword=${keyword}&type=${type}`;
+            query += `&keyword=${keyword}`;
         }
         if (category) {
-            query += `category=${category}&type=${type}`;
+            query += `&category=${category}`;
+        }
+        if (pageNumber) {
+            pageNumber += `&pageNumber=${pageNumber}`;
         }
         console.log("QUERY: ",query);
-        if(!category &&!keyword){
-            query += `type=${type}`;
-        }
 
 
         //get all products

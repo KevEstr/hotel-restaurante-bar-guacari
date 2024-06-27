@@ -22,6 +22,11 @@ module.exports = (sequelize, DataTypes) => {
                 as: "room",
             });
 
+            this.hasMany(models.Order, {
+                foreignKey: "reservation_id",
+                as: "orders", // Usualmente usamos plural para una relación de hasMany
+            });
+
             this.belongsToMany(models.Service, {
                 through: models.ReservationService,
                 foreignKey: "reservationId",

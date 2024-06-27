@@ -36,6 +36,8 @@ router.post("/:id/pay", protect, updateOrderPay);
 router.post("/:id/delivery", protect, updateOrderDelivery);
 
 router.route('/client/:id').get(protect, getClientOrders);
+router.route('/reservation/:id').get(protect, getClientOrders);
+
 
 router.delete('/:id', protect, async (req, res) => {
     const { id } = req.params;

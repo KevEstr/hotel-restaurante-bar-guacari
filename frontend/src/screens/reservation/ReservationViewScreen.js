@@ -106,6 +106,7 @@ const ReservationViewScreen = ({ history, match }) => {
     useEffect(() => {
         // Cargar detalles de la reserva y otros datos iniciales
         dispatch(listReservationsDetails(reservationId));
+        console.log('RESERVATION DETAILS', reservationDetails);
         dispatch(listAgreements());
         dispatch(listPayments());
     }, [dispatch, reservationId]);
@@ -113,8 +114,8 @@ const ReservationViewScreen = ({ history, match }) => {
     useEffect(() => {
         if (reservation) {
             // Cargar órdenes del cliente y reservas por cliente cuando la reserva esté disponible
-            dispatch(listOrdersClient(reservation.clientId));
-            dispatch(listReservationsByClient(reservation.clientId));
+            dispatch(listOrdersClient(reservation.id));
+            //dispatch(listReservationsByClient(reservation.clientId));
         }
     }, [dispatch, reservation]);
     
@@ -378,14 +379,9 @@ const ReservationViewScreen = ({ history, match }) => {
                             title="Habitaciones"
                             paragraph={
                                 <div>
-                                    {clientReservationsList && clientReservationsList.length > 0 ? (
-                                        [...new Set(clientReservationsList.reduce((roomNames, reservation) => {
-                                            if (reservation.rooms && reservation.rooms.length > 0) {
-                                                const roomNamesForReservation = reservation.rooms.map(room => room.name);
-                                                return roomNames.concat(roomNamesForReservation);
-                                            }
-                                            return roomNames;
-                                        }, []))].join(', ')
+                                    {console.log("reservationDetails: ", reservationDetails)}
+                                    {reservationDetails && reservationDetails.reservation && reservationDetails.reservation.room && reservationDetails.reservation.room.length > 0 ? (
+                                        [...new Set(reservationDetails.reservation.room.map(room => room.name))].join(', ')
                                     ) : (
                                         'No hay habitaciones asociadas a esta reserva.'
                                     )}

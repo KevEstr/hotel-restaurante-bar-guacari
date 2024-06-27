@@ -13,6 +13,11 @@ module.exports = (sequelize, DataTypes) => {
                 foreignKey: "clientId",
                 as: "client",
             });
+
+            this.belongsTo(models.Reservation, {
+                foreignKey: "reservation_id",
+                as: "reservation",
+            });
             
             this.belongsTo(models.Table, {
                 foreignKey: "tableId",
@@ -42,6 +47,7 @@ module.exports = (sequelize, DataTypes) => {
             tableId: DataTypes.INTEGER,
             paymentId: DataTypes.INTEGER,
             type: DataTypes.BOOLEAN,
+            reservation_id: DataTypes.INTEGER,
         },
         {
             sequelize,
