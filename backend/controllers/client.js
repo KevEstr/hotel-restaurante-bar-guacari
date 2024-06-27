@@ -137,13 +137,18 @@ exports.deleteClient = asyncHandler(async (req, res) => {
 
 exports.updateClientReservationStatus = asyncHandler(async (req, res) => {
     const { has_reservation } = req.body;
+    const { reservationId } = req.body;
+    const { clientId } = req.body;
 
+    console.log("req.body: ",req.body)
     const client = await Client.findByPk(req.params.id);
 
     if (client) {
         client.has_reservation = has_reservation;
+        client.reservationId = reservationId;
 
         const updatedClient = await client.save();
+        console.log("updatedClient: ",updatedClient)
         res.json(updatedClient);
     } else {
         res.status(404);

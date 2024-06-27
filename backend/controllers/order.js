@@ -230,7 +230,7 @@ const findDifferences = (oldProducts, newProducts) => {
 exports.createOrder = asyncHandler(async (req, res) => {
     //get data from request
     const { total, tableId, clientId, products, delivery, note, userId, paymentId, type, confirmExceedQuota, reservation_id } = req.body;
-    
+    console.log("req.body: ",req.body);
     try {
         // verificar si el cliente tiene cupo sufuciente
 
@@ -255,7 +255,7 @@ exports.createOrder = asyncHandler(async (req, res) => {
         let sufficientQuota = true;
         let extraPayment = 0;
 
-
+        console.log("CLIENT: ",client);
         if (client.has_reservation && client.reservation && client.reservation.service.length > 0) {
             const foodService = client.reservation.service.find(service => service.id === 1);
 
@@ -294,7 +294,7 @@ exports.createOrder = asyncHandler(async (req, res) => {
                 reservationService.availableQuota -=total;
                 await reservationService.save();
             }
-        } else if (sufficientQuota) {
+        } else if (sufficientQuota && client.id!==1 && client.has_reservation && client.reservation && client.reservation.service.length > 0) {
             // Adjust the available quota
             const reservationService = await ReservationService.findOne({
                 where: {
@@ -333,12 +333,15 @@ exports.createOrder = asyncHandler(async (req, res) => {
             await updateTable(createdOrder.tableId, true);
         }
 
-        await Client.update(
-            { has_order: 1 },
-            { where: { id: clientId } }
-        );
+    
+        if(client.id!==1){
+            await Client.update(
+                { has_order: 1 },
+                { where: { id: clientId } }
+            );
+        }
         
-
+        console.log("createdOrder: ",createdOrder);
         // Actualizar el stock y crear movimientos de inventario
         await updateStockAndCreateMovement(products, userId, createdOrder.id,-1,false,true);
 
@@ -629,7 +632,15 @@ exports.getStatistics = asyncHandler(async (req, res) => {
             isPaid: true,
         },
         limit: 5,
-        include: { all: true, nested: true },
+        include: [
+            { model: Client, as: "client" },
+            { model: Table, as: "table" },
+            {
+                model: Product,
+                as: "products",
+                through: { model: OrderProduct, as: "orderProducts" }
+            },
+        ],
     });
 
     const totalSales = await Order.sum("total", {
@@ -665,7 +676,15 @@ exports.getStatistics = asyncHandler(async (req, res) => {
         where: {
             [Op.or]: [{ isPaid: false }],
         },
-        include: { all: true, nested: true },
+        include: [
+            { model: Client, as: "client" },
+            { model: Table, as: "table" },
+            {
+                model: Product,
+                as: "products",
+                through: { model: OrderProduct, as: "orderProducts" }
+            },
+        ],
         attributes: {
             exclude: ["userId", "clientId", "tableId"],
         },

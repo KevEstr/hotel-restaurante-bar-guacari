@@ -186,7 +186,7 @@ const OrderCreateScreen = ({ match }) => {
     const proceedWithOrder = (clientObj) => {
         console.log("USUARIO: ", user);
         console.log("Productos en la orden: ", productsInOrder);
-
+    
         /* Create order */
         const order = {
             total: total,
@@ -194,18 +194,19 @@ const OrderCreateScreen = ({ match }) => {
             clientId: client,
             products: productsInOrder,
             delivery: delivery,
-            note: note,
+            note: note ? note : "",
             userId: user,
             confirmExceedQuota: true,
-            reservation_id: clientObj.reservation.id ? clientObj.reservation.id : null,
+            reservation_id: clientObj.reservation?.id ?? null,
         };
-
+    
         /* Make request */
         console.log("ORDEN A CREAR: ", order);
-        dispatch(createOrder(order)).then((createdOrder) => {
-
+        
+        dispatch(createOrder(order)).then(createdOrder => {
+            console.log("ORDEN CREADA: ", createdOrder);
             const newOrder = {
-                id: createdOrder.id, 
+                id: createdOrder.id,
                 table: getTableName(createdOrder.tableId),
                 client: getClientName(createdOrder.clientId),
                 waiter: getUserName(createdOrder.userId),
@@ -215,16 +216,14 @@ const OrderCreateScreen = ({ match }) => {
                     name: product.name,
                     productNote: product.note
                 })),
-                note: note
+                note: note ? note : ""
             };
-
-            generateOrder(newOrder, true);
-
-            
-
+            console.log("NUEVA ORDEN: ", newOrder);
+            dispatch(generateOrder(newOrder));
+            //dispatch(updateClientHasReservation(order.clientId, true));
+        }).catch(error => {
+            console.error("Error creating order: ", error);
         });
-
-        dispatch(updateClientHasReservation(order.clientId, true));
     };
 
     const renderModalExceedQuota = () => (

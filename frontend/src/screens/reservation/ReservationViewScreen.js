@@ -22,7 +22,7 @@ import { RESERVATION_DELETE_RESET } from "../../constants/reservationConstants";
 import {
     listReservationsDetails,
     updateReservationToPaid,
-    listReservationsByClient
+    listReservationsByClient,
 } from "../../actions/reservationActions";
 
 import { deleteReservation } from '../../actions/reservationActions';
@@ -526,7 +526,7 @@ const renderServicesTable = () => (
         };
         setModal(false);    
         dispatch(updateReservationToPaid(updatedReservation));
-    
+        dispatch(updateClientReservationStatus(reservation.clientId, false, null));
         const rooms = reservation.room;
         await Promise.all(rooms.map(async (room) => {
             // Cambiar el estado de la habitación a false
@@ -535,7 +535,6 @@ const renderServicesTable = () => (
             await dispatch(updateRoom(updatedRoom));
         }));
             const agreementName = getAgreementName(reservation.client.agreementId);
-            dispatch(updateClientReservationStatus(reservation.clientId, false));
             generateInvoice(reservation, clientOrdersList, clientReservationsList, agreementName, paymentMethodName);
 
         };

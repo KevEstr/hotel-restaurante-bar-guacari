@@ -212,7 +212,7 @@ export const deleteClient = (id) => async (dispatch, getState) => {
     }
 };
 
-export const updateClientReservationStatus = (clientId, hasReservation) => async (dispatch, getState) => {
+export const updateClientReservationStatus = (clientId, hasReservation, reservationId) => async (dispatch, getState) => {
     try {
         dispatch({ type: CLIENT_UPDATE_RESERVATION_STATUS_REQUEST });
 
@@ -225,8 +225,8 @@ export const updateClientReservationStatus = (clientId, hasReservation) => async
             },
         };
 
-        const { data } = await axios.put(`/api/clients/${clientId}/updateReservationStatus`, { has_reservation: hasReservation }, config);
-
+        const { data } = await axios.put(`/api/clients/${clientId}/updateReservationStatus`, { has_reservation: hasReservation, reservationId: reservationId }, config);
+        console.log("DATA: ",data);
         dispatch({ type: CLIENT_UPDATE_RESERVATION_STATUS_SUCCESS, payload: data });
     } catch (error) {
         dispatch({

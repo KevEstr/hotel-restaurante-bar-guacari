@@ -196,12 +196,12 @@ export const createOrder = (order) => async (dispatch, getState) => {
             type: ORDER_CREATE_REQUEST,
         });
 
-        //get order from state
+        // Obtener usuario desde el estado
         const {
             userLogin: { userInfo },
         } = getState();
 
-        //headers
+        // Configuración de los headers
         const config = {
             headers: {
                 "Content-Type": "application/json",
@@ -209,13 +209,19 @@ export const createOrder = (order) => async (dispatch, getState) => {
             },
         };
 
-        //create order
+        // Crear la orden
+        console.log("ACTIONS ORDER:  ", order);
         const { data } = await axios.post("/api/orders", order, config);
+        console.log("ACTIONS DATA:  ", data);
+        if (!data || !data.id) {
+            throw new Error("Orden creada pero sin ID");
+        }
         dispatch({
             type: ORDER_CREATE_SUCCESS,
             payload: data,
         });
 
+        // Devolver la orden creada
         return data;
         
     } catch (error) {
@@ -226,6 +232,7 @@ export const createOrder = (order) => async (dispatch, getState) => {
                     ? error.response.data.message
                     : error.message,
         });
+        throw error;  // Asegúrate de lanzar el error para que pueda ser capturado por quien llame a la función
     }
 };
 

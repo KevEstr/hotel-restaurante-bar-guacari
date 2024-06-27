@@ -22,6 +22,7 @@ import { listClients } from "../../actions/clientActions";
 import { createReservation, updateClientHasReservation } from "../../actions/reservationActions";
 import { listServices } from '../../actions/serviceActions';
 import { listAgreements } from '../../actions/agreementActions';
+import { updateClientReservationStatus } from '../../actions/clientActions';
 
 const ReservationCreateScreen = ({ history, match }) => {
     /* Get table from url */
@@ -166,7 +167,7 @@ const ReservationCreateScreen = ({ history, match }) => {
             };
             /* Make request */
 
-            dispatch(updateClientHasReservation(reservation.clientId, true));
+            dispatch(updateClientReservationStatus(reservation.clientId, true, reservation.id));
             dispatch(createReservation(reservation));
 
             selectedRooms.forEach((roomId) => {
