@@ -23,6 +23,7 @@ import { createReservation, updateClientHasReservation } from "../../actions/res
 import { listServices } from '../../actions/serviceActions';
 import { listAgreements } from '../../actions/agreementActions';
 import { updateClientReservationStatus } from '../../actions/clientActions';
+import { listPayments } from '../../actions/paymentActions';
 
 const ReservationCreateScreen = ({ history, match }) => {
     /* Get table from url */
@@ -45,6 +46,9 @@ const ReservationCreateScreen = ({ history, match }) => {
     const [selectedServices, setSelectedServices] = useState([]);
     const [clientAgreement, setClientAgreement] = useState(null);
     const [roomSelects, setRoomSelects] = useState([{ selectId: Date.now(), roomId: '' }]);
+    const [advance, setAdvance] = useState(0);
+    const [paymentId, setPaymentId] = useState("");
+
 
     const [total, setTotal] = useState(0);
 
@@ -64,6 +68,9 @@ const ReservationCreateScreen = ({ history, match }) => {
     const serviceList = useSelector((state) => state.serviceList);
     const { services } = serviceList;
 
+    const paymentList = useSelector((state) => state.paymentList);
+    const { payments, error: errorPayments } = paymentList;
+
     //reservation create state
     const reservationCreate = useSelector((state) => state.reservationCreate);
     const { success, loading, error, reservation } = reservationCreate;
@@ -78,7 +85,7 @@ const ReservationCreateScreen = ({ history, match }) => {
             dispatch({ type: RESERVATION_CREATE_RESET });
             history.push("/activeReservation");
         }
-
+        dispatch(listPayments());
         dispatch(allRooms());
         dispatch(listServices());
         dispatch(listAgreements());
@@ -162,8 +169,10 @@ const ReservationCreateScreen = ({ history, match }) => {
                 note: note,
                 is_paid: 0,
                 services: selectedServices,
-
+                advance: advance,
                 total: calculatedTotal,
+                pending_payment: calculatedTotal-advance,
+                paymentId: paymentId,
             };
             /* Make request */
 
@@ -199,6 +208,14 @@ const ReservationCreateScreen = ({ history, match }) => {
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Milliseconds to days
         return diffDays * pricePerDay;
     };
+
+    const getPaymentName = (paymentId) => {
+        if (payments && payments.length > 0) {
+          const payment = payments.find((payment) => payment.id === paymentId);
+          return payment ? payment.name : '';
+        }
+        return '';
+      };
 
     const renderRoomsSelect = () => (
         <div>
@@ -263,6 +280,31 @@ const ReservationCreateScreen = ({ history, match }) => {
             </>
     );
 }
+    const renderPaymentsSelect = () => {
+        console.log("PaymentList: ", paymentList);
+        console.log('payments: ', payments );
+        if (payments.length === 0) {
+            return null; // No hay pagos disponibles
+        }
+
+        return (
+            <div className="form-group">
+                <label htmlFor="paymentId">Método de Pago</label>
+                <select
+                    id="paymentId"
+                    value={paymentId}
+                    onChange={(e) => setPaymentId(e.target.value)}
+                    className="form-control"
+                >
+                    {payments.map((payment) => (
+                        <option key={payment.id} value={payment.id}>
+                            {payment.name}
+                        </option>
+                    ))}
+                </select>
+            </div>
+        );
+    };
 
     const renderNoteTextarea = () => (
         <Textarea
@@ -345,6 +387,26 @@ const ReservationCreateScreen = ({ history, match }) => {
                                         />
                                     </div>
                                 </div>
+                                <div className="col-md-3">
+                                    <div className="form-group">
+                                        <label style={{fontWeight: 'normal'}}>Valor anticipo:</label>
+                                        <input
+                                            type="number"
+                                            value={advance}
+                                            onChange={(e) => setAdvance(e.target.value)}
+                                            className="form-control"
+                                        />
+                                    </div>
+                                </div>
+                                {advance > 0 && (
+                                <div className="col-md-3">
+                                    <div className="form-group">
+                                    <div className="col-lg-4 col-md-6">
+                                        {renderPaymentsSelect()}
+                                    </div>
+                                    </div>
+                                </div>
+                                )}
                                 <div className="col-md-3">
                                     <div className="form-group">
                                         <label style={{fontWeight: 'normal'}}>Cantidad de personas:</label>

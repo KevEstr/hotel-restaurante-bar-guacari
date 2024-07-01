@@ -90,6 +90,19 @@ const ReservationScreen = ({ history }) => {
                     cash += reservation.total;
                 }
             }
+
+            if (reservation.advances.length > 0) {
+                reservation.advances.forEach((advanceTotal) => {
+                    accumulated += advanceTotal.advance;
+                    if (advanceTotal.paymentId === 1) {
+                        credit += advanceTotal.advance;
+                    } else if (advanceTotal.paymentId === 2) {
+                        transfer += advanceTotal.advance;
+                    } else if (advanceTotal.paymentId === 3) {
+                        cash += advanceTotal.advance;
+                    }
+                });                
+            }
         });
 
         setTotalCredit(credit);
@@ -222,8 +235,18 @@ const ReservationScreen = ({ history }) => {
                 </tr>
             </thead>
             <tbody>
-                {console.log(reservations)}
-                {reservations.slice().reverse().map((reservation) => (
+            {console.log(reservations)}
+            {reservations.slice().reverse().map((reservation) => {
+                // Verificar y calcular los avances
+                const advances = reservation.advances || [];
+                console.log(advances);
+                const totalAdvances = advances.reduce((sum, advance) => sum + (advance.advance || 0), 0);
+
+                // Calcular el total neto
+                const netTotal = reservation.total - totalAdvances;
+                const badgeClass = totalAdvances > 0 ? "badge bg-warning" : "badge bg-success";
+
+                return (
                     <tr key={reservation.id}>
                         <td>{reservation.id}</td>
                         <td>{reservation.client && reservation.client.name ? reservation.client.name : "Cliente desconocido"}</td>
@@ -243,7 +266,6 @@ const ReservationScreen = ({ history }) => {
                         <td className="d-none d-sm-table-cell">
                             {getAgreementName(reservation.client.agreementId)}
                         </td>
-
                         <td>
                             {reservation.is_paid ? (
                                 <h4 className="text-success">
@@ -255,7 +277,6 @@ const ReservationScreen = ({ history }) => {
                                 </h4>
                             )}
                         </td>
-
                         <td>
                             {reservation.is_paid ? (
                                 <>
@@ -267,38 +288,28 @@ const ReservationScreen = ({ history }) => {
                                 </h4>
                             )}
                         </td>
-
                         <td className="d-none d-sm-table-cell h4">
-                            <span className={"badge bg-success"}>
+                            <span className={badgeClass}>
                                 ${reservation.total}
                             </span>
                         </td>
-
                         <td className="d-none d-sm-table-cell">
                             <FormattedDate dateString={reservation.createdAt} />
                         </td>
-
                         <td>
-                            <Link
-                                to={`/reservation/${reservation.id}/view`}
-                                className="btn btn-info btn-lg"
-                            >
+                            <Link to={`/reservation/${reservation.id}/view`} className="btn btn-info btn-lg">
                                 Ver
                             </Link>
                         </td>
-
                         <td>
-                        <button
-                                onClick={() => handleInvoiceClick(reservation.id)}
-                                className="btn btn-warning btn-lg"
-                            >
+                            <button onClick={() => handleInvoiceClick(reservation.id)} className="btn btn-warning btn-lg">
                                 Factura
                             </button>
                         </td>
-
                     </tr>
-                ))}
-            </tbody>
+                );
+            })}
+        </tbody>
         </table>
     );
 

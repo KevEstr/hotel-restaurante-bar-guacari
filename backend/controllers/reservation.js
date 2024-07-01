@@ -11,6 +11,9 @@ const Agreement = require("../models").Agreement;
 const { AgreementService, ReservationAudit } = require("../models");
 const { User } = require("../models").User;
 
+const { ReservationAdvance } = require("../models");
+
+
 const {
     updateRoom
 } = require("../utils/reservation");
@@ -19,7 +22,7 @@ const {
 //@route    POST /api/orders
 //@access   Private/user
 exports.createReservation = asyncHandler(async (req, res) => {
-    const { price, start_date, end_date, quantity, clientId, note, paymentId, is_paid, rooms, total, services } = req.body;
+    const { price, start_date, end_date, quantity, clientId, note, paymentId, is_paid, rooms, total, services, pending_payment, advance } = req.body;
 
     const createdReservation = await Reservation.create({
         price,
@@ -29,10 +32,22 @@ exports.createReservation = asyncHandler(async (req, res) => {
         clientId,
         userId: req.user.id,
         note,
-        paymentId,
+        paymentId: paymentId!== ''? paymentId : null,
         is_paid,
         total,
+        pending_payment,
+        advance,
     });
+
+    if(advance){
+        console.log("advance: ", advance);
+        await ReservationAdvance.create({
+            reservationId: createdReservation.id,
+            userId: req.user.id,
+            paymentId: paymentId,
+            advance: advance,
+        });
+    }
 
     const payment = await Payment.findByPk(paymentId);
     if (payment) {
@@ -107,10 +122,9 @@ exports.getReservations = asyncHandler(async (req, res) => {
                     attributes: ["maxLimit"],
                 },
             },
+            { model: ReservationAdvance, as: "advances" },
+
         ],
-        attributes: {
-            exclude: ["userId", "clientId", "roomId", "updatedAt"],
-        },
         reservation: [["id", "DESC"]],
         offset: pageSize * (page - 1),
         limit: pageSize,
@@ -161,7 +175,8 @@ exports.getReservation = asyncHandler(async (req, res) => {
             through: {
                 model: RoomReservation,
             },
-        }
+        },
+        { model: ReservationAdvance, as: "advances" },
       ]
     });
   
@@ -343,9 +358,9 @@ exports.getStatistics = asyncHandler(async (req, res) => {
 
 
 
-exports.updateReservationEnd = asyncHandler(async (req, res) => {
-    const { paymentId } = req.body; // Recibir paymentId desde la solicitud
-    console.log("req.params.id: ", req.params.id);
+exports.updateReservationToPaid = asyncHandler(async (req, res) => {
+    const { paymentId, note, agreementId } = req.body; // Recibir paymentId desde la solicitud
+    console.log("req.body: ", req.body);
 
     try {
         const reservation = await Reservation.findByPk(req.params.id, {
@@ -369,6 +384,17 @@ exports.updateReservationEnd = asyncHandler(async (req, res) => {
 
             reservation.is_paid = true;
             reservation.paymentId = paymentId; // Asignar paymentId
+            reservation.note += ' - '+ note; // Asignar nota
+
+            if(paymentId===1){
+                if(agreementId!==1){
+                    reservation.pending_payment=0;
+                }
+                
+            }
+            else{
+                reservation.pending_payment=0;
+            }
 
             const updatedReservation = await reservation.save();
             res.json(updatedReservation);

@@ -48,6 +48,10 @@ const ReservationViewScreen = ({ history, match }) => {
     const [hasActiveOrders, setHasActiveOrders] = useState(false);
     const [showWarningModal, setShowWarningModal] = useState(false);
     const [paymentMethodName, setPaymentMethodName] = useState('');
+    const [note, setNote] = useState('');
+    const [noteVisible, setNoteVisible] = useState('');
+
+
 
     const dispatch = useDispatch();
 
@@ -77,6 +81,13 @@ const ReservationViewScreen = ({ history, match }) => {
       const handlePaymentMethodChange = (paymentId, paymentName) => {
         setPaymentId(paymentId);
         setPaymentMethodName(paymentName);
+
+        if (paymentId===1 && reservation.client && reservation.client.agreementId === 1) {
+            setNoteVisible(true);
+        } else {
+            setNoteVisible(false);
+        }
+
     };
       
     const clientReservations = useSelector(state => state.clientReservations);
@@ -148,7 +159,7 @@ const ReservationViewScreen = ({ history, match }) => {
             const totalOrders = orders
                 .filter(order => order.paymentId === 1)  // Filtrar órdenes con paymentId igual a 1
                 .reduce((total, order) => total + order.total, 0);
-            const totalPayment = totalOrders + reservation.total;
+            const totalPayment = totalOrders + reservation.pending_payment;
             setTotalPayment(totalPayment);
         }
     };
@@ -283,6 +294,19 @@ const ReservationViewScreen = ({ history, match }) => {
                         </div>
                     ))}
                 </div>
+                {noteVisible && (
+                <div className="form-group mt-3">
+                    <label htmlFor="note">Nota:</label>
+                    <textarea
+                        id="note"
+                        className="form-control"
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        //required
+                    />
+                </div>
+            )}
+
                 <div style={{ marginTop: "25px" }}>
                     <button type="submit" className="btn btn-primary">
                         Finalizar.
@@ -338,37 +362,50 @@ const ReservationViewScreen = ({ history, match }) => {
 
         
 
-    const renderTotalInfo = () => (
-        <div className="row">
-            
-            <div className="col-12 col-md-6">
-                <>
+    const renderTotalInfo = () => {
+        // Calcular los avances
+        const advances = reservation.advances || [];
+        const totalAdvances = advances.reduce((sum, advance) => sum + (advance.advance || 0), 0);
+    
+        // Calcular el total neto
+        const netTotal = reservation.total - totalAdvances;
+    
+        // Determinar la clase de color
+        const boxColor = totalAdvances > 0 ? "bg-warning" : "bg-success";
+
+        const paymentMethod = reservation.paymentId ? getPaymentName(reservation.paymentId) : "Método de pago desconocido";
+    
+        return (
+            <div className="row">
+                <div className="col-12 col-md-6">
+                    <>
                         {reservation.total && (
                             <ViewBox
-                                title= {`$${reservation.total}`}
-                                paragraph={"Pago de la Reserva"}
+                                title={`$${netTotal}`}
+                                paragraph={totalAdvances ? `Pago de la Reserva (Avances: $${totalAdvances}) - ${paymentMethod}` : `Pago de la Reserva`}
+                                icon={"fas fa-dollar-sign"}
+                                color={boxColor}
+                            />
+                        )}
+                    </>
+                </div>
+    
+                <div className="col-12 col-md-6">
+                    <>
+                        {reservation.total && (
+                            <ViewBox
+                                title={`$${totalPayment}`}
+                                paragraph={"Pago Total"}
                                 icon={"fas fa-dollar-sign"}
                                 color={"bg-success"}
                             />
                         )}
-                </>
-            </div>
-
-            <div className="col-12 col-md-6">
-                    <>
-                            {reservation.total && (
-                                <ViewBox
-                                    title= {`$${totalPayment}`}
-                                    paragraph={"Pago Total"}
-                                    icon={"fas fa-dollar-sign"}
-                                    color={"bg-success"}
-                                />
-                            )}
                     </>
                 </div>
-
-        </div>
-    );
+            </div>
+        );
+    };
+        
                 
     const renderRoomsInfo = () => 
         reservation && (
@@ -522,18 +559,14 @@ const renderServicesTable = () => (
         const updatedReservation = {
             id: reservationId,
             is_paid: true,
-            paymentId: paymentId
+            paymentId: paymentId,
+            note: "note",
+            agreementId: reservation.client.agreementId,
         };
+        console.log(updatedReservation);
         setModal(false);    
         dispatch(updateReservationToPaid(updatedReservation));
         dispatch(updateClientReservationStatus(reservation.clientId, false, null));
-        const rooms = reservation.room;
-        await Promise.all(rooms.map(async (room) => {
-            // Cambiar el estado de la habitación a false
-            const updatedRoom = { ...room, active_status: 0 };
-                // Realizar la actualización en el backend
-            await dispatch(updateRoom(updatedRoom));
-        }));
             const agreementName = getAgreementName(reservation.client.agreementId);
             generateInvoice(reservation, clientOrdersList, clientReservationsList, agreementName, paymentMethodName);
 

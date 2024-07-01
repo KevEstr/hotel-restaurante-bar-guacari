@@ -162,10 +162,10 @@ const OrderCreateScreen = ({ match }) => {
     
         const clientObj = clients.find((c) => c.id === client);
         console.log("clientObj: ", clientObj);
-        if (clientObj.has_reservation && clientObj.reservation && clientObj.reservation.service.length > 0) {
+        if (clientObj.has_reservation && clientObj.reservation && clientObj.reservation.service.length > 0 && clientObj.agreementId !== 1 ) {
             const foodService = clientObj.reservation.service.find(service => service.id === 1);
             console.log("foodService: ", foodService);
-            if (foodService && foodService.ReservationService.availableQuota < total) {
+            if (foodService && foodService.ReservationService.availableQuota < total && foodService.ReservationService.maxLimit !== 0 ) {
                 // Calcular la diferencia
                 const difference = total - foodService.ReservationService.availableQuota;
                 console.log("difference: ", difference);
@@ -198,6 +198,7 @@ const OrderCreateScreen = ({ match }) => {
             userId: user,
             confirmExceedQuota: true,
             reservation_id: clientObj.reservation?.id ?? null,
+            type: false,
         };
     
         /* Make request */

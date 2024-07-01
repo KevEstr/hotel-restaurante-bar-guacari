@@ -37,7 +37,7 @@ module.exports = (sequelize, DataTypes) => {
             this.belongsTo(models.User, { foreignKey: "userId", as: "user" });
 
             this.belongsTo(models.Payment, { foreignKey: 'paymentId', as: 'payment' });
-            
+            this.hasMany(models.ReservationAdvance, { foreignKey: "reservationId", as: "advances" });
         }
     }
     Reservation.init(
@@ -52,7 +52,8 @@ module.exports = (sequelize, DataTypes) => {
             paymentId: DataTypes.INTEGER,
             is_paid: DataTypes.BOOLEAN,
             total: DataTypes.INTEGER,
-            
+            advance: DataTypes.INTEGER,
+            pending_payment: DataTypes.INTEGER,
         },
         {
             sequelize,

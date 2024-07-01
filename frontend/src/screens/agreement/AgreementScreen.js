@@ -72,7 +72,7 @@ const AgreementScreen = ({ history, match }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        console.log("serviceIds: ", serviceIds);
+        console.log("selectedServices: ", selectedServices.length);
         let errorsCheck = {};
 
         if (!name) {
@@ -83,6 +83,7 @@ const AgreementScreen = ({ history, match }) => {
         }
 
         if (Object.keys(errorsCheck).length > 0) {
+            console.log("ERRORES: ",errorsCheck)
             setErrors(errorsCheck);
         } else {
             setErrors({});
