@@ -1,0 +1,262 @@
+[33mcommit 7cf76845d0c78e489b57ce317e0e4cb7365eff17[m[33m ([m[1;36mHEAD -> [m[1;32mRamaKevJuanCombinada[m[33m)[m
+Merge: cc5601eb 83073ac5
+Author: Kev <kevin.estrada1@udea.edu.co>
+Date:   Mon Jul 1 02:30:19 2024 -0500
+
+    Merge Solucionado, Codigo Combinado. Cambio y Fuera
+
+[33mcommit cc5601eb7ed486f7b0775166d972647da9b92052[m[33m ([m[1;31morigin/Kev-Juan-Postgresql[m[33m, [m[1;32mKev-Juan-Postgresql[m[33m)[m
+Author: Kev <kevin.estrada1@udea.edu.co>
+Date:   Sun Jun 30 22:43:32 2024 -0500
+
+    Guardar cambios en .gitignore antes del merge
+
+[33mcommit 27a3d8685a5a9d806e349145c3659813878e69f8[m
+Author: Kev <kevin.estrada1@udea.edu.co>
+Date:   Sun Jun 30 22:34:39 2024 -0500
+
+    Cambios Database/Front y Topes
+
+[33mcommit 83aa775d4e7ed8a0f1669bf530f583f4107bb954[m[33m ([m[1;31morigin/kev-postgresql[m[33m, [m[1;32mkev-postgresql[m[33m)[m
+Author: Kev <kevin.estrada1@udea.edu.co>
+Date:   Sun Jun 30 20:12:00 2024 -0500
+
+    Base de datos implementada y frontend
+
+[33mcommit 83073ac54d146d871e3bcf1c3c4def212fdf721e[m[33m ([m[1;31morigin/juan-con-filtros[m[33m, [m[1;32mjuan-con-filtros[m[33m)[m
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Sun Jun 30 20:02:47 2024 -0500
+
+    Pago anticipo en reserva funcional, consumos ilimitados funcionales
+
+[33mcommit fdf645fa6fdb907194e3352aa0abab723f92fbd9[m
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Thu Jun 27 13:28:46 2024 -0500
+
+    Como siempre, arreglando las novedosas cochinadas de kevin. Ya todo funciona
+
+[33mcommit c58e673808ed4d02e7b4bff712ae29b7465a2bd0[m
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Wed Jun 26 20:25:49 2024 -0500
+
+    Todo optimizado, cochinadas de kevin organizadas
+
+[33mcommit fb7f93c67576e97a36f8f867bba47d6d6ed96768[m
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Tue Jun 25 21:08:02 2024 -0500
+
+    Union de kev con impresora y juan con filtros funcional
+
+[33mcommit cb475e1ce5d6689a5b38125cc72f7ea17a7563e0[m
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Tue Jun 25 18:02:07 2024 -0500
+
+    Guardando cambios locales antes del merge
+
+[33mcommit 99ee465972d2d0a8c44e925e8f2ff65b162246b4[m
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Tue Jun 25 17:27:34 2024 -0500
+
+    se agregaron filtros a casi todo
+
+[33mcommit 6a7aa904d7eaf306713ac8bb7b69a20d48478306[m[33m ([m[1;31morigin/hotel-expo-v1[m[33m)[m
+Author: Kev <kevin.estrada1@udea.edu.co>
+Date:   Mon Jun 17 12:44:52 2024 -0500
+
+    Para que el llorón deje de llorar
+
+[33mcommit 3543923c7b13aeb9994b1336bf03e4d9b38e41fd[m
+Author: Kev <kevin.estrada1@udea.edu.co>
+Date:   Fri Jun 14 23:39:00 2024 -0500
+
+    Hotel hasta la exposición
+
+[33mcommit 28d96cb64de3ca5bbdb1e08a7454a62d90056f88[m
+Merge: 8786c1bc 79bf0e9f
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Wed Jun 5 19:49:00 2024 -0500
+
+    Resolver conflictos de la fusión entre kevin-v2 y juan-v2
+
+[33mcommit 8786c1bccdc45d28eb4d9268fd2c112efdb41ad4[m[33m ([m[1;31morigin/juan-v2[m[33m)[m
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Wed Jun 5 18:07:14 2024 -0500
+
+    Descripción de tus cambios
+
+[33mcommit 79bf0e9f8071707b2af7246b4f2dcc9d446723a7[m[33m ([m[1;31morigin/kevin-v2[m[33m)[m
+Author: Kev <kevin.estrada1@udea.edu.co>
+Date:   Wed Jun 5 18:04:35 2024 -0500
+
+    Descripción de tus cambios
+
+[33mcommit c8558e053539a8342fefef665a52910452923ebc[m[33m ([m[1;31morigin/restaurante-y-hotel[m[33m)[m
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Thu May 30 14:45:05 2024 -0500
+
+    Integración de hotel y restaurante funcionando
+
+[33mcommit 32d52fa2b0ed41e92411eca9ea67d955d678fe5a[m
+Merge: 3a8a419d ea3701d1
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Thu May 30 14:18:27 2024 -0500
+
+    Resolver conflictos de la fusión de kev-con-hotel
+
+[33mcommit 3a8a419da87944ddfc369b3e65a06d6c8d9d251f[m
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Thu May 30 13:48:08 2024 -0500
+
+    fusión de rama-juan-v1 con restaurante a tope
+
+[33mcommit ea3701d18eeebefab94a107032182f5b98ecd8fa[m[33m ([m[1;31morigin/kev-con-hotel[m[33m)[m
+Author: Kev <kevin.estrada1@udea.edu.co>
+Date:   Thu May 30 13:38:25 2024 -0500
+
+    PONE LOS CAMBIOS
+
+[33mcommit 7732bf755e1fb301d3e0ba150fa6765f07a6a5fb[m[33m ([m[1;31morigin/rama-juan-v1[m[33m)[m
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Thu May 23 18:40:27 2024 -0500
+
+    Falta que se guarde la cantidad de ingrediente
+
+[33mcommit b1d4752f4b81ba6ddbff400fd8175bb46562be16[m[33m ([m[1;31morigin/rama-kev-sin-modules[m[33m)[m
+Merge: b9d5c086 7d5cd3b4
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Tue May 21 15:54:22 2024 -0500
+
+    Merge remote-tracking branch 'origin/sinModulesKev' into rama-kev-sin-modules
+
+[33mcommit 7d5cd3b4bd32cc1305358e10030561efea10ec9a[m[33m ([m[1;31morigin/sinModulesKev[m[33m)[m
+Author: Juan Andrés Rivera <30670997+mono789@users.noreply.github.com>
+Date:   Tue May 21 15:46:19 2024 -0500
+
+    Delete LICENSE
+
+[33mcommit 42afea70b11ab53f01151eda6ba673f922319e76[m
+Author: Juan Andrés Rivera <30670997+mono789@users.noreply.github.com>
+Date:   Tue May 21 15:46:09 2024 -0500
+
+    Delete README.md
+
+[33mcommit 8ae1c297ffcc57298d8a205266a4c9d008ebab21[m
+Author: Juan Andrés Rivera <30670997+mono789@users.noreply.github.com>
+Date:   Tue May 21 15:42:55 2024 -0500
+
+    Delete backend/node_modules directory
+
+[33mcommit f0fb35930333e87b3eeffee0d6110d6cb326223f[m
+Author: Juan Andrés Rivera <30670997+mono789@users.noreply.github.com>
+Date:   Tue May 21 15:42:19 2024 -0500
+
+    Delete frontend/node_modules directory
+
+[33mcommit 1385efde5d5b5a1637ae02a2f03b7144744edece[m
+Author: Juan Andrés Rivera <30670997+mono789@users.noreply.github.com>
+Date:   Tue May 21 15:41:54 2024 -0500
+
+    Delete node_modules directory
+
+[33mcommit 041c31e814bc56e31bf4f4d329dbedc8cfab8ea1[m
+Author: Kev <kevin.estrada1@udea.edu.co>
+Date:   Tue May 21 15:38:35 2024 -0500
+
+    Probando sin Modules
+
+[33mcommit b9d5c086d4c59af21c50fb52b2ae32836329a669[m
+Author: Juan Andrés Rivera <30670997+mono789@users.noreply.github.com>
+Date:   Tue May 21 15:33:09 2024 -0500
+
+    Delete LICENSE
+
+[33mcommit a53a6e66ca142a6993e0ef055c445f8209c18c60[m
+Author: Juan Andrés Rivera <30670997+mono789@users.noreply.github.com>
+Date:   Tue May 21 15:32:44 2024 -0500
+
+    Delete README.md
+
+[33mcommit 2a47cdfed9f05a0d91c8914cea79899dbb535b33[m
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Mon May 20 20:49:53 2024 -0500
+
+    Modulo de crear producto funcional, solo faltan mejoras estéticas. Integración con botones de hotel y restaurante lista
+
+[33mcommit f67f02aa6591b337a376bee6c0b613ac78b51edd[m
+Merge: 840ae222 bdb80807
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Mon May 20 11:57:36 2024 -0500
+
+    Merge nueva-rama-test-juan en rama-kev-sin-modules
+
+[33mcommit bdb80807ddd2f5e2572a0c472f230916b60689c1[m[33m ([m[1;31morigin/rama-test-juan[m[33m)[m
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Mon May 20 11:48:38 2024 -0500
+
+    Prueba de subida sin modules
+
+[33mcommit f3c5330af2902d3ba122f5979d4955a51f61955c[m[33m ([m[1;31morigin/nueva-rama-juan-sin-modules[m[33m)[m
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Mon May 20 11:11:56 2024 -0500
+
+    Eliminadas carpetas modules de back y front
+
+[33mcommit 840ae22212faab8daa5d2efb48e830ac86df9717[m
+Author: Juan Andrés Rivera <30670997+mono789@users.noreply.github.com>
+Date:   Mon May 20 09:55:37 2024 -0500
+
+    Delete backend/node_modules directory
+
+[33mcommit 1a42cecc16f6d27fd2f3318457c8e71c5f3362ab[m
+Author: Juan Andrés Rivera <30670997+mono789@users.noreply.github.com>
+Date:   Mon May 20 09:55:09 2024 -0500
+
+    Delete frontend/node_modules directory
+
+[33mcommit 2b4e103026b3bfea757966b6c25734ac3226edc2[m
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Mon May 20 09:51:12 2024 -0500
+
+    Eliminar node_modules de la rama de kevin
+
+[33mcommit e632626b01bacb2eb2b1f80e2a0572b0b7a9fa49[m[33m ([m[1;31morigin/rama-juan[m[33m)[m
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Mon May 20 07:39:00 2024 -0500
+
+    Columna de nota en cada producto agregada en el ordercart
+
+[33mcommit bdd00fce7fb28035b65a1d24b90423c788330636[m[33m ([m[1;31morigin/LaMejorRamaDeKev[m[33m)[m
+Author: Kev <kevin.estrada1@udea.edu.co>
+Date:   Sun May 19 20:33:03 2024 -0500
+
+    Solucionado errores y añadido el cambio de vistas, cambio y fuera
+
+[33mcommit bd087f7e156792b0fcf2710b633ef56e1204d811[m
+Author: Kev <kevin.estrada1@udea.edu.co>
+Date:   Sun May 19 03:00:42 2024 -0500
+
+    Vistas y Solución de Errores. cambio y fuera
+
+[33mcommit 2a3a60e8b30d07892c7c46d9f69c198b0c7c9195[m
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Sat May 18 23:41:27 2024 -0500
+
+    Versión inicial del proyecto, luego del desastre,la  vista meseros es funcional, cambio y fuera
+
+[33mcommit df473a433c62a5e31f530be8c483d386fbab9a40[m
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Sat May 18 22:40:27 2024 -0500
+
+    Vista de meseros lista y funcional
+
+[33mcommit 758916190553e09f4c777efabeb3088870027aed[m
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Fri May 17 10:53:13 2024 -0500
+
+    Casi todo traducido y modulo de ingredientes creado en front
+
+[33mcommit e7a81878331738eec06d12a60d8509c9e1e05359[m
+Author: mono789 <juan.rivera7@udea.edu.co>
+Date:   Thu May 16 18:58:00 2024 -0500
+
+    first commit

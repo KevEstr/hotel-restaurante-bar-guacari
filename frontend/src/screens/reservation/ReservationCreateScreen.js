@@ -22,8 +22,8 @@ import { allRooms, updateRoom } from "../../actions/roomActions";
 import { listClients } from "../../actions/clientActions";
 import { createReservation, updateClientHasReservation } from "../../actions/reservationActions";
 import { listServices } from '../../actions/serviceActions';
-import { listAgreements } from '../../actions/agreementActions';
 import { listPayments } from '../../actions/paymentActions';
+import { listAgreements } from '../../actions/agreementActions';
 import { updateClientReservationStatus } from '../../actions/clientActions';
 
 import DatePicker from 'react-datepicker';
@@ -61,7 +61,8 @@ const ReservationCreateScreen = ({ history, location }) => {
     const [quantity, setQuantity] = useState("");
     const [selectedServices, setSelectedServices] = useState([]);
     const [clientAgreement, setClientAgreement] = useState(null);
-    const [roomSelects, setRoomSelects] = useState([{ selectId: Date.now(), roomId: roomIdFromParams ? parseInt(roomIdFromParams) : '' }]);    const [advance, setAdvance] = useState(0);
+    const [roomSelects, setRoomSelects] = useState([{ selectId: Date.now(), roomId: roomIdFromParams ? parseInt(roomIdFromParams) : '' }]);
+    const [advance, setAdvance] = useState(0);
     const [paymentId, setPaymentId] = useState("");
 
 
@@ -236,6 +237,14 @@ const ReservationCreateScreen = ({ history, location }) => {
         return diffDays * pricePerDay;
     };
 
+    const getPaymentName = (paymentId) => {
+        if (payments && payments.length > 0) {
+          const payment = payments.find((payment) => payment.id === paymentId);
+          return payment ? payment.name : '';
+        }
+        return '';
+      };
+
     const renderRoomsSelect = () => {
         const selectedRoomIds = roomSelects.map(select => select.roomId); // Obtener todas las habitaciones seleccionadas
     
@@ -268,8 +277,6 @@ const ReservationCreateScreen = ({ history, location }) => {
         );
     };
     
-    
-
     const removeLastRoomSelect = () => {
         setRoomSelects(prevSelects => {
             const updatedSelects = [...prevSelects];
@@ -278,8 +285,6 @@ const ReservationCreateScreen = ({ history, location }) => {
         });
     };
     
-    
-
     const handleClientSelect = (selectedClient) => {
         setClient(selectedClient);
         const selectedClientData = clients.find(client => client.id === selectedClient);
@@ -391,22 +396,9 @@ const ReservationCreateScreen = ({ history, location }) => {
                         </div>
                         {/* /.card-header */}
                         <div className="card-body">
+                            
                             <div className="row">
-                                <div className="col-md-6">
-                                    <div className="form-group">
-                                    <label className="mr-4" style={{fontWeight: 'normal'}}>Selecciona las habitaciones:</label>
-                                    <button onClick={addRoomSelect} className="btn btn-sm btn-primary mb-1 mr-1">
-                                        <i className="fas fa-plus"></i>
-                                    </button>
-                                    <button onClick={removeLastRoomSelect} className="btn btn-sm btn-danger mb-1">
-                                        <i className="fas fa-minus"></i>
-                                    </button>
-                                        <div className="d-flex align-items-center">
-                                            {renderRoomsSelect()}
-                                        </div>
-                                        {errors.rooms && <Message message={errors.rooms} color={"warning"} />}
-                                    </div>
-                                </div>
+                            {renderSelectedRooms()}
                             </div>
                             <div className="row">
                             <div className="col-md-3">
