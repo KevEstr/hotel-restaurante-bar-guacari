@@ -143,6 +143,14 @@ const OrderFridgeScreen = ({ history }) => {
         setKeyword('');
     };
 
+    const renderCreateButton = () => (
+        <Link to="/order/create">
+            <button className="btn btn-success btn-lg">
+                <i className="fas fa-edit" /> Nueva órden
+            </button>
+        </Link>
+    );
+
     const getAgreementName = (agreementId) => {
         if (agreements && agreements.length > 0) {
           const agreement = agreements.find((agreement) => agreement.id === agreementId);

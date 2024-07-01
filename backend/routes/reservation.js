@@ -8,7 +8,7 @@ const {
     getReservation,
     updateReservation,
     deleteReservation,
-    updateReservationEnd,
+    updateReservationToPaid,
     getClientReservations,
     getRoomsByReservation,
     getAllReservations,
@@ -33,7 +33,7 @@ router
     .get(protect, getReservation)
     .put(protect, updateReservation)
 
-router.post("/:id/pay", protect, updateReservationEnd);
+router.post("/:id/pay", protect, updateReservationToPaid);
 
 router.route('/client/:id').get(protect, getClientReservations);
 

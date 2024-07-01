@@ -118,7 +118,7 @@ const OrderEditScreen = ({ history, match }) => {
                 setClient(order.client ? order.client.id : null);
                 setNote(order.note ? order.note : note);
                 setDelivery(order.delivery ? order.delivery : delivery);
-                setUser(order.user.id? order.user.id : null)
+                setUser(order.userId? order.userId : null)
                 setPrevTotal(order.total? order.total : null);
                 console.log("Usuarios: ", users)
 
@@ -168,10 +168,10 @@ const OrderEditScreen = ({ history, match }) => {
 
         const clientObj = clients.find((c) => c.id === client);
         console.log("clientObj: ", clientObj);
-        if (clientObj.has_reservation && clientObj.reservation && clientObj.reservation.service.length > 0) {
+        if (clientObj.has_reservation && clientObj.reservation && clientObj.reservation.service.length > 0 && clientObj.agreementId !== 1 ) {
             const foodService = clientObj.reservation.service.find(service => service.id === 1);
             console.log("foodService: ", foodService);
-            if (foodService && foodService.ReservationService.availableQuota < (total-prevTotal)) {
+            if (foodService && foodService.ReservationService.availableQuota < (total-prevTotal) && foodService.ReservationService.maxLimit !== 0) {
                 // Calcular la diferencia
                 const difference = (total-prevTotal) - foodService.ReservationService.availableQuota;
                 console.log("difference: ", difference);

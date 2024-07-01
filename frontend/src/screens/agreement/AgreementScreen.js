@@ -72,17 +72,18 @@ const AgreementScreen = ({ history, match }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        console.log("serviceIds: ", serviceIds);
+        console.log("selectedServices: ", selectedServices.length);
         let errorsCheck = {};
 
         if (!name) {
             errorsCheck.name = "Nombre es requerido";
         }
         if (!selectedServices || selectedServices.length === 0) {
-            errorsCheck.selectedServices = "Debe seleccionar al menos 1 servicio";
+            errorsCheck.selectedServices = "Debe seleccionar almenos 1 servicio";
         }
 
         if (Object.keys(errorsCheck).length > 0) {
+            console.log("ERRORES: ",errorsCheck)
             setErrors(errorsCheck);
         } else {
             setErrors({});

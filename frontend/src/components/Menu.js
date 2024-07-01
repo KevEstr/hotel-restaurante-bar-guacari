@@ -158,7 +158,6 @@ const Menu = ({ history }) => {
                                     </Link>
                                 </li>
                                 </OverlayTrigger>
-
                                 <OverlayTrigger
                                 placement="right"
                                 overlay={<Tooltip id="tooltip-top">Visualiza el histórico de ventas</Tooltip>}> 

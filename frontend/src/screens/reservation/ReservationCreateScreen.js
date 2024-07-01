@@ -23,6 +23,7 @@ import { listClients } from "../../actions/clientActions";
 import { createReservation, updateClientHasReservation } from "../../actions/reservationActions";
 import { listServices } from '../../actions/serviceActions';
 import { listAgreements } from '../../actions/agreementActions';
+import { listPayments } from '../../actions/paymentActions';
 import { updateClientReservationStatus } from '../../actions/clientActions';
 
 import DatePicker from 'react-datepicker';
@@ -60,7 +61,9 @@ const ReservationCreateScreen = ({ history, location }) => {
     const [quantity, setQuantity] = useState("");
     const [selectedServices, setSelectedServices] = useState([]);
     const [clientAgreement, setClientAgreement] = useState(null);
-    const [roomSelects, setRoomSelects] = useState([{ selectId: Date.now(), roomId: roomIdFromParams ? parseInt(roomIdFromParams) : '' }]);
+    const [roomSelects, setRoomSelects] = useState([{ selectId: Date.now(), roomId: roomIdFromParams ? parseInt(roomIdFromParams) : '' }]);    const [advance, setAdvance] = useState(0);
+    const [paymentId, setPaymentId] = useState("");
+
 
     const [total, setTotal] = useState(0);
 
@@ -81,6 +84,9 @@ const ReservationCreateScreen = ({ history, location }) => {
 
     const serviceList = useSelector((state) => state.serviceList);
     const { services } = serviceList;
+
+    const paymentList = useSelector((state) => state.paymentList);
+    const { payments, error: errorPayments } = paymentList;
 
     //reservation create state
     const reservationCreate = useSelector((state) => state.reservationCreate);
@@ -104,7 +110,7 @@ const ReservationCreateScreen = ({ history, location }) => {
             dispatch({ type: RESERVATION_CREATE_RESET });
             history.push("/activeReservation");
         }
-
+        dispatch(listPayments());
         dispatch(allRooms());
         dispatch(listServices());
         dispatch(listAgreements());
@@ -190,8 +196,10 @@ const ReservationCreateScreen = ({ history, location }) => {
                 note: note,
                 is_paid: 0,
                 services: selectedServices,
-
+                advance: advance,
                 total: calculatedTotal,
+                pending_payment: calculatedTotal-advance,
+                paymentId: paymentId,
             };
             /* Make request */
 
@@ -300,6 +308,31 @@ const ReservationCreateScreen = ({ history, location }) => {
             </>
     );
 }
+    const renderPaymentsSelect = () => {
+        console.log("PaymentList: ", paymentList);
+        console.log('payments: ', payments );
+        if (payments.length === 0) {
+            return null; // No hay pagos disponibles
+        }
+
+        return (
+            <div className="form-group">
+                <label htmlFor="paymentId">Método de Pago</label>
+                <select
+                    id="paymentId"
+                    value={paymentId}
+                    onChange={(e) => setPaymentId(e.target.value)}
+                    className="form-control"
+                >
+                    {payments.map((payment) => (
+                        <option key={payment.id} value={payment.id}>
+                            {payment.name}
+                        </option>
+                    ))}
+                </select>
+            </div>
+        );
+    };
 
     const renderNoteTextarea = () => (
         <Textarea
@@ -358,9 +391,22 @@ const ReservationCreateScreen = ({ history, location }) => {
                         </div>
                         {/* /.card-header */}
                         <div className="card-body">
-                            
                             <div className="row">
-                            {renderSelectedRooms()}
+                                <div className="col-md-6">
+                                    <div className="form-group">
+                                    <label className="mr-4" style={{fontWeight: 'normal'}}>Selecciona las habitaciones:</label>
+                                    <button onClick={addRoomSelect} className="btn btn-sm btn-primary mb-1 mr-1">
+                                        <i className="fas fa-plus"></i>
+                                    </button>
+                                    <button onClick={removeLastRoomSelect} className="btn btn-sm btn-danger mb-1">
+                                        <i className="fas fa-minus"></i>
+                                    </button>
+                                        <div className="d-flex align-items-center">
+                                            {renderRoomsSelect()}
+                                        </div>
+                                        {errors.rooms && <Message message={errors.rooms} color={"warning"} />}
+                                    </div>
+                                </div>
                             </div>
                             <div className="row">
                             <div className="col-md-3">
@@ -381,6 +427,26 @@ const ReservationCreateScreen = ({ history, location }) => {
                                         />
                                     </div>
                                 </div>
+                                <div className="col-md-3">
+                                    <div className="form-group">
+                                        <label style={{fontWeight: 'normal'}}>Valor anticipo:</label>
+                                        <input
+                                            type="number"
+                                            value={advance}
+                                            onChange={(e) => setAdvance(e.target.value)}
+                                            className="form-control"
+                                        />
+                                    </div>
+                                </div>
+                                {advance > 0 && (
+                                <div className="col-md-3">
+                                    <div className="form-group">
+                                    <div className="col-lg-4 col-md-6">
+                                        {renderPaymentsSelect()}
+                                    </div>
+                                    </div>
+                                </div>
+                                )}
                                 <div className="col-md-3">
                                     <div className="form-group">
                                         <label style={{fontWeight: 'normal'}}>Cantidad de personas:</label>
