@@ -271,7 +271,7 @@ export const listOrderDetails = (id) => async (dispatch, getState) => {
 };
 
 //update a order
-export const updateOrder = (order) => async (dispatch, getState) => {
+export const updateOrder = (order, concept) => async (dispatch, getState) => {
     try {
         dispatch({
             type: ORDER_UPDATE_REQUEST,
@@ -358,7 +358,7 @@ export const deleteOrder = (orderId, reason) => async (dispatch, getState) => {
         type: ORDER_DELETE_REQUEST,
       });
 
-      console.log('Enviando solicitud DELETE al backend');
+      console.log('Enviando solicitud DELETE al backend con ID:', orderId, 'y razón:', reason);
 
       const { userLogin: { userInfo } } = getState();
 
@@ -371,7 +371,7 @@ export const deleteOrder = (orderId, reason) => async (dispatch, getState) => {
 
       // Enviar la solicitud para eliminar la orden
       const { data } = await axios.delete(`/api/orders/${orderId}`,  {
-        data: { reason, concept: reason, deletedBy: userInfo.id }, ...config
+        data: { userId: userInfo._id, orderId: orderId, concept: reason }, ...config
       });
   
       dispatch({

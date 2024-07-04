@@ -110,6 +110,8 @@ import { roleListReducer } from './reducers/roleReducers';
 
 import { paymentListReducer } from './reducers/paymentReducers';
 
+import { tableAuditListReducer } from './reducers/tableAuditReducers';
+
 import{
     reservationListReducer,
     reservationCreateReducer,
@@ -228,6 +230,7 @@ const reducer = combineReducers({
 
     paidOrderDetails: paidOrderDetailsReducer,
 
+    tableAuditList: tableAuditListReducer,
 
 });
 

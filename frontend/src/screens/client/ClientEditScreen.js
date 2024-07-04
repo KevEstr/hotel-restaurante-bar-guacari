@@ -9,7 +9,6 @@ import LoaderHandler from "../../components/loader/LoaderHandler";
 import Select from "../../components/Select";
 import Message from "../../components/Message";
 
-
 /* Constants */
 import {
     CLIENT_DELETE_RESET,
@@ -19,7 +18,6 @@ import {
 
 /* Actions */
 import { listClientDetails, updateClient } from "../../actions/clientActions";
-
 import { listAgreements } from "../../actions/agreementActions";
 
 const ClientEditScreen = ({ history, match }) => {
@@ -30,13 +28,7 @@ const ClientEditScreen = ({ history, match }) => {
     const [phone, setPhone] = useState("");
     const [dni, setDni] = useState("");
     const [agreementId, setAgreementId] = useState("");
-
-
-    const agreementFromUrl = window.location.href.indexOf("agreement") !== -1;
-
-    const [agreement, setAgreement] = useState(
-        agreementFromUrl ? parseInt(match.params.id) : null
-    );
+    const [is_active, setIsActive] = useState(false);
 
     const [errors, setErrors] = useState({});
 
@@ -81,6 +73,7 @@ const ClientEditScreen = ({ history, match }) => {
                 setPhone(client.phone);
                 setAgreementId(client.agreementId);
                 setDni(client.dni);
+                setIsActive(client.is_active);
             }
         }
     }, [dispatch, history, clientId, client, successUpdate]);
@@ -120,6 +113,7 @@ const ClientEditScreen = ({ history, match }) => {
                     phone,
                     dni,
                     agreementId,
+                    is_active: is_active,
                 })
             );
         }
@@ -136,6 +130,8 @@ const ClientEditScreen = ({ history, match }) => {
 
     const renderForm = () => (
         <form onSubmit={handleSubmit}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ flex: '1 1 45%', marginRight: '10px' }}>
             <Input
                 name={"Nombre"}
                 type={"text"}
@@ -143,6 +139,9 @@ const ClientEditScreen = ({ history, match }) => {
                 setData={setName}
                 errors={errors}
             />
+                        </div>
+
+    <div style={{ flex: '1 1 45%', marginRight: '10px' }}>
             <Input
                 name={"Apellidos"}
                 type={"text"}
@@ -150,27 +149,66 @@ const ClientEditScreen = ({ history, match }) => {
                 setData={setLastNames}
                 errors={errors}
             />
-            <Input
-                name={"Tel"}
-                type={"text"}
-                data={phone}
-                setData={setPhone}
-                errors={errors}
-            />
-            <Input
-                name={"CC"}
-                type={"text"}
-                data={dni}
-                setData={setDni}
-                errors={errors}
-            />
+            </div>
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <div style={{ flex: '1 1 45%', marginRight: '10px' }}>
+                    <Input
+                        name={"Télefono"}
+                        type={"text"}
+                        data={phone}
+                        setData={setPhone}
+                        errors={errors}
+                    />
+                </div>
+                <div style={{ flex: '1 1 45%' }}>
+                    <Input
+                        name={"CC"}
+                        type={"text"}
+                        data={dni}
+                        setData={setDni}
+                        errors={errors}
+                    />
+                </div>
+            </div>
+
             <div style={{ flex: '1 1 45%' }}>
-                        <label style={{fontWeight: 'normal'}}>Convenio:</label>
-                        {renderAgreementsSelect()}
-                        {errors.agreement && (
-                            <Message message={errors.agreement} color={"warning"} />
-                        )}
-                    </div>
+                <label style={{ fontWeight: 'normal' }}>Convenio:</label>
+                {renderAgreementsSelect()}
+                {errors.agreement && (
+                    <Message message={errors.agreement} color={"warning"} />
+                )}
+            </div>
+            
+
+            <div style={{ marginTop: '10px', textAlign: 'center' }}>
+                <label style={{ fontWeight: 'normal', display: 'block' }}>Estado Actual del Cliente:</label>
+                <div style={{ display: 'inline-flex', justifyContent: 'center', marginTop: '5px' }}>
+                    <label style={{ marginRight: '20px' }}>
+                        <input
+                            type="radio"
+                            value="true"
+                            checked={is_active === true}
+                            onChange={() => setIsActive(true)}
+                        />
+                        <span style={{ marginLeft: '5px', fontWeight: 'normal'}}>Activo</span>
+                    </label>
+                    <label style={{ marginLeft: '20px' }}>
+                        <input
+                            type="radio"
+                            value="false"
+                            checked={is_active === false}
+                            onChange={() => setIsActive(false)}
+                        />
+                        <span style={{ marginLeft: '5px', fontWeight: 'normal' }}>Inactivo</span>
+                    </label>
+                </div>
+
+                {errors.is_active && (
+                    <Message message={errors.is_active} color={"warning"} />
+                )}
+            </div>
 
             <hr />
             <button type="submit" className="btn btn-success">
@@ -185,7 +223,6 @@ const ClientEditScreen = ({ history, match }) => {
             <HeaderContent name={"Clientes"} />
 
             {/* Main content */}
-
             <section className="content">
                 <div className="container-fluid">
                     <ButtonGoBack history={history} />

@@ -6,12 +6,11 @@ const Table = require("../models").Table;
 const Product = require("../models").Product;
 const Ingredient = require("../models").Ingredient;
 const OrderProduct = require("../models").OrderProduct;
-const OrderAudit = require("../models").OrderAudit;
+const TableAudit = require("../models").TableAudit;
+const OrderInvoice = require("../models").OrderInvoice;
 const ReservationService = require("../models").ReservationService;
 const Reservation = require("../models").Reservation;
 const Service = require("../models").Service;
-
-
 
 //utils
 const {
@@ -109,17 +108,6 @@ exports.getOrders = asyncHandler(async (req, res) => {
         };
     }
 
-    /*if (type) {
-        options = {
-            ...options,
-            where: {
-                ...options.where,
-                type: {
-                    [Op.eq]: type,
-                },
-            },
-        };
-    }*/
 
     if (paymentId) {
         options = {
@@ -402,9 +390,11 @@ const adjustInventoryForChanges = async (productChanges, userId, orderId) => {
 //@access   Private/user
 exports.updateOrder = asyncHandler(async (req, res) => {
     const orderId = req.params.id;
-    const { total, tableId, clientId, products, delivery, note, userId, paymentId, confirmExceedQuota  } = req.body;
+    const { total, tableId, clientId, products, delivery, note, userId, paymentId, confirmExceedQuota, concept } = req.body;
+
     console.log("orderId: ",orderId);
     console.log("req.body: ",req.body);
+    console.log("Concepto desde el back:", concept)
 
     try {
 
@@ -427,9 +417,6 @@ exports.updateOrder = asyncHandler(async (req, res) => {
             return res.status(404).json({ message: "Cliente no encontrado" });
         }
         
-
-        
-
         const order = await Order.findByPk(orderId);
         if (!order) {
             return res.status(404).json({ message: "Order not found" });
@@ -524,9 +511,14 @@ exports.updateOrder = asyncHandler(async (req, res) => {
                 }
             ]
         });
+
+        await TableAudit.create({
+            orderId: order.id,
+            concept,
+            userId,
+            is_delete: false,
+        });
         
-
-
         const productChanges = diffProducts(oldProducts, products);
 
         await adjustInventoryForChanges(productChanges, userId, orderId);
@@ -577,47 +569,75 @@ exports.updateOrderDelivery = asyncHandler(async (req, res) => {
 //@route    DELETE /api/orders/:id
 //@access   Private/user
 exports.deleteOrder = asyncHandler(async (req, res) => {
-    const order = await Order.findByPk(req.params.id, {
+    try {
+      const { userId, concept } = req.body;
+      const order = await Order.findByPk(req.params.id, {
         include: { all: true, nested: true },
-    });
-
-    const orderProducts = await order.products
-    console.log("orderProducts: ", orderProducts);
-    console.log("orderProducts: ", orderProducts[0].OrderProduct);
-
-  
-    if (order) {
-      // Guardar los datos de la reservación en la tabla de auditoría
-      await OrderAudit.create({
-        orderId: order.id,
-        concept: req.body.reason,
-        deletedAt: new Date(),
-        deletedBy: req.user.id,
       });
   
+      if (!order) {
+        res.status(404).json({ message: 'Order not found' });
+        return;
+      }
+  
+      const orderProducts = await order.products;
+      console.log("orderProducts: ", orderProducts);
+      console.log("orderProducts[0].OrderProduct: ", orderProducts[0]?.OrderProduct);
+  
+      console.log('Datos recibidos en el backend:');
+      console.log('reservationId:', order.id);
+      console.log('userId:', userId);
+      console.log('concept:', concept);
+  
+      // Guardar los datos de la reservación en la tabla de auditoría
+      try {
+        await TableAudit.create({
+          orderId: order.id,
+          concept,
+          userId,
+          is_delete: true,
+        });
+        console.log('Datos guardados en la tabla de auditoría.');
+      } catch (auditError) {
+        console.error('Error guardando en la tabla de auditoría:', auditError);
+        throw auditError;
+      }
+  
       const table = await Table.findByPk(order.tableId);
-
       if (table) {
         table.occupied = false;
         await table.save();
+        console.log('Estado de la mesa actualizado.');
       }
 
-      updateStockAndCreateMovement(orderProducts, order.userId, order.id, 0, false, false, true);
-      
+      try {
+        await OrderInvoice.destroy({ where: { orderId: order.id } });
+        console.log('Referencias en orderinvoices eliminadas.');
+      } catch (invoiceError) {
+        console.error('Error eliminando referencias en orderinvoices:', invoiceError);
+        throw invoiceError;
+      }
+  
+      await updateStockAndCreateMovement(orderProducts, order.userId, order.id, 0, false, false, true);
+      console.log('Stock y movimientos actualizados.');
+  
       const client = await Client.findByPk(order.clientId);
-        if (client) {
-            client.has_order = 0;
-            await client.save();
-        }
-
+      if (client) {
+        client.has_order = 0;
+        await client.save();
+        console.log('Estado del cliente actualizado.');
+      }
+  
       await order.destroy();
-
+      console.log('Orden eliminada.');
+  
       res.json({ message: 'Order removed' });
-    } else {
-      res.status(404);
-      throw new Error('Order not found');
+    } catch (error) {
+      console.error('Error en deleteOrder:', error);
+      res.status(500).json({ message: 'Internal Server Error', error: error.message });
     }
   });
+  
 
 
 //@desc     Get statistics

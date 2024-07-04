@@ -7,7 +7,7 @@ const {
     getClient,
     updateClient,
     deleteClient,
-    updateClientReservationStatus
+    updateClientReservationStatus,
 } = require("../controllers/client");
 
 // VALIDATORS

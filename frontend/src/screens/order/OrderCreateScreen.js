@@ -220,7 +220,11 @@ const OrderCreateScreen = ({ match }) => {
                 note: note ? note : ""
             };
             console.log("NUEVA ORDEN: ", newOrder);
-            dispatch(generateOrder(newOrder, true));
+
+            const printer2 = 'Microsoft XPS Document Writer';
+            const printer1 = 'Microsoft Print to PDF';
+
+            dispatch(generateOrder(newOrder, true, printer1));
             //dispatch(updateClientHasReservation(order.clientId, true));
         }).catch(error => {
             console.error("Error creating order: ", error);

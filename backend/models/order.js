@@ -55,14 +55,6 @@ module.exports = (sequelize, DataTypes) => {
             tableName: "orders",
         }
     );
-
-    Order.addHook('beforeDestroy', async (order, options) => {
-        await sequelize.models.OrderAudit.create({
-            orderId: order.id,
-            concept: options.concept,
-            deletedBy: options.userId, 
-        });
-    });
-      
+          
     return Order;
 };

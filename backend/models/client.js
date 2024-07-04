@@ -34,6 +34,7 @@ module.exports = (sequelize, DataTypes) => {
             has_reservation: DataTypes.BOOLEAN,
             has_order: DataTypes.BOOLEAN,
             reservationId: DataTypes.INTEGER,
+            is_active: DataTypes.BOOLEAN,
         },
         {
             sequelize,

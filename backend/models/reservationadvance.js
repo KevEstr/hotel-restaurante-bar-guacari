@@ -1,6 +1,5 @@
 "use strict";
 const { Model } = require("sequelize");
-const {ReservationAudit } = require('.');
 module.exports = (sequelize, DataTypes) => {
 
     class ReservationAdvance extends Model {
@@ -33,15 +32,6 @@ module.exports = (sequelize, DataTypes) => {
             tableName: "reservationadvances",
         }
     );
-
-    ReservationAdvance.addHook('beforeDestroy', async (reservation, options) => {
-        await sequelize.models.ReservationAudit.create({
-            reservationId: reservation.id,
-            concept: options.concept,
-            deletedBy: options.userId, 
-        });
-    });
-
 
     return ReservationAdvance;
     

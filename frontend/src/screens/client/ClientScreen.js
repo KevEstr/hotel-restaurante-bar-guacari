@@ -42,6 +42,8 @@ const ClientScreen = ({ history, match}) => {
     const [dni, setDni] = useState("");
     const [has_reservation, setHasReservation] = useState(false);
     const [has_order, setHasOrder] = useState(false);
+    const [is_active, setIsActive] = useState(true);
+
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [clientIdToDelete, setClientIdToDelete] = useState(null);
 
@@ -69,7 +71,7 @@ const ClientScreen = ({ history, match}) => {
     } = clientCreate;
 
     useEffect(() => {
-        dispatch(listClients(keyword, pageNumber));
+        dispatch(listClients(keyword, pageNumber, false, true, true));
         dispatch(listAgreements());
         if (createSuccess) {
             setName("");
@@ -80,6 +82,7 @@ const ClientScreen = ({ history, match}) => {
             setModalIsOpen(false);
             setHasReservation(false);
             setHasOrder(false);
+            setIsActive(true);
         }
     }, [dispatch, history, userInfo, pageNumber, keyword, createSuccess, deleteSuccess]);
 
@@ -147,9 +150,10 @@ const ClientScreen = ({ history, match}) => {
                 agreementId: agreement,
                 has_reservation: has_reservation,
                 has_order: has_order,
+                is_active: is_active,
             };
 
-            console.log('datos del cliente' + name, lastnames, phone, dni, agreement, has_reservation, has_order)
+            console.log('datos del cliente' + name, lastnames, phone, dni, agreement, has_reservation, has_order, is_active)
             console.log(client)
 
             dispatch(createClient(client));
@@ -259,6 +263,7 @@ const ClientScreen = ({ history, match}) => {
                     <th className="text-center d-none d-sm-table-cell">Tel</th>
                     <th className="text-center d-none d-sm-table-cell">CC</th>
                     <th className="text-center d-none d-sm-table-cell">Convenio</th>
+                    <th className="text-center d-none d-sm-table-cell">Usuario Activo?</th>
                     <th className="text-center d-none d-sm-table-cell">¿Tiene Reserva Activa?</th>
                     <th className="text-center d-none d-sm-table-cell">¿Tiene Órden Activa?</th>
                     <th className="text-center d-none d-sm-table-cell">Creado en</th>
@@ -267,13 +272,16 @@ const ClientScreen = ({ history, match}) => {
             </thead>
             <tbody>
                 {clients.map((client) => (
-                    <tr key={client.id}>
+                    <tr key={client.id} style={{
+                        backgroundColor: client.is_active ? "#c3e6cb" : "#f5c6cb"
+                    }}>
                         <td className="text-center">{client.id}</td>
                         <td className="text-center">{client.name}</td>
                         <td className="text-center">{client.lastnames}</td>
                         <td className="text-center d-none d-sm-table-cell">{client.phone}</td>
                         <td className="text-center d-none d-sm-table-cell">{client.dni}</td>
                         <td className="text-center d-none d-sm-table-cell">{getAgreementName(client.agreementId)}</td>
+                        <td className="text-center d-none d-sm-table-cell">{client.is_active ? "Sí" : "No"}</td>
                         <td className="text-center d-none d-sm-table-cell">{client.has_reservation ? "Sí" : "No"}</td>
                         <td className="text-center d-none d-sm-table-cell">{client.has_order ? "Sí" : "No"}</td>
                         <td className="text-center d-none d-sm-table-cell">{client.createdAt.slice(0, 10)}</td>
@@ -316,7 +324,7 @@ const ClientScreen = ({ history, match}) => {
                                             setKeyword={setKeyword}
                                             setPage={setPageNumber}
                                         />
-                                    </div>
+                                    </div>                                        
                                 </div>
                                 {/* /.card-header */}
                                 <div className="card-body table-responsive p-0">

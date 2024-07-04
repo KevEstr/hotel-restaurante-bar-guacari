@@ -53,6 +53,8 @@ import CategoryEditScreen from "./screens/category/CategoryEditScreen";
 import AgreementScreen from "./screens/agreement/AgreementScreen";
 import AgreementEditScreen from "./screens/agreement/AgreementEditScreen";
 
+import TableAuditScreen from "./screens/TableAuditScreen";
+
 import UserScreen from "./screens/user/UserScreen";
 import UserEditScreen from "./screens/user/UserEditScreen";
 import ProfileScreen from "./screens/user/ProfileScreen";
@@ -63,6 +65,7 @@ import PrivateRoute from "./auth/PrivateRoute";
 import NotFoundScreen from "./screens/NotFoundScreen";
 import AdminRoute from "./auth/AdminRoute";
 import NotAuthorizedScreen from "./screens/NotAuthorizedScreen";
+
 
 const Main = () => {
     const dispatch = useDispatch();
@@ -143,7 +146,7 @@ const Main = () => {
 
                     <PrivateRoute path="/laundry" component={LaundryScreen} />
 
-                    
+                    <PrivateRoute path="/tableaudit" component={TableAuditScreen} />
 
                     <PrivateRoute
                         path="/room/:id/edit"

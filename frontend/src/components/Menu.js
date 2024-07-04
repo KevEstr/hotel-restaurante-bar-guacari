@@ -210,9 +210,9 @@ const Menu = ({ history }) => {
                                 placement="right"
                                 overlay={<Tooltip id="tooltip-top">Revisa y exporta informes financieros</Tooltip>}> 
                                 <li className="nav-item">
-                                    <Link to="/" className="nav-link">
+                                    <Link to="/tableaudit" className="nav-link">
                                         <i className="nav-icon fas fa-solid fa-money-bill" />{" "}
-                                        <p>Facturación</p>
+                                        <p>Historial Eliminación</p>
                                     </Link>
                                 </li>
                                 </OverlayTrigger>

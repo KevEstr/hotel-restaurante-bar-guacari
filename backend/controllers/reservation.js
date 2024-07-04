@@ -5,10 +5,10 @@ const Client = require("../models").Client;
 const Room = require("../models").Room;
 const Payment = require("../models").Payment;
 const RoomReservation = require("../models").RoomReservation;
-const { ReservationService } = require("../models");
+const { ReservationService, TableAudit } = require("../models");
 const Service = require("../models").Service
 const Agreement = require("../models").Agreement;
-const { AgreementService, ReservationAudit } = require("../models");
+const { AgreementService } = require("../models");
 const { User } = require("../models").User;
 
 const { ReservationAdvance } = require("../models");
@@ -22,82 +22,97 @@ const {
 //@route    POST /api/orders
 //@access   Private/user
 exports.createReservation = asyncHandler(async (req, res) => {
-    const { price, start_date, end_date, quantity, clientId, note, paymentId, is_paid, rooms, total, services, pending_payment, advance } = req.body;
+    try {
+        const { price, start_date, end_date, quantity, clientId, note, paymentId, is_paid, rooms, total, services, pending_payment, advance } = req.body;
 
-    const createdReservation = await Reservation.create({
-        price,
-        start_date,
-        end_date,
-        quantity,
-        clientId,
-        userId: req.user.id,
-        note,
-        paymentId: paymentId!== ''? paymentId : null,
-        is_paid,
-        total,
-        pending_payment,
-        advance,
-    });
+        console.log("Received reservation data:", req.body);
+        console.log("Habitaciones recibidas:", rooms);
 
-    if(advance){
-        console.log("advance: ", advance);
-        await ReservationAdvance.create({
-            reservationId: createdReservation.id,
+        const createdReservation = await Reservation.create({
+            price,
+            start_date,
+            end_date,
+            quantity,
+            clientId,
             userId: req.user.id,
-            paymentId: paymentId,
-            advance: advance,
+            note,
+            paymentId: paymentId !== '' ? paymentId : null,
+            is_paid,
+            total,
+            pending_payment,
+            advance: advance !== '' ? advance : null,
         });
-    }
 
-    const payment = await Payment.findByPk(paymentId);
-    if (payment) {
-        payment.total_accumulated += total;
-        await payment.save();
-    }
+        console.log("Created reservation:", createdReservation);
 
-    // Calculate the number of nights
-    const startDate = new Date(start_date);
-    const endDate = new Date(end_date);
-    const oneDay = 24 * 60 * 60 * 1000; // hours * minutes * seconds * milliseconds
-    const numberOfNights = Math.round(Math.abs((endDate - startDate) / oneDay));
-
-    if (services && services.length > 0) {
-        await Promise.all(services.map(async (service) => {
-            const maxLimitPerStay = numberOfNights * service.maxLimit;
-            await ReservationService.create({
+        if (advance) {
+            console.log("advance:", advance);
+            await ReservationAdvance.create({
                 reservationId: createdReservation.id,
-                serviceId: service.id,
-                maxLimit: maxLimitPerStay,
-                availableQuota: maxLimitPerStay
+                userId: req.user.id,
+                paymentId: paymentId,
+                advance: advance,
             });
-        }));
+        }
+
+        const startDate = new Date(start_date);
+        const endDate = new Date(end_date);
+        const oneDay = 24 * 60 * 60 * 1000;
+        const numberOfNights = Math.round(Math.abs((endDate - startDate) / oneDay));
+
+        if (services && services.length > 0) {
+            await Promise.all(services.map(async (service) => {
+                const maxLimitPerStay = numberOfNights * service.maxLimit;
+                await ReservationService.create({
+                    reservationId: createdReservation.id,
+                    serviceId: service.id,
+                    maxLimit: maxLimitPerStay,
+                    availableQuota: maxLimitPerStay
+                });
+            }));
+        }
+
+        const client = await Client.findByPk(clientId);
+        if (client) {
+            client.reservationId = createdReservation.id;
+            await client.save();
+        }
+
+        console.log("CREATED RESERVATION:", createdReservation);
+        console.log("CLIENT:", client);
+        console.log("Habitaciones:", rooms);
+
+        if (rooms && rooms.length > 0) {
+            console.log("Processing rooms:", rooms);
+            await Promise.all(rooms.map(async (roomId) => {
+                if (!roomId) {
+                    console.log("Room ID is undefined or null:", roomId);
+                    return;
+                }
+                await RoomReservation.create({
+                    reservationId: createdReservation.id,
+                    roomId,
+                    active_status: 1,
+                });
+
+                const room = await Room.findByPk(roomId);
+                if (room) {
+                    room.active_status = 1;
+                    await room.save();
+                    console.log("Updated room status for room with ID:", roomId);
+                } else {
+                    console.log("Room with ID not found:", roomId);
+                }
+            }));
+        }
+
+        res.status(201).json(createdReservation);
+    } catch (error) {
+        console.error("Error creating reservation:", error);
+        res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
-
-    const client = await Client.findByPk(clientId);
-    if (client) {
-        client.reservationId = createdReservation.id;
-        await client.save();
-    }
-
-    console.log("CREATED RESERVATION: ",createdReservation);
-    console.log("CLIENT: ",client);
-
-    if (rooms && rooms.length > 0) {
-        await Promise.all(rooms.map(async (roomId) => {
-            await RoomReservation.create({
-                reservationId: createdReservation.id,
-                roomId,
-                active_status: 1,
-            });
-
-            const room = await Room.findByPk(roomId);
-            room.active_status = 1;
-            await room.save();
-        }));
-    }
-
-    res.status(201).json(createdReservation);
 });
+
 
 //@desc     Get all orders
 //@route    GET /api/orders
@@ -256,33 +271,80 @@ exports.updateReservation = asyncHandler(async (req, res) => {
 //@route    DELETE /api/orders/:id
 //@access   Private/user
 
-exports.deleteReservation = asyncHandler(async (req, res) => {
-    const reservation = await Reservation.findByPk(req.params.id);
-  
-    if (reservation) {
-      // Guardar los datos de la reservación en la tabla de auditoría
-      await ReservationAudit.create({
-        reservationId: reservation.id,
-        concept: req.body.reason,
-        deletedAt: new Date(),
-        deletedBy: req.user.id,
-      });
+exports.deleteReservation = async (req, res) => {
+    const { reservationId, userId, concept } = req.body;
+    console.log('Datos recibidos en el backend:');
+    console.log('reservationId:', reservationId);
+    console.log('userId:', userId);
+    console.log('concept:', concept);
 
-        if (reservation.rooms && reservation.rooms.length > 0) {
-            for (let room of reservation.rooms) {
-              room.active_status = 0;
-              await room.save();
-            }
-          }
-  
-      // Eliminar la reservación
-      await reservation.destroy();
-      res.json({ message: 'Reservation removed' });
-    } else {
-      res.status(404);
-      throw new Error('Reservation not found');
+    try {
+        const reservation = await Reservation.findByPk(reservationId);
+        
+        if (!reservation) {
+            console.log('Reservation not found');
+            return res.status(404).json({ message: 'Reservation not found' });
+        }
+
+        console.log('Reservation encontrada:', reservation);
+
+        await TableAudit.create({
+            userId,
+            reservationId: reservation.id,
+            concept,
+            is_delete: true,
+        });
+
+        console.log('Registro en TableAudit creado');
+
+        // Encontrar todas las habitaciones asociadas a la reserva
+        const roomReservations = await RoomReservation.findAll({
+            where: { reservationId: reservationId }
+        });
+
+        if (roomReservations.length > 0) {
+            const roomIds = roomReservations.map(rr => rr.roomId);
+            
+            // Actualizar el active_status de las habitaciones asociadas a 0
+            await Room.update(
+                { active_status: 0 },
+                { where: { id: roomIds } }
+            );
+
+            console.log('active_status de las habitaciones asociadas actualizado a 0');
+
+            // Eliminar las asociaciones en la tabla RoomReservation
+            await RoomReservation.destroy({
+                where: { reservationId: reservationId }
+            });
+
+            console.log('Asociaciones en RoomReservation eliminadas');
+        } else {
+            console.log('No se encontraron habitaciones asociadas a esta reserva');
+        }
+
+        await Client.update(
+            { reservationId: null }, // Campo a actualizar
+            { where: { reservationId: reservationId } } // Condición para actualizar
+        );
+
+        await ReservationAdvance.destroy({
+            where: { reservationId: reservationId }
+        });
+
+        await reservation.destroy();
+        
+        console.log('Reservation eliminada');
+        
+        return res.status(200).json({ message: 'Reservation deleted successfully' });
+    } catch (error) {
+        console.log('Error al eliminar la reserva:', error);
+        return res.status(500).json({ message: 'An error occurred', error: error.message, stack: error.stack });
     }
-  });
+};
+
+
+  
 
 //@desc     Get statistics
 //@route    POST /api/orders/statistics
@@ -456,23 +518,4 @@ exports.getRoomsByReservation = asyncHandler(async (req, res) => {
         console.error(error);
         res.status(500).json({ message: 'Server Error' });
     }
-});
-
-exports.getAllReservations = asyncHandler(async (req, res) => {
-    const keyword = req.query.keyword ? {
-        client: {
-            $regex: req.query.keyword,
-            $options: 'i',
-        },
-    } : {};
-
-    const pageSize = 10;
-    const page = Number(req.query.pageNumber) || 1;
-
-    const count = await Reservation.countDocuments({ ...keyword });
-    const reservations = await Reservation.find({ ...keyword })
-        .limit(pageSize)
-        .skip(pageSize * (page - 1));
-
-    res.json({ reservations, page, pages: Math.ceil(count / pageSize) });
 });

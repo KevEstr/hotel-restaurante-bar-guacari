@@ -35,6 +35,8 @@ const invoiceRoutes = require('./routes/invoice');
 const laundryRoutes = require('./routes/laundry');
 const orderInvoiceRoutes = require('./routes/orderinvoice');
 const paidOrderInvoiceRoutes = require('./routes/paidorder');
+const tableAuditRoutes = require('./routes/tableaudit');
+
 
 /* Routes */
 app.use("/api/users", userRoutes);
@@ -56,7 +58,9 @@ app.use("/api/invoices", invoiceRoutes);
 app.use("/api/laundries", laundryRoutes);
 app.use("/api/orderinvoices", orderInvoiceRoutes);
 app.use("/api/paidorders", paidOrderInvoiceRoutes);
+app.use("/api/tableaudits", tableAuditRoutes);
 
+require('../backend/utils/cronJobs');
 
 const rootPath = path.resolve();
 

@@ -2,9 +2,15 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import axios from 'axios';
 
-
-const generateInvoice = async (reservation, clientOrdersList, clientReservationsList, agreementName, paymentMethodName) => {
+const generateInvoice = async (reservation, clientOrdersList, agreementName, paymentMethodName) => {
     const doc = new jsPDF();
+
+    console.log('Datos de entrada:', {
+        reservation,
+        clientOrdersList,
+        agreementName,
+        paymentMethodName
+    });
 
     // Función para añadir encabezado de la empresa
     const addCompanyHeader = () => {
@@ -62,21 +68,26 @@ const generateInvoice = async (reservation, clientOrdersList, clientReservations
         }))
     );
 
+    console.log('formattedOrders:', formattedOrders);
+
     // Datos de las reservas
-    const formattedReservations = clientReservationsList.flatMap((reservation, index) =>
-        reservation.rooms.map((room, index) => ({
-            index: index + 1,
-            title: room.name,
-            startDate: reservation.start_date,
-            endDate: reservation.end_date,
-            price: reservation.price.toFixed(2),
-            total: reservation.total.toFixed(2)
-        }))
-    );
+    const formattedReservations = reservation.room.map((room, index) => ({
+        index: index + 1,
+        title: room.name,
+        startDate: reservation.start_date,
+        endDate: reservation.end_date,
+        price: reservation.price.toFixed(2),
+        total: reservation.total.toFixed(2)
+    }));
+
+    console.log('formattedReservations:', formattedReservations);
 
     // Calcular subtotal de órdenes y reservas
     const subtotalOrders = formattedOrders.reduce((acc, order) => acc + parseFloat(order.total), 0).toFixed(2);
     const subtotalReservations = formattedReservations.reduce((acc, reservation) => acc + parseFloat(reservation.total), 0).toFixed(2);
+
+    console.log('subtotalOrders:', subtotalOrders);
+    console.log('subtotalReservations:', subtotalReservations);
 
     // Añadir encabezado de la empresa
     addCompanyHeader();
@@ -197,21 +208,24 @@ const generateInvoice = async (reservation, clientOrdersList, clientReservations
         });
     }
 
-    try {
-        await axios.post('/api/invoices', {
-          reservation,
-          clientOrdersList,
-          clientReservationsList,
-          agreementName,
-          paymentMethodName
-        });
-        console.log('Factura guardada exitosamente');
-      } catch (error) {
-        console.error('Error al guardar la factura:', error);
-      }
+    // Guardar el documento
+    doc.save(`Factura_${reservation.client.name}_${reservation.id}.pdf`);
 
-    // Guardar el PDF
-    doc.save(`Factura_${reservation.id}.pdf`);
+    // Crear el FormData para enviar la factura
+    const formData = new FormData();
+    formData.append('invoice', doc.output('blob'), `Factura_${reservation.client.name}_${reservation.id}.pdf`);
+    formData.append('client', JSON.stringify(reservation.client));
+    formData.append('products', JSON.stringify(clientOrdersList));
+    formData.append('payment', JSON.stringify(paymentMethodName));
+    formData.append('date', new Date().toISOString());
+    formData.append('orderId', reservation.id);
+
+    try {
+        const response = await axios.post('/paidorders', formData);
+        console.log('Factura enviada correctamente:', response.data);
+    } catch (error) {
+        console.error('Error al enviar la factura:', error);
+    }
 };
 
 export default generateInvoice;

@@ -69,7 +69,7 @@ const ReservationEditScreen = ({ history, match }) => {
                 dispatch(listReservationsDetails(reservationId));
             } else {
                 setRoom(reservation.room ? reservation.room.id : null);
-                setClient(reservation.client ? reservation.client.id : null);
+                setClient(reservation.client ? reservation.client.name : "");
                 setNote(reservation.note || "");
                 setPrice(reservation.price || 0);
                 setStartDate(reservation.start_date || "");
@@ -173,15 +173,13 @@ const ReservationEditScreen = ({ history, match }) => {
 
     const renderClientsSelect = () => (
         <>
-            <Select
-                data={client}
-                setData={setClient}
-                items={clients}
-                search={searchClients}
+            <input
+                type="text"
+                id="client"
+                value={client}
+                readOnly
+                className="form-control"
             />
-            {errors.client && (
-                <Message message={errors.client} color={"warning"} />
-            )}
         </>
     );
 

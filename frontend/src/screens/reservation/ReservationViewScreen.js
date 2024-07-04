@@ -58,6 +58,7 @@ const ReservationViewScreen = ({ history, match }) => {
     //order details state
     const reservationDetails = useSelector((state) => state.reservationDetails);
     const { loading, error, reservation } = reservationDetails;
+
     const [modal, setModal] = useState(false);
 
     const reservationDelete = useSelector((state) => state.reservationDelete);
@@ -440,6 +441,7 @@ const ReservationViewScreen = ({ history, match }) => {
                     )}
                 </div>
                     
+                {reservation.note && (
                     <div className="col-12 col-md-6">
                         <ViewBox
                             title={"Nota:"}
@@ -448,6 +450,7 @@ const ReservationViewScreen = ({ history, match }) => {
                             color={"bg-silver"}
                         />
                     </div>
+                )}
                 </div>
             </>
         );
@@ -568,7 +571,8 @@ const renderServicesTable = () => (
         dispatch(updateReservationToPaid(updatedReservation));
         dispatch(updateClientReservationStatus(reservation.clientId, false, null));
             const agreementName = getAgreementName(reservation.client.agreementId);
-            generateInvoice(reservation, clientOrdersList, clientReservationsList, agreementName, paymentMethodName);
+            generateInvoice(reservation, clientOrdersList, agreementName, paymentMethodName);
+            console.log('Datos para la factura:', reservation, clientReservationsList)
 
         };
 

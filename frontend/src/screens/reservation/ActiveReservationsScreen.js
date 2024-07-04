@@ -33,7 +33,6 @@ const ActiveReservationsScreen = ({ history }) => {
     const [selectedRoom, setSelectedRoom] = useState(null);
 
     const [selectedRooms, setSelectedRooms] = useState([]);
-    const [multiSelect, setMultiSelect] = useState(false);
 
     useEffect(() => {
         dispatch(allRooms());
@@ -163,7 +162,7 @@ const ActiveReservationsScreen = ({ history }) => {
                         <div className="col-12 col-md-3 col-lg-3">
                             <div className="card mb-3">
                                 <div className="card-header">Habitaciones Disponibles</div>
-                                <div className="card-body">
+                                <div className="card-body" style={{ maxHeight: '400px', overflowY: 'scroll' }}>
                                     <button
                                         onClick={handleSendSelectedRooms}
                                         className="btn btn-block btn-primary mb-3"

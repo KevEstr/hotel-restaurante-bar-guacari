@@ -10,7 +10,7 @@ const { Op } = require("sequelize");
 //@route    POST /api/clients
 //@access   Private/user
 exports.createClient = asyncHandler(async (req, res) => {
-    const { name, lastnames, phone, dni, agreementId, has_reservation, has_order} = req.body;
+    const { name, lastnames, phone, dni, agreementId, has_reservation, has_order, is_active} = req.body;
     const createdClient = await Client.create({
         name,
         lastnames,
@@ -18,7 +18,9 @@ exports.createClient = asyncHandler(async (req, res) => {
         dni,
         agreementId,
         has_reservation,
-        has_order
+        has_order,
+        is_active
+
     });
     res.status(201).json(createdClient);
 });
@@ -27,51 +29,52 @@ exports.createClient = asyncHandler(async (req, res) => {
 //@route    GET /api/clients
 //@access   Private/user
 exports.getClients = asyncHandler(async (req, res) => {
-    const pageSize = 20;
-    const page = Number(req.query.pageNumber) || 1;
-    const keyword = req.query.keyword ? req.query.keyword : null;
-    const hasReservation = req.query.has_reservation === "true";
-    let options = {
-        include: {
-            model: Reservation,
-            as: "reservation",
-            include: {
-                model: Service,
-                as: "service",
-            },
-        },
-        attributes: {
-            exclude: ["updatedAt"],
-        },
-        offset: pageSize * (page - 1),
-        limit: pageSize,
-    };
+  const pageSize = 20;
+  const page = Number(req.query.pageNumber) || 1;
+  const keyword = req.query.keyword ? req.query.keyword : null;
+  const includeInactive = req.query.include_inactive === 'true';
 
-    if (keyword) {
-        options.where = {
-            [Op.or]: [
-                { id: { [Op.like]: `%${keyword}%` } },
-                { name: { [Op.like]: `%${keyword}%` } },
-                { lastnames: { [Op.like]: `%${keyword}%` } },
-                { phone: { [Op.like]: `%${keyword}%` } },
-                { dni: { [Op.like]: `%${keyword}%` } },
-                { agreementId: { [Op.like]: `%${keyword}%` } },
-            ],
-        };
-    }
+  let options = {
+      where: {},
+      include: {
+          model: Reservation,
+          as: "reservation",
+          include: {
+              model: Service,
+              as: "service",
+          },
+      },
+      attributes: {
+          exclude: ["updatedAt"],
+      },
+      offset: pageSize * (page - 1),
+      limit: pageSize,
+  };
 
-    if (hasReservation) {
-        options.where = {
-            ...options.where,
-            has_reservation: true,
-        };
-    }
+  if (!includeInactive) {
+      options.where.is_active = true;
+  }
 
-    const count = await Client.count({ ...options });
-    const clients = await Client.findAll({ ...options });
+  if (keyword) {
+      options.where = {
+          ...options.where,
+          [Op.or]: [
+              { id: { [Op.like]: `%${keyword}%` } },
+              { name: { [Op.like]: `%${keyword}%` } },
+              { lastnames: { [Op.like]: `%${keyword}%` } },
+              { phone: { [Op.like]: `%${keyword}%` } },
+              { dni: { [Op.like]: `%${keyword}%` } },
+              { agreementId: { [Op.like]: `%${keyword}%` } },
+          ],
+      };
+  }
 
-    res.json({ clients, page, pages: Math.ceil(count / pageSize) });
+  const count = await Client.count({ ...options });
+  const clients = await Client.findAll({ ...options });
+
+  res.json({ clients, page, pages: Math.ceil(count / pageSize) });
 });
+
 
 //@desc     Get client by ID
 //@route    GET /api/clients/:id
@@ -100,7 +103,7 @@ exports.getClient = asyncHandler(async (req, res) => {
 //@route    PUT /api/clients/:id
 //@access   Private/user
 exports.updateClient = asyncHandler(async (req, res) => {
-    const { name, lastnames, phone, dni, agreementId, has_reservation } = req.body;
+    const { name, lastnames, phone, dni, agreementId, has_reservation, is_active } = req.body;
 
     const client = await Client.findByPk(req.params.id);
 
@@ -111,8 +114,10 @@ exports.updateClient = asyncHandler(async (req, res) => {
         client.dni = dni;
         client.agreementId = agreementId
         client.has_reservation = has_reservation;
+        client.is_active = is_active;
         
         const updatedClient = await client.save();
+        console.log('Datos Editados en el controlador:', is_active)
         res.json(updatedClient);
     } else {
         res.status(404);

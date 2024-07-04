@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 const Table = ({ room }) => {
+    console.log("Datos de la tabla:", room)
     return (
         <Link
             to={

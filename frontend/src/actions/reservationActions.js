@@ -83,6 +83,8 @@ export const listReservations =
 export const createReservation = (reservation) => async (dispatch, getState) => {
     const { price, start_date, end_date, note, quantity, clientId, rooms, paymentId, is_paid, services, total, pending_payment, advance } = reservation;
 
+    console.log('RESERVA ACTIONS.',reservation)
+
     try {
         dispatch({
             type: RESERVATION_CREATE_REQUEST,
@@ -103,6 +105,8 @@ export const createReservation = (reservation) => async (dispatch, getState) => 
 
         //create category
         const { data } = await axios.post("/api/reservations", { price, start_date, end_date, note, quantity, clientId, rooms, paymentId, is_paid, services, total, pending_payment, advance}, config);
+
+        console.log("Datos recibidos en el actions de la reserva:", price, start_date, end_date, note, quantity, clientId, rooms, paymentId, is_paid, services, total, pending_payment, advance )
         dispatch({
             type: RESERVATION_CREATE_SUCCESS,
             payload: data,
@@ -200,40 +204,42 @@ export const deleteReservation = (reservationId, reason) => async (dispatch, get
       dispatch({
         type: RESERVATION_DELETE_REQUEST,
       });
-
-      console.log('Enviando solicitud DELETE al backend');
-
+  
+      console.log('Enviando solicitud DELETE al backend con ID:', reservationId, 'y razón:', reason);
+  
       const { userLogin: { userInfo } } = getState();
-
-        const config = {
-            headers: {
-                Authorization: `Bearer ${userInfo.token}`,
-                "Content-Type": "application/json",
-            },
-        };
-
+  
+      const config = {
+        headers: {
+          Authorization: `Bearer ${userInfo.token}`,
+          "Content-Type": "application/json",
+        },
+      };
   
       // Enviar la solicitud para eliminar la reserva
-      const { data } = await axios.delete(`/api/reservations/${reservationId}`,  {
-        data: { reason }, ...config
+      const { data } = await axios.delete(`/api/reservations/${reservationId}`, {
+        data: { userId: userInfo._id, reservationId: reservationId, concept: reason},
+        ...config
       });
+
+      console.log('Respuesta del backend:', data);
   
       dispatch({
         type: RESERVATION_DELETE_SUCCESS,
         payload: data,
       });
-
+  
       const { reservationDetails: { reservation } } = getState();
-
+  
       const clientUpdate = {
         id: reservation.clientId,
         has_reservation: false
       };
-
+  
       dispatch({
         type: USER_UPDATE_REQUEST,
       });
-
+  
       try {
         await axios.put(`/api/clients/${clientUpdate.id}`, clientUpdate, config);
         dispatch({
@@ -250,19 +256,19 @@ export const deleteReservation = (reservationId, reason) => async (dispatch, get
         });
       }
   
-  // Actualizar el estado de las habitaciones a active_status: false
+      // Actualizar el estado de las habitaciones a active_status: false
       const rooms = reservation.rooms;
-    await Promise.all(rooms.map(async (room) => {
-      const updatedRoom = { ...room, active_status: 0 };
-      await axios.put(`/api/rooms/${room.id}`, updatedRoom, config);
-    }));
-
-  } catch (error) {
-    dispatch({
-      type: RESERVATION_DELETE_FAIL,
-      payload: error.response && error.response.data.message ? error.response.data.message : error.message,
-    });
-  }
+      await Promise.all(rooms.map(async (room) => {
+        const updatedRoom = { ...room, active_status: 0 };
+        await axios.put(`/api/rooms/${room.id}`, updatedRoom, config);
+      }));
+  
+    } catch (error) {
+      dispatch({
+        type: RESERVATION_DELETE_FAIL,
+        payload: error.response && error.response.data.message ? error.response.data.message : error.message,
+      });
+    }
   };
 
 export const updateReservationToPaid = (reservation) => async (dispatch, getState) => {

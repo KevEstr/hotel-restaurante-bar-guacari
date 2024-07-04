@@ -20,6 +20,8 @@ import Select from "../../components/Select";
 import OrderCart from "../../components/order/OrderCart";
 import LoaderHandler from "../../components/loader/LoaderHandler";
 
+import generateOrder from "../../utils/InvoicesRestaurant/generateOrder";
+
 /* Constants */
 import {
     ORDER_DETAILS_RESET,
@@ -55,7 +57,7 @@ const OrderEditScreen = ({ history, match }) => {
     const [modal, setModal] = useState(false);
     const [difference, setDifference] = useState(false);
     const [availableQuota, setAvailableQuota] = useState(false);
-
+    const [concept, setConcept] = useState("");
 
     const dispatch = useDispatch();
 
@@ -218,6 +220,14 @@ const OrderEditScreen = ({ history, match }) => {
         }
     };
 
+    const getModifiedProducts = () => {
+        const modifiedProducts = productsInOrder.filter(product => {
+            const originalProduct = productsAlreadyOrdered.find(p => p.id === product.id);
+            return !originalProduct || originalProduct.quantity !== product.quantity || originalProduct.note !== product.note;
+        });
+        return modifiedProducts;
+    };
+
     const proceedWithOrder = () => {
         console.log("USUARIO: ", user);
         console.log("Productos en la orden: ", productsInOrder);
@@ -233,11 +243,28 @@ const OrderEditScreen = ({ history, match }) => {
             note: note,
             userId: user,
             confirmExceedQuota: true,
+            concept:concept,
         };
     
         /* Make request */
         console.log("ORDEN A CREAR: ", newOrder);
+        console.log("CONCEPTO DE LA ORDEN: ", concept);
         dispatch(updateOrder(newOrder));
+
+        const modifiedProducts = getModifiedProducts();
+    
+        // Llamar a generateOrder
+        const orderDetails = {
+            id: orderId,
+            table: !delivery ? table : 0,
+            client: client,
+            waiter: user, // Asumiendo que el usuario es el mesero
+            date: new Date().toLocaleString(), // O la fecha que corresponda
+            products: modifiedProducts,
+            note: note,
+        };
+    
+        generateOrder(orderDetails, true);
     };
 
     const renderModalExceedQuota = () => (
@@ -390,8 +417,7 @@ const OrderEditScreen = ({ history, match }) => {
             <Select
                 data={user}
                 setData={setUser}
-                items={users.filter(user => user.roleId!==1 && user.roleId!==null)}
-                search={searchUsers}
+                items={users.filter(user => user.roleId !== 1 && user.roleId !== null)}
             />
             {errors.user && (
                 <Message message={errors.user} color={"warning"} />
@@ -409,6 +435,15 @@ const OrderEditScreen = ({ history, match }) => {
             rows={3}
             data={note}
             setData={setNote}
+        />
+    );
+
+    const renderConceptChange = () => (
+        <Textarea
+            title={"Concepto por el cambio de la órden:"}
+            rows={2}
+            data={concept}
+            setData={setConcept}
         />
     );
 
@@ -484,6 +519,13 @@ const OrderEditScreen = ({ history, match }) => {
             <div className="col-12 col-md-12">
                     <div className="form-group">
                         {renderNoteTextarea()}
+                    </div>
+            </div>
+        </div>
+        <div className="row">
+            <div className="col-12 col-md-12">
+                    <div className="form-group">
+                        {renderConceptChange()}
                     </div>
             </div>
         </div>

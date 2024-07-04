@@ -18,9 +18,9 @@ import Select from "../../components/Select";
 import { RESERVATION_CREATE_RESET } from "../../constants/reservationConstants";
 
 /* Actions */
-import { allRooms, updateRoom } from "../../actions/roomActions";
+import { allRooms, updateStatusRoom } from "../../actions/roomActions";
 import { listClients } from "../../actions/clientActions";
-import { createReservation, updateClientHasReservation } from "../../actions/reservationActions";
+import { createReservation } from "../../actions/reservationActions";
 import { listServices } from '../../actions/serviceActions';
 import { listPayments } from '../../actions/paymentActions';
 import { listAgreements } from '../../actions/agreementActions';
@@ -63,8 +63,8 @@ const ReservationCreateScreen = ({ history, location }) => {
     const [clientAgreement, setClientAgreement] = useState(null);
     const [roomSelects, setRoomSelects] = useState([{ selectId: Date.now(), roomId: roomIdFromParams ? parseInt(roomIdFromParams) : '' }]);
     const [advance, setAdvance] = useState(0);
-    const [paymentId, setPaymentId] = useState("");
-
+    const [paymentId, setPaymentId] = useState(null);
+    const [isAdvancePayment, setIsAdvancePayment] = useState(false);
 
     const [total, setTotal] = useState(0);
 
@@ -124,28 +124,13 @@ const ReservationCreateScreen = ({ history, location }) => {
     const handleServiceChange = (e, serviceId) => {
         const { name, value } = e.target;
         setSelectedServices((prevServices) => {
-            // Verifica si se está deseleccionando el servicio
-            if (value === "") {
-                // Elimina el servicio del estado
-                return prevServices.filter((service) => service.id !== serviceId);
-            } else {
-                // Verifica si el servicio ya está en selectedServices
-                const serviceExists = prevServices.find((service) => service.id === serviceId);
-                if (serviceExists) {
-                    // Actualiza el límite máximo del servicio existente
-                    return prevServices.map((service) =>
-                        service.id === serviceId ? { ...service, [name]: value } : service
-                    );
-                } else {
-                    // Agrega el servicio seleccionado al estado
-                    return [
-                        ...prevServices,
-                        { id: serviceId, maxLimit: value }
-                    ];
-                }
-            }
+            // Actualiza el servicio seleccionado, incluso si el valor está vacío
+            return prevServices.map((service) =>
+                service.id === serviceId ? { ...service, [name]: value } : service
+            );
         });
     };
+    
 
     const handleAddService = (service) => {
         const isSelected = selectedServices.some(item => item.id === service.id);
@@ -200,16 +185,20 @@ const ReservationCreateScreen = ({ history, location }) => {
                 advance: advance,
                 total: calculatedTotal,
                 pending_payment: calculatedTotal-advance,
-                paymentId: paymentId,
+                paymentId: paymentId !== "" ? paymentId : null,
             };
             /* Make request */
 
             dispatch(updateClientReservationStatus(reservation.clientId, true, reservation.id));
             dispatch(createReservation(reservation));
 
-            selectedRooms.forEach((roomId) => {
-                dispatch(updateRoom(roomId, 1));
-              });
+            reservation.rooms.forEach((roomId) => {
+                console.log(`Updating room with ID: ${roomId}`);
+                dispatch(updateStatusRoom(roomId, 1));
+            });
+
+            console.log("Habitaciones para cambiar:", reservation.rooms)
+        
 
             console.log("Datos de la reserva:", reservation);
             setReservationId(reservation.id);
@@ -322,7 +311,7 @@ const ReservationCreateScreen = ({ history, location }) => {
 
         return (
             <div className="form-group">
-                <label htmlFor="paymentId">Método de Pago</label>
+                <label style={{fontWeight: 'normal'}} htmlFor="paymentId">Método de Pago</label>
                 <select
                     id="paymentId"
                     value={paymentId}
@@ -410,7 +399,7 @@ const ReservationCreateScreen = ({ history, location }) => {
                                 </div>
                                 <div className="col-md-2">
                                     <div className="form-group">
-                                        <label style={{fontWeight: 'normal'}}>Precio:</label>
+                                        <label style={{fontWeight: 'normal'}}>Precio por noche:</label>
                                         <input
                                             type="number"
                                             value={price}
@@ -419,27 +408,7 @@ const ReservationCreateScreen = ({ history, location }) => {
                                         />
                                     </div>
                                 </div>
-                                <div className="col-md-3">
-                                    <div className="form-group">
-                                        <label style={{fontWeight: 'normal'}}>Valor anticipo:</label>
-                                        <input
-                                            type="number"
-                                            value={advance}
-                                            onChange={(e) => setAdvance(e.target.value)}
-                                            className="form-control"
-                                        />
-                                    </div>
-                                </div>
-                                {advance > 0 && (
-                                <div className="col-md-3">
-                                    <div className="form-group">
-                                    <div className="col-lg-4 col-md-6">
-                                        {renderPaymentsSelect()}
-                                    </div>
-                                    </div>
-                                </div>
-                                )}
-                                <div className="col-md-3">
+                                <div className="col-md-2">
                                     <div className="form-group">
                                         <label style={{fontWeight: 'normal'}}>Cantidad de personas:</label>
                                         <input
@@ -450,6 +419,48 @@ const ReservationCreateScreen = ({ history, location }) => {
                                         />
                                     </div>
                                 </div>
+
+                                <div className="col-md-5">
+                                    <div className="form-group">
+                                        <label style={{ display: 'flex', fontWeight: 'normal'}}>
+                                            ¿Pago anticipado?
+                                        </label>
+                                        <div style={{ display: 'flex', marginLeft: '50px'}}>
+                                            <input
+                                                type="checkbox"
+                                                checked={isAdvancePayment}
+                                                onChange={(e) => setIsAdvancePayment(e.target.checked)}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                {isAdvancePayment && (
+                                    <>
+                                <div className="col-md-2">
+                                    <div className="form-group">
+                                        <label style={{fontWeight: 'normal'}}>Valor de anticipo:</label>
+                                        <input
+                                            type="number"
+                                            value={advance}
+                                            onChange={(e) => setAdvance(e.target.value)}
+                                            className="form-control"
+                                        />
+                                    </div>
+                                </div>
+                                </>
+                                )}
+                                {advance > 0 && isAdvancePayment && (
+                                <div className="col-md-5">
+                                    <div className="form-group">
+                                    <div className="col-lg-4 col-md-6">
+                                        {renderPaymentsSelect()}
+                                    </div>
+                                    </div>
+                                </div>
+                                )}
+                                
                             </div>
 
                             <div className="row">
