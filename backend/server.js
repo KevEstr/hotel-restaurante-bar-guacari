@@ -2,10 +2,26 @@ const express = require("express");
 const dotenv = require("dotenv");
 const morgan = require("morgan");
 const path = require("path");
+const cors = require("cors");  // Importa cors
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 
 dotenv.config();
 const app = express();
+
+const allowedOrigins = ['https://pruebafrontdeploy--guacari.netlify.app'];
+
+const corsOptions = {
+    origin: function (origin, callback) {
+        if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+};
+
+app.use(cors(corsOptions));
 
 if (process.env.NODE_ENV === "development") {
     app.use(morgan("dev"));
@@ -59,8 +75,6 @@ app.use("/api/laundries", laundryRoutes);
 app.use("/api/orderinvoices", orderInvoiceRoutes);
 app.use("/api/paidorders", paidOrderInvoiceRoutes);
 app.use("/api/tableaudits", tableAuditRoutes);
-
-require('../backend/utils/cronJobs');
 
 const rootPath = path.resolve();
 
